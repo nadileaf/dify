@@ -7,7 +7,6 @@ import AppIcon from '@/app/components/base/app-icon'
 import { MessageDotsCircle } from '@/app/components/base/icons/src/vender/solid/communication'
 import { Edit02 } from '@/app/components/base/icons/src/vender/line/general'
 import { Star06 } from '@/app/components/base/icons/src/vender/solid/shapes'
-import { FootLogo } from '@/app/components/share/chat/welcome/massive-component'
 
 const ConfigPanel = () => {
   const { t } = useTranslation()
@@ -142,20 +141,20 @@ const ConfigPanel = () => {
               : <div>
               </div>}
             {
-              customConfig?.remove_webapp_brand
-                ? null
-                : (
-                  <div className={`flex items-center justify-end ${isMobile && 'w-full'}`}>
-                    <div className='flex items-center pr-3 space-x-3'>
-                      <span className='uppercase'>{t('share.chat.powerBy')}</span>
-                      {
-                        customConfig?.replace_webapp_logo
-                          ? <img src={customConfig?.replace_webapp_logo} alt='logo' className='block w-auto h-5' />
-                          : <FootLogo />
-                      }
-                    </div>
-                  </div>
-                )
+              // customConfig?.remove_webapp_brand
+              //   ? null
+              //   : (
+              //     <div className={`flex items-center justify-end ${isMobile && 'w-full'}`}>
+              //       <div className='flex items-center pr-3 space-x-3'>
+              //         <span className='uppercase'>{t('share.chat.powerBy')}</span>
+              //         {
+              //           customConfig?.replace_webapp_logo
+              //             ? <img src={customConfig?.replace_webapp_logo} alt='logo' className='block w-auto h-5' />
+              //             : <FootLogo />
+              //         }
+              //       </div>
+              //     </div>
+              //   )
             }
           </div>
         )

@@ -2,7 +2,6 @@ import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import s from './style.module.css'
-import LogoSite from '@/app/components/base/logo/logo-site'
 import Switch from '@/app/components/base/switch'
 import Button from '@/app/components/base/button'
 import { Loading02 } from '@/app/components/base/icons/src/vender/line/general'
@@ -117,16 +116,16 @@ const CustomWebAppBrand = () => {
         <div className='flex items-center h-5 justify-between'>
           <div className='w-[369px] h-1.5 rounded-sm bg-gray-200 opacity-80' />
           {
-            !webappBrandRemoved && (
-              <div className='flex items-center text-[10px] font-medium text-gray-400'>
-                POWERED BY
-                {
-                  webappLogo
-                    ? <img src={`${webappLogo}?hash=${imgKey}`} alt='logo' className='ml-2 block w-auto h-5' />
-                    : <LogoSite className='ml-2 !h-5' />
-                }
-              </div>
-            )
+            // !webappBrandRemoved && (
+            //   <div className='flex items-center text-[10px] font-medium text-gray-400'>
+            //     POWERED BY
+            //     {
+            //       webappLogo
+            //         ? <img src={`${webappLogo}?hash=${imgKey}`} alt='logo' className='ml-2 block w-auto h-5' />
+            //         : <LogoSite className='ml-2 !h-5' />
+            //     }
+            //   </div>
+            // )
           }
         </div>
       </div>
