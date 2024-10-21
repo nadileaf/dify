@@ -5,7 +5,10 @@ import {
   // useRef,
   useState,
 } from 'react'
-import cn from 'classnames'
+import {
+  RiClipboardLine,
+  RiCloseLine,
+} from '@remixicon/react'
 import { useTranslation } from 'react-i18next'
 import copy from 'copy-to-clipboard'
 import { useBoolean } from 'ahooks'
@@ -23,16 +26,11 @@ import { SimpleBtn } from '../../app/text-generate/item'
 import Toast from '../../base/toast'
 import IterationResultPanel from '../run/iteration-result-panel'
 import InputsPanel from './inputs-panel'
+import cn from '@/utils/classnames'
 import Loading from '@/app/components/base/loading'
-import { XClose } from '@/app/components/base/icons/src/vender/line/general'
-import { Clipboard } from '@/app/components/base/icons/src/vender/line/files'
 import type { NodeTracing } from '@/types/workflow'
 
-const WorkflowPreview = ({
-  onShowIterationDetail,
-}: {
-  onShowIterationDetail: (detail: NodeTracing[][]) => void
-}) => {
+const WorkflowPreview = () => {
   const { t } = useTranslation()
   const { handleCancelDebugAndPreviewPanel } = useWorkflowInteractions()
   const workflowRunningData = useStore(s => s.workflowRunningData)
@@ -86,7 +84,7 @@ const WorkflowPreview = ({
       <div className='flex items-center justify-between p-4 pb-1 text-base font-semibold text-gray-900'>
         {`Test Run${!workflowRunningData?.result.sequence_number ? '' : `#${workflowRunningData?.result.sequence_number}`}`}
         <div className='p-1 cursor-pointer' onClick={() => handleCancelDebugAndPreviewPanel()}>
-          <XClose className='w-4 h-4 text-gray-500' />
+          <RiCloseLine className='w-4 h-4 text-gray-500' />
         </div>
       </div>
       <div className='grow relative flex flex-col'>
@@ -148,8 +146,8 @@ const WorkflowPreview = ({
                 >{t('runLog.tracing')}</div>
               </div>
               <div className={cn(
-                'grow bg-white h-0 overflow-y-auto rounded-b-2xl',
-                (currentTab === 'RESULT' || currentTab === 'TRACING') && '!bg-gray-50',
+                'grow bg-components-panel-bg h-0 overflow-y-auto rounded-b-2xl',
+                (currentTab === 'RESULT' || currentTab === 'TRACING') && '!bg-background-section-burn',
               )}>
                 {currentTab === 'INPUT' && showInputsPanel && (
                   <InputsPanel onRun={() => switchTab('RESULT')} />
@@ -159,6 +157,7 @@ const WorkflowPreview = ({
                     <ResultText
                       isRunning={workflowRunningData?.result?.status === WorkflowRunningStatus.Running || !workflowRunningData?.result}
                       outputs={workflowRunningData?.resultText}
+                      allFiles={workflowRunningData?.result?.files as any}
                       error={workflowRunningData?.result?.error}
                       onClick={() => switchTab('DETAIL')}
                     />
@@ -173,7 +172,7 @@ const WorkflowPreview = ({
                             copy(JSON.stringify(content))
                           Toast.notify({ type: 'success', message: t('common.actionMsg.copySuccessfully') })
                         }}>
-                        <Clipboard className='w-3.5 h-3.5' />
+                        <RiClipboardLine className='w-3.5 h-3.5' />
                         <div>{t('common.operation.copy')}</div>
                       </SimpleBtn>
                     )}
@@ -193,18 +192,19 @@ const WorkflowPreview = ({
                   />
                 )}
                 {currentTab === 'DETAIL' && !workflowRunningData?.result && (
-                  <div className='flex h-full items-center justify-center bg-white'>
+                  <div className='flex h-full items-center justify-center bg-components-panel-bg'>
                     <Loading />
                   </div>
                 )}
                 {currentTab === 'TRACING' && (
                   <TracingPanel
+                    className='bg-background-section-burn'
                     list={workflowRunningData?.tracing || []}
                     onShowIterationDetail={handleShowIterationDetail}
                   />
                 )}
                 {currentTab === 'TRACING' && !workflowRunningData?.tracing?.length && (
-                  <div className='flex h-full items-center justify-center bg-gray-50'>
+                  <div className='flex h-full items-center justify-center !bg-background-section-burn'>
                     <Loading />
                   </div>
                 )}

@@ -1,12 +1,14 @@
 import type { DataSourceNotionPage } from './common'
-import type { AppMode, RetrievalConfig } from '@/types/app'
+import type { AppIconType, AppMode, RetrievalConfig } from '@/types/app'
 import type { Tag } from '@/app/components/base/tag-management/constant'
 
 export enum DataSourceType {
   FILE = 'upload_file',
   NOTION = 'notion_import',
-  WEB = 'web_import',
+  WEB = 'website_crawl',
 }
+
+export type DatasetPermission = 'only_me' | 'all_team_members' | 'partial_members'
 
 export type DataSet = {
   id: string
@@ -14,7 +16,7 @@ export type DataSet = {
   icon: string
   icon_background: string
   description: string
-  permission: 'only_me' | 'all_team_members'
+  permission: DatasetPermission
   data_source_type: DataSourceType
   indexing_technique: 'high_quality' | 'economy'
   created_by: string
@@ -23,12 +25,66 @@ export type DataSet = {
   app_count: number
   document_count: number
   word_count: number
+  provider: string
   embedding_model: string
   embedding_model_provider: string
   embedding_available: boolean
   retrieval_model_dict: RetrievalConfig
   retrieval_model: RetrievalConfig
   tags: Tag[]
+  partial_member_list?: any[]
+  external_knowledge_info: {
+    external_knowledge_id: string
+    external_knowledge_api_id: string
+    external_knowledge_api_name: string
+    external_knowledge_api_endpoint: string
+  }
+  external_retrieval_model: {
+    top_k: number
+    score_threshold: number
+    score_threshold_enabled: boolean
+  }
+}
+
+export type ExternalAPIItem = {
+  id: string
+  tenant_id: string
+  name: string
+  description: string
+  settings: {
+    endpoint: string
+    api_key: string
+  }
+  dataset_bindings: { id: string; name: string }[]
+  created_by: string
+  created_at: string
+}
+
+export type ExternalKnowledgeItem = {
+  id: string
+  name: string
+  description: string | null
+  provider: 'external'
+  permission: DatasetPermission
+  data_source_type: null
+  indexing_technique: null
+  app_count: number
+  document_count: number
+  word_count: number
+  created_by: string
+  created_at: string
+  updated_by: string
+  updated_at: string
+  tags: Tag[]
+}
+
+export type ExternalAPIDeleteResponse = {
+  result: 'success' | 'error'
+}
+
+export type ExternalAPIUsage = {
+  is_using: boolean
+  count: number
 }
 
 export type CustomFile = File & {
@@ -39,6 +95,23 @@ export type CustomFile = File & {
   created_at?: number
 }
 
+export type CrawlOptions = {
+  crawl_sub_pages: boolean
+  only_main_content: boolean
+  includes: string
+  excludes: string
+  limit: number | string
+  max_depth: number | string
+  use_sitemap: boolean
+}
+
+export type CrawlResultItem = {
+  title: string
+  markdown: string
+  description: string
+  source_url: string
+}
+
 export type FileItem = {
   fileID: string
   file: CustomFile
@@ -47,6 +120,14 @@ export type FileItem = {
 
 export type DataSetListResponse = {
   data: DataSet[]
+  has_more: boolean
+  limit: number
+  page: number
+  total: number
+}
+
+export type ExternalAPIListResponse = {
+  data: ExternalAPIItem[]
   has_more: boolean
   limit: number
   page: number
@@ -149,6 +230,8 @@ export type DataSourceInfo = {
     extension: string
   }
   notion_page_icon?: string
+  job_id: string
+  url: string
 }
 
 export type InitialDocumentDetail = {
@@ -168,6 +251,7 @@ export type InitialDocumentDetail = {
   completed_segments?: number
   total_segments?: number
   doc_form: 'text_model' | 'qa_model'
+  doc_language: string
 }
 
 export type SimpleDocumentDetail = InitialDocumentDetail & {
@@ -178,6 +262,12 @@ export type SimpleDocumentDetail = InitialDocumentDetail & {
   updated_at: number
   hit_count: number
   dataset_process_rule_id?: string
+  data_source_detail_dict?: {
+    upload_file: {
+      name: string
+      extension: string
+    }
+  }
 }
 
 export type DocumentListResponse = {
@@ -199,6 +289,8 @@ export type DocumentReq = {
 export type CreateDocumentReq = DocumentReq & {
   data_source: DataSource
   retrieval_model: RetrievalConfig
+  embedding_model: string
+  embedding_model_provider: string
 }
 
 export type IndexingEstimateParams = DocumentReq & Partial<DataSource> & {
@@ -212,6 +304,11 @@ export type DataSource = {
     notion_info_list?: NotionInfo[]
     file_info_list?: {
       file_ids: string[]
+    }
+    website_info_list?: {
+      provider: string
+      job_id: string
+      urls: string[]
     }
   }
 }
@@ -349,6 +446,16 @@ export type HitTesting = {
   tsne_position: TsnePosition
 }
 
+export type ExternalKnowledgeBaseHitTesting = {
+  content: string
+  title: string
+  score: number
+  metadata: {
+    'x-amz-bedrock-kb-source-uri': string
+    'x-amz-bedrock-kb-data-source-id': string
+  }
+}
+
 export type Segment = {
   id: string
   document: Document
@@ -389,12 +496,21 @@ export type HitTestingResponse = {
   records: Array<HitTesting>
 }
 
+export type ExternalKnowledgeBaseHitTestingResponse = {
+  query: {
+    content: string
+  }
+  records: Array<ExternalKnowledgeBaseHitTesting>
+}
+
 export type RelatedApp = {
   id: string
   name: string
   mode: AppMode
+  icon_type: AppIconType | null
   icon: string
   icon_background: string
+  icon_url: string
 }
 
 export type RelatedAppResponse = {
@@ -402,7 +518,7 @@ export type RelatedAppResponse = {
   total: number
 }
 
-export type SegmentUpdator = {
+export type SegmentUpdater = {
   content: string
   answer?: string
   keywords?: string[]
@@ -416,4 +532,50 @@ export enum DocForm {
 export type ErrorDocsResponse = {
   data: IndexingStatusResponse[]
   total: number
+}
+
+export type SelectedDatasetsMode = {
+  allHighQuality: boolean
+  allHighQualityVectorSearch: boolean
+  allHighQualityFullTextSearch: boolean
+  allEconomic: boolean
+  mixtureHighQualityAndEconomic: boolean
+  allInternal: boolean
+  allExternal: boolean
+  mixtureInternalAndExternal: boolean
+  inconsistentEmbeddingModel: boolean
+}
+
+export enum WeightedScoreEnum {
+  SemanticFirst = 'semantic_first',
+  KeywordFirst = 'keyword_first',
+  Customized = 'customized',
+}
+
+export enum RerankingModeEnum {
+  RerankingModel = 'reranking_model',
+  WeightedScore = 'weighted_score',
+}
+
+export const DEFAULT_WEIGHTED_SCORE = {
+  allHighQualityVectorSearch: {
+    semantic: 1.0,
+    keyword: 0,
+  },
+  allHighQualityFullTextSearch: {
+    semantic: 0,
+    keyword: 1.0,
+  },
+  semanticFirst: {
+    semantic: 0.7,
+    keyword: 0.3,
+  },
+  keywordFirst: {
+    semantic: 0.3,
+    keyword: 0.7,
+  },
+  other: {
+    semantic: 0.7,
+    keyword: 0.3,
+  },
 }

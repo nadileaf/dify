@@ -7,11 +7,12 @@ import {
   useNodeDataUpdate,
   useWorkflow,
 } from '@/app/components/workflow/hooks'
-import { getNodeInfoById, isSystemVar, toNodeOutputVars } from '@/app/components/workflow/nodes/_base/components/variable/utils'
+import { getNodeInfoById, isConversationVar, isENV, isSystemVar, toNodeOutputVars } from '@/app/components/workflow/nodes/_base/components/variable/utils'
 
 import type { CommonNodeType, InputVar, ValueSelector, Var, Variable } from '@/app/components/workflow/types'
 import { BlockEnum, InputVarType, NodeRunningStatus, VarType } from '@/app/components/workflow/types'
 import { useStore as useAppStore } from '@/app/components/app/store'
+import { useStore, useWorkflowStore } from '@/app/components/workflow/store'
 import { getIterationSingleNodeRunUrl, singleNodeRun } from '@/service/workflow'
 import Toast from '@/app/components/base/toast'
 import LLMDefault from '@/app/components/workflow/nodes/llm/default'
@@ -79,8 +80,10 @@ const varTypeToInputVarType = (type: VarType, {
     return InputVarType.number
   if ([VarType.object, VarType.array, VarType.arrayNumber, VarType.arrayString, VarType.arrayObject].includes(type))
     return InputVarType.json
+  if (type === VarType.file)
+    return InputVarType.singleFile
   if (type === VarType.arrayFile)
-    return InputVarType.files
+    return InputVarType.multiFiles
 
   return InputVarType.textInput
 }
@@ -94,12 +97,13 @@ const useOneStepRun = <T>({
 }: Params<T>) => {
   const { t } = useTranslation()
   const { getBeforeNodesInSameBranch, getBeforeNodesInSameBranchIncludeParent } = useWorkflow() as any
+  const conversationVariables = useStore(s => s.conversationVariables)
   const isChatMode = useIsChatMode()
   const isIteration = data.type === BlockEnum.Iteration
 
   const availableNodes = getBeforeNodesInSameBranch(id)
   const availableNodesIncludeParent = getBeforeNodesInSameBranchIncludeParent(id)
-  const allOutputVars = toNodeOutputVars(availableNodes, isChatMode)
+  const allOutputVars = toNodeOutputVars(availableNodes, isChatMode, undefined, undefined, conversationVariables)
   const getVar = (valueSelector: ValueSelector): Var | undefined => {
     let res: Var | undefined
     const isSystem = valueSelector[0] === 'sys'
@@ -115,12 +119,13 @@ const useOneStepRun = <T>({
 
     valueSelector.slice(1).forEach((key, i) => {
       const isLast = i === valueSelector.length - 2
-      curr = curr?.find((v: any) => v.variable === key)
+      // conversation variable is start with 'conversation.'
+      curr = curr?.find((v: any) => v.variable.replace('conversation.', '') === key)
       if (isLast) {
         res = curr
       }
       else {
-        if (curr?.type === VarType.object)
+        if (curr?.type === VarType.object || curr?.type === VarType.file)
           curr = curr.children
       }
     })
@@ -164,6 +169,12 @@ const useOneStepRun = <T>({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data._isSingleRun])
+
+  const workflowStore = useWorkflowStore()
+  useEffect(() => {
+    workflowStore.getState().setShowSingleRunPanel(!!isShowSingleRun)
+  }, [isShowSingleRun])
+
   const hideSingleRun = () => {
     handleNodeDataUpdate({
       id,
@@ -322,7 +333,7 @@ const useOneStepRun = <T>({
     if (!variables)
       return []
 
-    const varInputs = variables.map((item) => {
+    const varInputs = variables.filter(item => !isENV(item.value_selector)).map((item) => {
       const originalVar = getVar(item.value_selector)
       if (!originalVar) {
         return {
@@ -330,6 +341,7 @@ const useOneStepRun = <T>({
           variable: item.variable,
           type: InputVarType.textInput,
           required: true,
+          value_selector: item.value_selector,
         }
       }
       return {
@@ -361,6 +373,7 @@ const useOneStepRun = <T>({
           nodeType: varInfo?.type,
           nodeName: varInfo?.title || availableNodesIncludeParent[0]?.data.title, // default start node title
           variable: isSystemVar(item) ? item.join('.') : item[item.length - 1],
+          isChatVar: isConversationVar(item),
         },
         variable: `#${item.join('.')}#`,
         value_selector: item,

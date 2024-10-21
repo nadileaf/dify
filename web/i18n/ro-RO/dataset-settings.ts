@@ -14,7 +14,7 @@ const translation = {
     permissionsAllMember: 'Toți membrii echipei',
     indexMethod: 'Metodă de indexare',
     indexMethodHighQuality: 'Calitate ridicată',
-    indexMethodHighQualityTip: 'Apelați interfața de încorporare a OpenAI pentru procesare pentru a oferi o acuratețe mai ridicată atunci când utilizatorii interogă.',
+    indexMethodHighQualityTip: 'Invocă modelul Embedding pentru procesare pentru a oferi o acuratețe mai mare la interogările utilizatorilor.',
     indexMethodEconomy: 'Economică',
     indexMethodEconomyTip: 'Utilizați motoare de vectori offline, indexuri de cuvinte cheie etc. pentru a reduce acuratețea fără a cheltui jetoane',
     embeddingModel: 'Model de încorporare',
@@ -27,6 +27,11 @@ const translation = {
       longDescription: ' despre metoda de recuperare, o puteți schimba în orice moment în setările cunoștințelor.',
     },
     save: 'Salvare',
+    permissionsInvitedMembers: 'Membri parțiali ai echipei',
+    me: '(Tu)',
+    externalKnowledgeID: 'ID de cunoștințe extern',
+    externalKnowledgeAPI: 'API de cunoștințe externe',
+    retrievalSettings: 'Setări de recuperare',
   },
 }
 

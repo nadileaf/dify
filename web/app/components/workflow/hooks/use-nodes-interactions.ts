@@ -16,6 +16,7 @@ import {
   useReactFlow,
   useStoreApi,
 } from 'reactflow'
+import { unionBy } from 'lodash-es'
 import type { ToolDefaultValue } from '../block-selector/types'
 import type {
   Edge,
@@ -25,6 +26,7 @@ import type {
 import { BlockEnum } from '../types'
 import { useWorkflowStore } from '../store'
 import {
+  CUSTOM_EDGE,
   ITERATION_CHILDREN_Z_INDEX,
   ITERATION_PADDING,
   NODES_INITIAL_DATA,
@@ -38,26 +40,34 @@ import {
   getNodesConnectedSourceOrTargetHandleIdsMap,
   getTopLeftNodePosition,
 } from '../utils'
+import { CUSTOM_NOTE_NODE } from '../note-node/constants'
 import type { IterationNodeType } from '../nodes/iteration/types'
+import { CUSTOM_ITERATION_START_NODE } from '../nodes/iteration-start/constants'
 import type { VariableAssignerNodeType } from '../nodes/variable-assigner/types'
 import { useNodeIterationInteractions } from '../nodes/iteration/use-interactions'
+import { useWorkflowHistoryStore } from '../workflow-history-store'
 import { useNodesSyncDraft } from './use-nodes-sync-draft'
 import { useHelpline } from './use-helpline'
 import {
   useNodesReadOnly,
   useWorkflow,
+  useWorkflowReadOnly,
 } from './use-workflow'
+import { WorkflowHistoryEvent, useWorkflowHistory } from './use-workflow-history'
 
 export const useNodesInteractions = () => {
   const { t } = useTranslation()
   const store = useStoreApi()
   const workflowStore = useWorkflowStore()
   const reactflow = useReactFlow()
+  const { store: workflowHistoryStore } = useWorkflowHistoryStore()
   const { handleSyncWorkflowDraft } = useNodesSyncDraft()
   const {
+    checkNestedParallelLimit,
     getAfterNodesInSameBranch,
   } = useWorkflow()
   const { getNodesReadOnly } = useNodesReadOnly()
+  const { getWorkflowReadOnly } = useWorkflowReadOnly()
   const { handleSetHelpline } = useHelpline()
   const {
     handleNodeIterationChildDrag,
@@ -65,13 +75,15 @@ export const useNodesInteractions = () => {
   } = useNodeIterationInteractions()
   const dragNodeStartPosition = useRef({ x: 0, y: 0 } as { x: number; y: number })
 
+  const { saveStateToHistory, undo, redo } = useWorkflowHistory()
+
   const handleNodeDragStart = useCallback<NodeDragHandler>((_, node) => {
     workflowStore.setState({ nodeAnimation: false })
 
     if (getNodesReadOnly())
       return
 
-    if (node.data.isIterationStart)
+    if (node.type === CUSTOM_ITERATION_START_NODE || node.type === CUSTOM_NOTE_NODE)
       return
 
     dragNodeStartPosition.current = { x: node.position.x, y: node.position.y }
@@ -81,7 +93,7 @@ export const useNodesInteractions = () => {
     if (getNodesReadOnly())
       return
 
-    if (node.data.isIterationStart)
+    if (node.type === CUSTOM_ITERATION_START_NODE)
       return
 
     const {
@@ -136,11 +148,19 @@ export const useNodesInteractions = () => {
       setHelpLineHorizontal()
       setHelpLineVertical()
       handleSyncWorkflowDraft()
+
+      if (x !== 0 && y !== 0) {
+        // selecting a note will trigger a drag stop event with x and y as 0
+        saveStateToHistory(WorkflowHistoryEvent.NodeDragStop)
+      }
     }
-  }, [handleSyncWorkflowDraft, workflowStore, getNodesReadOnly])
+  }, [workflowStore, getNodesReadOnly, saveStateToHistory, handleSyncWorkflowDraft])
 
   const handleNodeEnter = useCallback<NodeMouseHandler>((_, node) => {
     if (getNodesReadOnly())
+      return
+
+    if (node.type === CUSTOM_NOTE_NODE || node.type === CUSTOM_ITERATION_START_NODE)
       return
 
     const {
@@ -164,6 +184,7 @@ export const useNodesInteractions = () => {
       if (sameLevel) {
         setEnteringNodePayload({
           nodeId: node.id,
+          nodeData: node.data as VariableAssignerNodeType,
         })
         const fromType = connectingNodePayload.handleType
 
@@ -190,10 +211,30 @@ export const useNodesInteractions = () => {
       })
     })
     setEdges(newEdges)
+    const connectedEdges = getConnectedEdges([node], edges).filter(edge => edge.target === node.id)
+
+    const targetNodes: Node[] = []
+    for (let i = 0; i < connectedEdges.length; i++) {
+      const sourceConnectedEdges = getConnectedEdges([{ id: connectedEdges[i].source } as Node], edges).filter(edge => edge.source === connectedEdges[i].source && edge.sourceHandle === connectedEdges[i].sourceHandle)
+      targetNodes.push(...sourceConnectedEdges.map(edge => nodes.find(n => n.id === edge.target)!))
+    }
+    const uniqTargetNodes = unionBy(targetNodes, 'id')
+    if (uniqTargetNodes.length > 1) {
+      const newNodes = produce(nodes, (draft) => {
+        draft.forEach((n) => {
+          if (uniqTargetNodes.some(targetNode => n.id === targetNode.id))
+            n.data._inParallelHovering = true
+        })
+      })
+      setNodes(newNodes)
+    }
   }, [store, workflowStore, getNodesReadOnly])
 
-  const handleNodeLeave = useCallback<NodeMouseHandler>(() => {
+  const handleNodeLeave = useCallback<NodeMouseHandler>((_, node) => {
     if (getNodesReadOnly())
+      return
+
+    if (node.type === CUSTOM_NOTE_NODE || node.type === CUSTOM_ITERATION_START_NODE)
       return
 
     const {
@@ -209,6 +250,7 @@ export const useNodesInteractions = () => {
     const newNodes = produce(getNodes(), (draft) => {
       draft.forEach((node) => {
         node.data._isEntering = false
+        node.data._inParallelHovering = false
       })
     })
     setNodes(newNodes)
@@ -267,6 +309,8 @@ export const useNodesInteractions = () => {
   }, [store, handleSyncWorkflowDraft])
 
   const handleNodeClick = useCallback<NodeMouseHandler>((_, node) => {
+    if (node.type === CUSTOM_ITERATION_START_NODE)
+      return
     handleNodeSelect(node.id)
   }, [handleNodeSelect])
 
@@ -294,22 +338,15 @@ export const useNodesInteractions = () => {
     if (targetNode?.parentId !== sourceNode?.parentId)
       return
 
-    if (targetNode?.data.isIterationStart)
+    if (sourceNode?.type === CUSTOM_NOTE_NODE || targetNode?.type === CUSTOM_NOTE_NODE)
       return
 
-    const needDeleteEdges = edges.filter((edge) => {
-      if (
-        (edge.source === source && edge.sourceHandle === sourceHandle)
-        || (edge.target === target && edge.targetHandle === targetHandle && targetNode?.data.type !== BlockEnum.VariableAssigner && targetNode?.data.type !== BlockEnum.VariableAggregator)
-      )
-        return true
+    if (edges.find(edge => edge.source === source && edge.sourceHandle === sourceHandle && edge.target === target && edge.targetHandle === targetHandle))
+      return
 
-      return false
-    })
-    const needDeleteEdgesIds = needDeleteEdges.map(edge => edge.id)
     const newEdge = {
       id: `${source}-${sourceHandle}-${target}-${targetHandle}`,
-      type: 'custom',
+      type: CUSTOM_EDGE,
       source: source!,
       target: target!,
       sourceHandle,
@@ -324,7 +361,6 @@ export const useNodesInteractions = () => {
     }
     const nodesConnectedSourceOrTargetHandleIdsMap = getNodesConnectedSourceOrTargetHandleIdsMap(
       [
-        ...needDeleteEdges.map(edge => ({ type: 'remove', edge })),
         { type: 'add', edge: newEdge },
       ],
       nodes,
@@ -339,17 +375,26 @@ export const useNodesInteractions = () => {
         }
       })
     })
-    setNodes(newNodes)
     const newEdges = produce(edges, (draft) => {
-      const filtered = draft.filter(edge => !needDeleteEdgesIds.includes(edge.id))
-
-      filtered.push(newEdge)
-
-      return filtered
+      draft.push(newEdge)
     })
-    setEdges(newEdges)
-    handleSyncWorkflowDraft()
-  }, [store, handleSyncWorkflowDraft, getNodesReadOnly])
+
+    if (checkNestedParallelLimit(newNodes, newEdges, targetNode?.parentId)) {
+      setNodes(newNodes)
+      setEdges(newEdges)
+
+      handleSyncWorkflowDraft()
+      saveStateToHistory(WorkflowHistoryEvent.NodeConnect)
+    }
+    else {
+      const {
+        setConnectingNodePayload,
+        setEnteringNodePayload,
+      } = workflowStore.getState()
+      setConnectingNodePayload(undefined)
+      setEnteringNodePayload(undefined)
+    }
+  }, [getNodesReadOnly, store, workflowStore, handleSyncWorkflowDraft, saveStateToHistory, checkNestedParallelLimit])
 
   const handleNodeConnectStart = useCallback<OnConnectStart>((_, { nodeId, handleType, handleId }) => {
     if (getNodesReadOnly())
@@ -360,14 +405,20 @@ export const useNodesInteractions = () => {
       const { getNodes } = store.getState()
       const node = getNodes().find(n => n.id === nodeId)!
 
-      if (!node.data.isIterationStart) {
-        setConnectingNodePayload({
-          nodeId,
-          nodeType: node.data.type,
-          handleType,
-          handleId,
-        })
+      if (node.type === CUSTOM_NOTE_NODE)
+        return
+
+      if (node.data.type === BlockEnum.VariableAggregator || node.data.type === BlockEnum.VariableAssigner) {
+        if (handleType === 'target')
+          return
       }
+
+      setConnectingNodePayload({
+        nodeId,
+        nodeType: node.data.type,
+        handleType,
+        handleId,
+      })
     }
   }, [store, workflowStore, getNodesReadOnly])
 
@@ -395,7 +446,6 @@ export const useNodesInteractions = () => {
       const fromHandleType = connectingNodePayload.handleType
       const fromHandleId = connectingNodePayload.handleId
       const fromNode = nodes.find(n => n.id === connectingNodePayload.nodeId)!
-      const fromNodeParent = nodes.find(n => n.id === fromNode.parentId)
       const toNode = nodes.find(n => n.id === enteringNodePayload.nodeId)!
       const toParentNode = nodes.find(n => n.id === toNode.parentId)
 
@@ -406,39 +456,15 @@ export const useNodesInteractions = () => {
 
       if (fromHandleType === 'source' && (toNode.data.type === BlockEnum.VariableAssigner || toNode.data.type === BlockEnum.VariableAggregator)) {
         const groupEnabled = toNode.data.advanced_settings?.group_enabled
+        const firstGroupId = toNode.data.advanced_settings?.groups[0].groupId
+        let handleId = 'target'
 
-        if (
-          (groupEnabled && hoveringAssignVariableGroupId)
-          || !groupEnabled
-        ) {
-          const newNodes = produce(nodes, (draft) => {
-            draft.forEach((node) => {
-              if (node.id === toNode.id) {
-                node.data._showAddVariablePopup = true
-                node.data._holdAddVariablePopup = true
-              }
-            })
-          })
-          setNodes(newNodes)
-          setShowAssignVariablePopup({
-            nodeId: fromNode.id,
-            nodeData: fromNode.data,
-            variableAssignerNodeId: toNode.id,
-            variableAssignerNodeData: toNode.data,
-            variableAssignerNodeHandleId: hoveringAssignVariableGroupId || 'target',
-            parentNode: toParentNode,
-            x: x - toNode.positionAbsolute!.x,
-            y: y - toNode.positionAbsolute!.y,
-          })
-          handleNodeConnect({
-            source: fromNode.id,
-            sourceHandle: fromHandleId,
-            target: toNode.id,
-            targetHandle: hoveringAssignVariableGroupId || 'target',
-          })
+        if (groupEnabled) {
+          if (hoveringAssignVariableGroupId)
+            handleId = hoveringAssignVariableGroupId
+          else
+            handleId = firstGroupId
         }
-      }
-      if (fromHandleType === 'target' && (fromNode.data.type === BlockEnum.VariableAssigner || fromNode.data.type === BlockEnum.VariableAggregator) && toNode.data.type !== BlockEnum.IfElse && toNode.data.type !== BlockEnum.QuestionClassifier) {
         const newNodes = produce(nodes, (draft) => {
           draft.forEach((node) => {
             if (node.id === toNode.id) {
@@ -449,20 +475,20 @@ export const useNodesInteractions = () => {
         })
         setNodes(newNodes)
         setShowAssignVariablePopup({
-          nodeId: toNode.id,
-          nodeData: toNode.data,
-          variableAssignerNodeId: fromNode.id,
-          variableAssignerNodeData: fromNode.data,
-          variableAssignerNodeHandleId: fromHandleId || 'target',
-          parentNode: fromNodeParent,
+          nodeId: fromNode.id,
+          nodeData: fromNode.data,
+          variableAssignerNodeId: toNode.id,
+          variableAssignerNodeData: toNode.data,
+          variableAssignerNodeHandleId: handleId,
+          parentNode: toParentNode,
           x: x - toNode.positionAbsolute!.x,
           y: y - toNode.positionAbsolute!.y,
         })
         handleNodeConnect({
-          source: toNode.id,
-          sourceHandle: 'source',
-          target: fromNode.id,
-          targetHandle: fromHandleId,
+          source: fromNode.id,
+          sourceHandle: fromHandleId,
+          target: toNode.id,
+          targetHandle: 'target',
         })
       }
     }
@@ -502,6 +528,12 @@ export const useNodesInteractions = () => {
           return handleNodeDelete(nodeId)
         }
         else {
+          if (iterationChildren.length === 1) {
+            handleNodeDelete(iterationChildren[0].id)
+            handleNodeDelete(nodeId)
+
+            return
+          }
           const { setShowConfirm, showConfirm } = workflowStore.getState()
 
           if (!showConfirm) {
@@ -533,14 +565,8 @@ export const useNodesInteractions = () => {
           }
         }
 
-        if (node.id === currentNode.parentId) {
+        if (node.id === currentNode.parentId)
           node.data._children = node.data._children?.filter(child => child !== nodeId)
-
-          if (currentNode.id === (node as Node<IterationNodeType>).data.start_node_id) {
-            (node as Node<IterationNodeType>).data.start_node_id = '';
-            (node as Node<IterationNodeType>).data.startNodeType = undefined
-          }
-        }
       })
       draft.splice(currentNodeIndex, 1)
     })
@@ -550,7 +576,13 @@ export const useNodesInteractions = () => {
     })
     setEdges(newEdges)
     handleSyncWorkflowDraft()
-  }, [store, handleSyncWorkflowDraft, getNodesReadOnly, workflowStore, t])
+
+    if (currentNode.type === CUSTOM_NOTE_NODE)
+      saveStateToHistory(WorkflowHistoryEvent.NoteDelete)
+
+    else
+      saveStateToHistory(WorkflowHistoryEvent.NodeDelete)
+  }, [getNodesReadOnly, store, handleSyncWorkflowDraft, saveStateToHistory, workflowStore, t])
 
   const handleNodeAdd = useCallback<OnNodeAdd>((
     {
@@ -577,7 +609,10 @@ export const useNodesInteractions = () => {
     } = store.getState()
     const nodes = getNodes()
     const nodesWithSameType = nodes.filter(node => node.data.type === nodeType)
-    const newNode = generateNewNode({
+    const {
+      newNode,
+      newIterationStartNode,
+    } = generateNewNode({
       data: {
         ...NODES_INITIAL_DATA[nodeType],
         title: nodesWithSameType.length > 0 ? `${t(`workflow.blocks.${nodeType}`)} ${nodesWithSameType.length + 1}` : t(`workflow.blocks.${nodeType}`),
@@ -613,7 +648,7 @@ export const useNodesInteractions = () => {
 
       const newEdge: Edge = {
         id: `${prevNodeId}-${prevNodeSourceHandle}-${newNode.id}-${targetHandle}`,
-        type: 'custom',
+        type: CUSTOM_EDGE,
         source: prevNodeId,
         sourceHandle: prevNodeSourceHandle,
         target: newNode.id,
@@ -648,8 +683,10 @@ export const useNodesInteractions = () => {
             node.data._children?.push(newNode.id)
         })
         draft.push(newNode)
+        if (newIterationStartNode)
+          draft.push(newIterationStartNode)
       })
-      setNodes(newNodes)
+
       if (newNode.data.type === BlockEnum.VariableAssigner || newNode.data.type === BlockEnum.VariableAggregator) {
         const { setShowAssignVariablePopup } = workflowStore.getState()
 
@@ -673,7 +710,14 @@ export const useNodesInteractions = () => {
         })
         draft.push(newEdge)
       })
-      setEdges(newEdges)
+
+      if (checkNestedParallelLimit(newNodes, newEdges, prevNode.parentId)) {
+        setNodes(newNodes)
+        setEdges(newEdges)
+      }
+      else {
+        return false
+      }
     }
     if (!prevNodeId && nextNodeId) {
       const nextNodeIndex = nodes.findIndex(node => node.id === nextNodeId)
@@ -692,15 +736,13 @@ export const useNodesInteractions = () => {
         newNode.data.iteration_id = nextNode.parentId
         newNode.zIndex = ITERATION_CHILDREN_Z_INDEX
       }
-      if (nextNode.data.isIterationStart)
-        newNode.data.isIterationStart = true
 
       let newEdge
 
       if ((nodeType !== BlockEnum.IfElse) && (nodeType !== BlockEnum.QuestionClassifier)) {
         newEdge = {
           id: `${newNode.id}-${sourceHandle}-${nextNodeId}-${nextNodeTargetHandle}`,
-          type: 'custom',
+          type: CUSTOM_EDGE,
           source: newNode.id,
           sourceHandle,
           target: nextNodeId,
@@ -749,13 +791,11 @@ export const useNodesInteractions = () => {
             node.data.start_node_id = newNode.id
             node.data.startNodeType = newNode.data.type
           }
-
-          if (node.id === nextNodeId && node.data.isIterationStart)
-            node.data.isIterationStart = false
         })
         draft.push(newNode)
+        if (newIterationStartNode)
+          draft.push(newIterationStartNode)
       })
-      setNodes(newNodes)
       if (newEdge) {
         const newEdges = produce(edges, (draft) => {
           draft.forEach((item) => {
@@ -766,7 +806,21 @@ export const useNodesInteractions = () => {
           })
           draft.push(newEdge)
         })
-        setEdges(newEdges)
+
+        if (checkNestedParallelLimit(newNodes, newEdges, nextNode.parentId)) {
+          setNodes(newNodes)
+          setEdges(newEdges)
+        }
+        else {
+          return false
+        }
+      }
+      else {
+        if (checkNestedParallelLimit(newNodes, edges))
+          setNodes(newNodes)
+
+        else
+          return false
       }
     }
     if (prevNodeId && nextNodeId) {
@@ -790,7 +844,7 @@ export const useNodesInteractions = () => {
       const currentEdgeIndex = edges.findIndex(edge => edge.source === prevNodeId && edge.target === nextNodeId)
       const newPrevEdge = {
         id: `${prevNodeId}-${prevNodeSourceHandle}-${newNode.id}-${targetHandle}`,
-        type: 'custom',
+        type: CUSTOM_EDGE,
         source: prevNodeId,
         sourceHandle: prevNodeSourceHandle,
         target: newNode.id,
@@ -808,7 +862,7 @@ export const useNodesInteractions = () => {
       if (nodeType !== BlockEnum.IfElse && nodeType !== BlockEnum.QuestionClassifier) {
         newNextEdge = {
           id: `${newNode.id}-${sourceHandle}-${nextNodeId}-${nextNodeTargetHandle}`,
-          type: 'custom',
+          type: CUSTOM_EDGE,
           source: newNode.id,
           sourceHandle,
           target: nextNodeId,
@@ -851,6 +905,8 @@ export const useNodesInteractions = () => {
             node.data._children?.push(newNode.id)
         })
         draft.push(newNode)
+        if (newIterationStartNode)
+          draft.push(newIterationStartNode)
       })
       setNodes(newNodes)
       if (newNode.data.type === BlockEnum.VariableAssigner || newNode.data.type === BlockEnum.VariableAggregator) {
@@ -883,7 +939,8 @@ export const useNodesInteractions = () => {
       setEdges(newEdges)
     }
     handleSyncWorkflowDraft()
-  }, [store, workflowStore, handleSyncWorkflowDraft, getAfterNodesInSameBranch, getNodesReadOnly, t])
+    saveStateToHistory(WorkflowHistoryEvent.NodeAdd)
+  }, [getNodesReadOnly, store, t, handleSyncWorkflowDraft, saveStateToHistory, workflowStore, getAfterNodesInSameBranch, checkNestedParallelLimit])
 
   const handleNodeChange = useCallback((
     currentNodeId: string,
@@ -904,7 +961,10 @@ export const useNodesInteractions = () => {
     const currentNode = nodes.find(node => node.id === currentNodeId)!
     const connectedEdges = getConnectedEdges([currentNode], edges)
     const nodesWithSameType = nodes.filter(node => node.data.type === nodeType)
-    const newCurrentNode = generateNewNode({
+    const {
+      newNode: newCurrentNode,
+      newIterationStartNode,
+    } = generateNewNode({
       data: {
         ...NODES_INITIAL_DATA[nodeType],
         title: nodesWithSameType.length > 0 ? `${t(`workflow.blocks.${nodeType}`)} ${nodesWithSameType.length + 1}` : t(`workflow.blocks.${nodeType}`),
@@ -914,7 +974,6 @@ export const useNodesInteractions = () => {
         selected: currentNode.data.selected,
         isInIteration: currentNode.data.isInIteration,
         iteration_id: currentNode.data.iteration_id,
-        isIterationStart: currentNode.data.isIterationStart,
       },
       position: {
         x: currentNode.position.x,
@@ -940,18 +999,12 @@ export const useNodesInteractions = () => {
             ...nodesConnectedSourceOrTargetHandleIdsMap[node.id],
           }
         }
-        if (node.id === currentNode.parentId && currentNode.data.isIterationStart) {
-          node.data._children = [
-            newCurrentNode.id,
-            ...(node.data._children || []),
-          ].filter(child => child !== currentNodeId)
-          node.data.start_node_id = newCurrentNode.id
-          node.data.startNodeType = newCurrentNode.data.type
-        }
       })
       const index = draft.findIndex(node => node.id === currentNodeId)
 
       draft.splice(index, 1, newCurrentNode)
+      if (newIterationStartNode)
+        draft.push(newIterationStartNode)
     })
     setNodes(newNodes)
     const newEdges = produce(edges, (draft) => {
@@ -961,7 +1014,9 @@ export const useNodesInteractions = () => {
     })
     setEdges(newEdges)
     handleSyncWorkflowDraft()
-  }, [store, handleSyncWorkflowDraft, getNodesReadOnly, t])
+
+    saveStateToHistory(WorkflowHistoryEvent.NodeChange)
+  }, [getNodesReadOnly, store, t, handleSyncWorkflowDraft, saveStateToHistory])
 
   const handleNodeCancelRunningStatus = useCallback(() => {
     const {
@@ -994,6 +1049,9 @@ export const useNodesInteractions = () => {
   }, [store])
 
   const handleNodeContextMenu = useCallback((e: MouseEvent, node: Node) => {
+    if (node.type === CUSTOM_NOTE_NODE || node.type === CUSTOM_ITERATION_START_NODE)
+      return
+
     e.preventDefault()
     const container = document.querySelector('#workflow-container')
     const { x, y } = container!.getBoundingClientRect()
@@ -1007,35 +1065,38 @@ export const useNodesInteractions = () => {
     handleNodeSelect(node.id)
   }, [workflowStore, handleNodeSelect])
 
-  const handleNodesCopy = useCallback(() => {
+  const handleNodesCopy = useCallback((nodeId?: string) => {
     if (getNodesReadOnly())
       return
 
-    const {
-      setClipboardElements,
-      shortcutsDisabled,
-      showFeaturesPanel,
-    } = workflowStore.getState()
-
-    if (shortcutsDisabled || showFeaturesPanel)
-      return
+    const { setClipboardElements } = workflowStore.getState()
 
     const {
       getNodes,
     } = store.getState()
 
     const nodes = getNodes()
-    const bundledNodes = nodes.filter(node => node.data._isBundled && node.data.type !== BlockEnum.Start && !node.data.isInIteration)
 
-    if (bundledNodes.length) {
-      setClipboardElements(bundledNodes)
-      return
+    if (nodeId) {
+      // If nodeId is provided, copy that specific node
+      const nodeToCopy = nodes.find(node => node.id === nodeId && node.data.type !== BlockEnum.Start && node.type !== CUSTOM_ITERATION_START_NODE)
+      if (nodeToCopy)
+        setClipboardElements([nodeToCopy])
     }
+    else {
+      // If no nodeId is provided, fall back to the current behavior
+      const bundledNodes = nodes.filter(node => node.data._isBundled && node.data.type !== BlockEnum.Start && !node.data.isInIteration)
 
-    const selectedNode = nodes.find(node => node.data.selected && node.data.type !== BlockEnum.Start)
+      if (bundledNodes.length) {
+        setClipboardElements(bundledNodes)
+        return
+      }
 
-    if (selectedNode)
-      setClipboardElements([selectedNode])
+      const selectedNode = nodes.find(node => node.data.selected && node.data.type !== BlockEnum.Start)
+
+      if (selectedNode)
+        setClipboardElements([selectedNode])
+    }
   }, [getNodesReadOnly, store, workflowStore])
 
   const handleNodesPaste = useCallback(() => {
@@ -1044,13 +1105,8 @@ export const useNodesInteractions = () => {
 
     const {
       clipboardElements,
-      shortcutsDisabled,
-      showFeaturesPanel,
       mousePosition,
     } = workflowStore.getState()
-
-    if (shortcutsDisabled || showFeaturesPanel)
-      return
 
     const {
       getNodes,
@@ -1069,7 +1125,11 @@ export const useNodesInteractions = () => {
       clipboardElements.forEach((nodeToPaste, index) => {
         const nodeType = nodeToPaste.data.type
 
-        const newNode = generateNewNode({
+        const {
+          newNode,
+          newIterationStartNode,
+        } = generateNewNode({
+          type: nodeToPaste.type,
           data: {
             ...NODES_INITIAL_DATA[nodeType],
             ...nodeToPaste.data,
@@ -1087,19 +1147,17 @@ export const useNodesInteractions = () => {
           zIndex: nodeToPaste.zIndex,
         })
         newNode.id = newNode.id + index
-
+        // This new node is movable and can be placed anywhere
         let newChildren: Node[] = []
         if (nodeToPaste.data.type === BlockEnum.Iteration) {
-          newNode.data._children = [];
-          (newNode.data as IterationNodeType).start_node_id = ''
+          newIterationStartNode!.parentId = newNode.id;
+          (newNode.data as IterationNodeType).start_node_id = newIterationStartNode!.id
 
           newChildren = handleNodeIterationChildrenCopy(nodeToPaste.id, newNode.id)
-
           newChildren.forEach((child) => {
             newNode.data._children?.push(child.id)
-            if (child.data.isIterationStart)
-              (newNode.data as IterationNodeType).start_node_id = child.id
           })
+          newChildren.push(newIterationStartNode!)
         }
 
         nodesToPaste.push(newNode)
@@ -1109,28 +1167,21 @@ export const useNodesInteractions = () => {
       })
 
       setNodes([...nodes, ...nodesToPaste])
+      saveStateToHistory(WorkflowHistoryEvent.NodePaste)
       handleSyncWorkflowDraft()
     }
-  }, [t, getNodesReadOnly, store, workflowStore, handleSyncWorkflowDraft, reactflow, handleNodeIterationChildrenCopy])
+  }, [getNodesReadOnly, workflowStore, store, reactflow, saveStateToHistory, handleSyncWorkflowDraft, handleNodeIterationChildrenCopy])
 
-  const handleNodesDuplicate = useCallback(() => {
+  const handleNodesDuplicate = useCallback((nodeId?: string) => {
     if (getNodesReadOnly())
       return
 
-    handleNodesCopy()
+    handleNodesCopy(nodeId)
     handleNodesPaste()
   }, [getNodesReadOnly, handleNodesCopy, handleNodesPaste])
 
   const handleNodesDelete = useCallback(() => {
     if (getNodesReadOnly())
-      return
-
-    const {
-      shortcutsDisabled,
-      showFeaturesPanel,
-    } = workflowStore.getState()
-
-    if (shortcutsDisabled || showFeaturesPanel)
       return
 
     const {
@@ -1155,7 +1206,7 @@ export const useNodesInteractions = () => {
 
     if (selectedNode)
       handleNodeDelete(selectedNode.id)
-  }, [store, workflowStore, getNodesReadOnly, handleNodeDelete])
+  }, [store, getNodesReadOnly, handleNodeDelete])
 
   const handleNodeResize = useCallback((nodeId: string, params: ResizeParamsWithDirection) => {
     if (getNodesReadOnly())
@@ -1210,7 +1261,74 @@ export const useNodesInteractions = () => {
     })
     setNodes(newNodes)
     handleSyncWorkflowDraft()
-  }, [store, getNodesReadOnly, handleSyncWorkflowDraft])
+    saveStateToHistory(WorkflowHistoryEvent.NodeResize)
+  }, [getNodesReadOnly, store, handleSyncWorkflowDraft, saveStateToHistory])
+
+  const handleNodeDisconnect = useCallback((nodeId: string) => {
+    if (getNodesReadOnly())
+      return
+
+    const {
+      getNodes,
+      setNodes,
+      edges,
+      setEdges,
+    } = store.getState()
+    const nodes = getNodes()
+    const currentNode = nodes.find(node => node.id === nodeId)!
+    const connectedEdges = getConnectedEdges([currentNode], edges)
+    const nodesConnectedSourceOrTargetHandleIdsMap = getNodesConnectedSourceOrTargetHandleIdsMap(
+      connectedEdges.map(edge => ({ type: 'remove', edge })),
+      nodes,
+    )
+    const newNodes = produce(nodes, (draft: Node[]) => {
+      draft.forEach((node) => {
+        if (nodesConnectedSourceOrTargetHandleIdsMap[node.id]) {
+          node.data = {
+            ...node.data,
+            ...nodesConnectedSourceOrTargetHandleIdsMap[node.id],
+          }
+        }
+      })
+    })
+    setNodes(newNodes)
+    const newEdges = produce(edges, (draft) => {
+      return draft.filter(edge => !connectedEdges.find(connectedEdge => connectedEdge.id === edge.id))
+    })
+    setEdges(newEdges)
+    handleSyncWorkflowDraft()
+    saveStateToHistory(WorkflowHistoryEvent.EdgeDelete)
+  }, [store, getNodesReadOnly, handleSyncWorkflowDraft, saveStateToHistory])
+
+  const handleHistoryBack = useCallback(() => {
+    if (getNodesReadOnly() || getWorkflowReadOnly())
+      return
+
+    const { setEdges, setNodes } = store.getState()
+    undo()
+
+    const { edges, nodes } = workflowHistoryStore.getState()
+    if (edges.length === 0 && nodes.length === 0)
+      return
+
+    setEdges(edges)
+    setNodes(nodes)
+  }, [store, undo, workflowHistoryStore, getNodesReadOnly, getWorkflowReadOnly])
+
+  const handleHistoryForward = useCallback(() => {
+    if (getNodesReadOnly() || getWorkflowReadOnly())
+      return
+
+    const { setEdges, setNodes } = store.getState()
+    redo()
+
+    const { edges, nodes } = workflowHistoryStore.getState()
+    if (edges.length === 0 && nodes.length === 0)
+      return
+
+    setEdges(edges)
+    setNodes(nodes)
+  }, [redo, store, workflowHistoryStore, getNodesReadOnly, getWorkflowReadOnly])
 
   return {
     handleNodeDragStart,
@@ -1234,5 +1352,8 @@ export const useNodesInteractions = () => {
     handleNodesDuplicate,
     handleNodesDelete,
     handleNodeResize,
+    handleNodeDisconnect,
+    handleHistoryBack,
+    handleHistoryForward,
   }
 }

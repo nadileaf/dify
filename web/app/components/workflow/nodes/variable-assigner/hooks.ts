@@ -1,20 +1,17 @@
 import { useCallback } from 'react'
 import {
-  useEdges,
   useNodes,
   useStoreApi,
 } from 'reactflow'
-import { useTranslation } from 'react-i18next'
 import { uniqBy } from 'lodash-es'
 import produce from 'immer'
 import {
   useIsChatMode,
   useNodeDataUpdate,
   useWorkflow,
+  useWorkflowVariables,
 } from '../../hooks'
-import { getNodesConnectedSourceOrTargetHandleIdsMap } from '../../utils'
 import type {
-  Edge,
   Node,
   ValueSelector,
   Var,
@@ -24,7 +21,6 @@ import type {
   VarGroupItem,
   VariableAssignerNodeType,
 } from './types'
-import { toNodeAvailableVars } from '@/app/components/workflow/nodes/_base/components/variable/utils'
 
 export const useVariableAssigner = () => {
   const store = useStoreApi()
@@ -99,82 +95,6 @@ export const useVariableAssigner = () => {
     handleAssignVariableValueChange(variableAssignerNodeId, value, varDetail, variableAssignerNodeHandleId)
   }, [store, workflowStore, handleAssignVariableValueChange])
 
-  const handleRemoveEdges = useCallback((nodeId: string, enabled: boolean) => {
-    const {
-      getNodes,
-      setNodes,
-      edges,
-      setEdges,
-    } = store.getState()
-    const nodes = getNodes()
-    const needDeleteEdges = edges.filter(edge => edge.target === nodeId)
-
-    if (!needDeleteEdges.length)
-      return
-
-    const currentNode = nodes.find(node => node.id === nodeId)!
-    const groups = currentNode.data.advanced_settings?.groups || []
-
-    let shouldKeepEdges: Edge[] = []
-
-    if (enabled) {
-      shouldKeepEdges = edges.filter((edge) => {
-        return edge.target === nodeId && edge.targetHandle === 'target'
-      }).map((edge) => {
-        return {
-          ...edge,
-          targetHandle: groups[0].groupId,
-        }
-      })
-    }
-    else {
-      shouldKeepEdges = edges.filter((edge) => {
-        return edge.target === nodeId && edge.targetHandle === groups[0].groupId
-      }).map((edge) => {
-        return {
-          ...edge,
-          targetHandle: 'target',
-        }
-      })
-    }
-
-    const nodesConnectedSourceOrTargetHandleIdsMap = getNodesConnectedSourceOrTargetHandleIdsMap(
-      [
-        ...needDeleteEdges.map((needDeleteEdge) => {
-          return {
-            type: 'remove',
-            edge: needDeleteEdge,
-          }
-        }),
-        ...shouldKeepEdges.map((shouldKeepEdge) => {
-          return {
-            type: 'add',
-            edge: shouldKeepEdge,
-          }
-        }),
-      ],
-      nodes,
-    )
-
-    const newNodes = produce(nodes, (draft) => {
-      draft.forEach((node) => {
-        if (nodesConnectedSourceOrTargetHandleIdsMap[node.id]) {
-          node.data = {
-            ...node.data,
-            ...nodesConnectedSourceOrTargetHandleIdsMap[node.id],
-          }
-        }
-      })
-    })
-    setNodes(newNodes)
-    const newEdges = produce(edges, (draft) => {
-      draft = draft.filter(edge => edge.target !== nodeId)
-      draft.push(...shouldKeepEdges)
-      return draft
-    })
-    setEdges(newEdges)
-  }, [store])
-
   const handleGroupItemMouseEnter = useCallback((groupId: string) => {
     const {
       setHoveringAssignVariableGroupId,
@@ -195,7 +115,6 @@ export const useVariableAssigner = () => {
 
   return {
     handleAddVariableInAddVariablePopupWithPosition,
-    handleRemoveEdges,
     handleGroupItemMouseEnter,
     handleGroupItemMouseLeave,
     handleAssignVariableValueChange,
@@ -203,41 +122,44 @@ export const useVariableAssigner = () => {
 }
 
 export const useGetAvailableVars = () => {
-  const { t } = useTranslation()
   const nodes: Node[] = useNodes()
-  const edges: Edge[] = useEdges()
-  const { getBeforeNodesInSameBranch } = useWorkflow()
+  const { getBeforeNodesInSameBranchIncludeParent } = useWorkflow()
+  const { getNodeAvailableVars } = useWorkflowVariables()
   const isChatMode = useIsChatMode()
-  const getAvailableVars = useCallback((nodeId: string, handleId: string, filterVar: (v: Var) => boolean) => {
+  const getAvailableVars = useCallback((nodeId: string, handleId: string, filterVar: (v: Var) => boolean, hideEnv = false) => {
     const availableNodes: Node[] = []
     const currentNode = nodes.find(node => node.id === nodeId)!
 
     if (!currentNode)
       return []
+
+    const beforeNodes = getBeforeNodesInSameBranchIncludeParent(nodeId)
+    availableNodes.push(...beforeNodes)
     const parentNode = nodes.find(node => node.id === currentNode.parentId)
-    const connectedEdges = edges.filter(edge => edge.target === nodeId && edge.targetHandle === handleId)
 
-    if (parentNode && !connectedEdges.length) {
-      const beforeNodes = getBeforeNodesInSameBranch(parentNode.id)
-      availableNodes.push(...beforeNodes)
-    }
-    else {
-      connectedEdges.forEach((connectedEdge) => {
-        const beforeNodes = getBeforeNodesInSameBranch(connectedEdge.source)
-        const connectedNode = nodes.find(node => node.id === connectedEdge.source)!
-
-        availableNodes.push(connectedNode, ...beforeNodes)
+    if (hideEnv) {
+      return getNodeAvailableVars({
+        parentNode,
+        beforeNodes: uniqBy(availableNodes, 'id').filter(node => node.id !== nodeId),
+        isChatMode,
+        hideEnv,
+        hideChatVar: hideEnv,
+        filterVar,
       })
+        .map(node => ({
+          ...node,
+          vars: node.isStartNode ? node.vars.filter(v => !v.variable.startsWith('sys.')) : node.vars,
+        }))
+        .filter(item => item.vars.length > 0)
     }
 
-    return toNodeAvailableVars({
+    return getNodeAvailableVars({
       parentNode,
-      t,
       beforeNodes: uniqBy(availableNodes, 'id').filter(node => node.id !== nodeId),
       isChatMode,
       filterVar,
     })
-  }, [nodes, edges, t, isChatMode, getBeforeNodesInSameBranch])
+  }, [nodes, getBeforeNodesInSameBranchIncludeParent, getNodeAvailableVars, isChatMode])
 
   return getAvailableVars
 }

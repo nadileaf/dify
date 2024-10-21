@@ -28,7 +28,7 @@ import type { Collection } from '@/app/components/tools/types'
 
 type IDebugConfiguration = {
   appId: string
-  hasSetAPIKEY: boolean
+  isAPIKeySet: boolean
   isTrailFinished: boolean
   mode: string
   modelModeType: ModelModeType
@@ -97,11 +97,13 @@ type IDebugConfiguration = {
   isShowVisionConfig: boolean
   visionConfig: VisionSettings
   setVisionConfig: (visionConfig: VisionSettings, noNotice?: boolean) => void
+  rerankSettingModalOpen: boolean
+  setRerankSettingModalOpen: (rerankSettingModalOpen: boolean) => void
 }
 
 const DebugConfigurationContext = createContext<IDebugConfiguration>({
   appId: '',
-  hasSetAPIKEY: false,
+  isAPIKeySet: false,
   isTrailFinished: false,
   mode: '',
   modelModeType: ModelModeType.chat,
@@ -134,7 +136,7 @@ const DebugConfigurationContext = createContext<IDebugConfiguration>({
   introduction: '',
   setIntroduction: () => { },
   suggestedQuestions: [],
-  setSuggestedQuestions: () => {},
+  setSuggestedQuestions: () => { },
   controlClearChatMessage: 0,
   setControlClearChatMessage: () => { },
   prevPromptConfig: {
@@ -202,13 +204,16 @@ const DebugConfigurationContext = createContext<IDebugConfiguration>({
       prompt_template: '',
       prompt_variables: [],
     },
-    opening_statement: null,
     more_like_this: null,
-    suggested_questions_after_answer: null,
+    opening_statement: '',
+    suggested_questions: [],
+    sensitive_word_avoidance: null,
     speech_to_text: null,
     text_to_speech: null,
+    file_upload: null,
+    suggested_questions_after_answer: null,
     retriever_resource: null,
-    sensitive_word_avoidance: null,
+    annotation_reply: null,
     dataSets: [],
     agentConfig: DEFAULT_AGENT_SETTING,
   },
@@ -217,7 +222,7 @@ const DebugConfigurationContext = createContext<IDebugConfiguration>({
   showSelectDataSet: () => { },
   setDataSets: () => { },
   datasetConfigs: {
-    retrieval_model: RETRIEVE_TYPE.oneWay,
+    retrieval_model: RETRIEVE_TYPE.multiWay,
     reranking_model: {
       reranking_provider_name: '',
       reranking_model_name: '',
@@ -239,6 +244,8 @@ const DebugConfigurationContext = createContext<IDebugConfiguration>({
     transfer_methods: [TransferMethod.remote_url],
   },
   setVisionConfig: () => { },
+  rerankSettingModalOpen: false,
+  setRerankSettingModalOpen: () => { },
 })
 
 export const useDebugConfigurationContext = () => useContext(DebugConfigurationContext)

@@ -4,7 +4,7 @@
   <a href="https://cloud.dify.ai">Dify 云服务</a> ·
   <a href="https://docs.dify.ai/getting-started/install-self-hosted">自托管</a> ·
   <a href="https://docs.dify.ai">文档</a> ·
-  <a href="https://cal.com/guchenhe/dify-demo">预约演示</a>
+  <a href="https://udify.app/chat/22L1zSxg6yW1cWQg">（需用英文）常见问题解答 / 联系团队</a>
 </div>
 
 <p align="center">
@@ -17,7 +17,7 @@
             alt="chat on Discord"></a>
     <a href="https://twitter.com/intent/follow?screen_name=dify_ai" target="_blank">
         <img src="https://img.shields.io/twitter/follow/dify_ai?logo=X&color=%20%23f5f5f5"
-            alt="follow on Twitter"></a>
+            alt="follow on X(Twitter)"></a>
     <a href="https://hub.docker.com/u/langgenius" target="_blank">
         <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/langgenius/dify-web?labelColor=%20%23FDB062&color=%20%23f79009"></a>
     <a href="https://github.com/langgenius/dify/graphs/commit-activity" target="_blank">
@@ -29,13 +29,16 @@
 </p>
 
 <div align="center">
-  <a href="./README.md"><img alt="上个月的提交次数" src="https://img.shields.io/badge/英文-d9d9d9"></a>
-  <a href="./README_CN.md"><img alt="上个月的提交次数" src="https://img.shields.io/badge/简体中文-d9d9d9"></a>
-  <a href="./README_JA.md"><img alt="上个月的提交次数" src="https://img.shields.io/badge/日本語-d9d9d9"></a>
-  <a href="./README_ES.md"><img alt="上个月的提交次数" src="https://img.shields.io/badge/西班牙语-d9d9d9"></a>
-  <a href="./README_KL.md"><img alt="上个月的提交次数" src="https://img.shields.io/badge/法语-d9d9d9"></a>
-  <a href="./README_FR.md"><img alt="上个月的提交次数" src="https://img.shields.io/badge/克林贡语-d9d9d9"></a>
-  <a href="./README_KR.md"><img alt="上个月的提交次数" src="https://img.shields.io/badge/韓國語-d9d9d9"></a>
+  <a href="./README.md"><img alt="README in English" src="https://img.shields.io/badge/English-d9d9d9"></a>
+  <a href="./README_CN.md"><img alt="简体中文版自述文件" src="https://img.shields.io/badge/简体中文-d9d9d9"></a>
+  <a href="./README_JA.md"><img alt="日本語のREADME" src="https://img.shields.io/badge/日本語-d9d9d9"></a>
+  <a href="./README_ES.md"><img alt="README en Español" src="https://img.shields.io/badge/Español-d9d9d9"></a>
+  <a href="./README_FR.md"><img alt="README en Français" src="https://img.shields.io/badge/Français-d9d9d9"></a>
+  <a href="./README_KL.md"><img alt="README tlhIngan Hol" src="https://img.shields.io/badge/Klingon-d9d9d9"></a>
+  <a href="./README_KR.md"><img alt="README in Korean" src="https://img.shields.io/badge/한국어-d9d9d9"></a>
+  <a href="./README_AR.md"><img alt="README بالعربية" src="https://img.shields.io/badge/العربية-d9d9d9"></a>
+  <a href="./README_TR.md"><img alt="Türkçe README" src="https://img.shields.io/badge/Türkçe-d9d9d9"></a>
+  <a href="./README_VI.md"><img alt="README Tiếng Việt" src="https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-d9d9d9"></a>
 </div>
 
 
@@ -69,7 +72,7 @@ Dify 是一个开源的 LLM 应用开发平台。其直观的界面结合了 AI 
   广泛的 RAG 功能，涵盖从文档摄入到检索的所有内容，支持从 PDF、PPT 和其他常见文档格式中提取文本的开箱即用的支持。
 
 **5. Agent 智能体**: 
-  您可以基于 LLM 函数调用或 ReAct 定义 Agent，并为 Agent 添加预构建或自定义工具。Dify 为 AI Agent 提供了50多种内置工具，如谷歌搜索、DELL·E、Stable Diffusion 和 WolframAlpha 等。
+  您可以基于 LLM 函数调用或 ReAct 定义 Agent，并为 Agent 添加预构建或自定义工具。Dify 为 AI Agent 提供了50多种内置工具，如谷歌搜索、DALL·E、Stable Diffusion 和 WolframAlpha 等。
 
 **6. LLMOps**: 
   随时间监视和分析应用程序日志和性能。您可以根据生产数据和标注持续改进提示、数据集和模型。
@@ -155,7 +158,7 @@ Dify 是一个开源的 LLM 应用开发平台。其直观的界面结合了 AI 
 使用我们的[文档](https://docs.dify.ai)进行进一步的参考和更深入的说明。
 
 - **面向企业/组织的 Dify</br>**
-我们提供额外的面向企业的功能。[与我们安排会议](https://cal.com/guchenhe/30min)或[给我们发送电子邮件](mailto:business@dify.ai?subject=[GitHub]Business%20License%20Inquiry)讨论企业需求。 </br>
+我们提供额外的面向企业的功能。[给我们发送电子邮件](mailto:business@dify.ai?subject=[GitHub]Business%20License%20Inquiry)讨论企业需求。 </br>
   > 对于使用 AWS 的初创公司和中小型企业，请查看 [AWS Marketplace 上的 Dify 高级版](https://aws.amazon.com/marketplace/pp/prodview-t22mebxzwjhu6)，并使用一键部署到您自己的 AWS VPC。它是一个价格实惠的 AMI 产品，提供了使用自定义徽标和品牌创建应用程序的选项。
 
 ## 保持领先
@@ -179,21 +182,33 @@ Dify 是一个开源的 LLM 应用开发平台。其直观的界面结合了 AI 
 
 ```bash
 cd docker
+cp .env.example .env
 docker compose up -d
 ```
 
 运行后，可以在浏览器上访问 [http://localhost/install](http://localhost/install) 进入 Dify 控制台并开始初始化安装操作。
 
+### 自定义配置
+
+如果您需要自定义配置，请参考 [.env.example](docker/.env.example) 文件中的注释，并更新 `.env` 文件中对应的值。此外，您可能需要根据您的具体部署环境和需求对 `docker-compose.yaml` 文件本身进行调整，例如更改镜像版本、端口映射或卷挂载。完成任何更改后，请重新运行 `docker-compose up -d`。您可以在[此处](https://docs.dify.ai/getting-started/install-self-hosted/environments)找到可用环境变量的完整列表。
+
 #### 使用 Helm Chart 部署
 
-使用 [Helm Chart](https://helm.sh/) 版本，可以在 Kubernetes 上部署 Dify。
+使用 [Helm Chart](https://helm.sh/) 版本或者 YAML 文件，可以在 Kubernetes 上部署 Dify。
 
 - [Helm Chart by @LeoQuote](https://github.com/douban/charts/tree/master/charts/dify)
 - [Helm Chart by @BorisPolonsky](https://github.com/BorisPolonsky/dify-helm)
+- [YAML 文件 by @Winson-030](https://github.com/Winson-030/dify-kubernetes)
 
-### 配置
+#### 使用 Terraform 部署
 
-如果您需要自定义配置，请参考我们的 [docker-compose.yml](docker/docker-compose.yaml) 文件中的注释，并手动设置环境配置。更改后，请再次运行 `docker-compose up -d`。您可以在我们的[文档](https://docs.dify.ai/getting-started/install-self-hosted/environments)中查看所有环境变量的完整列表。
+使用 [terraform](https://www.terraform.io/) 一键将 Dify 部署到云平台
+
+##### Azure Global
+- [Azure Terraform by @nikawang](https://github.com/nikawang/dify-azure-terraform)
+
+##### Google Cloud
+- [Google Cloud Terraform by @sotazum](https://github.com/DeNA/dify-google-cloud-terraform)
 
 ## Star History
 
@@ -221,7 +236,7 @@ docker compose up -d
 - [GitHub Issues](https://github.com/langgenius/dify/issues)。👉：使用 Dify.AI 时遇到的错误和问题，请参阅[贡献指南](CONTRIBUTING.md)。
 - [电子邮件支持](mailto:hello@dify.ai?subject=[GitHub]Questions%20About%20Dify)。👉：关于使用 Dify.AI 的问题。
 - [Discord](https://discord.gg/FngNHpbcY7)。👉：分享您的应用程序并与社区交流。
-- [Twitter](https://twitter.com/dify_ai)。👉：分享您的应用程序并与社区交流。
+- [X(Twitter)](https://twitter.com/dify_ai)。👉：分享您的应用程序并与社区交流。
 - [商业许可](mailto:business@dify.ai?subject=[GitHub]Business%20License%20Inquiry)。👉：有关商业用途许可 Dify.AI 的商业咨询。
  - [微信]() 👉：扫描下方二维码，添加微信好友，备注 Dify，我们将邀请您加入 Dify 社区。  
 <img src="./images/wechat.png" alt="wechat" width="100"/>

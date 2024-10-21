@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import cn from 'classnames'
 import useConfig from './use-config'
 import ApiInput from './components/api-input'
 import KeyValue from './components/key-value'
@@ -9,6 +8,7 @@ import EditBody from './components/edit-body'
 import AuthorizationModal from './components/authorization'
 import type { HttpNodeType } from './types'
 import Timeout from './components/timeout'
+import cn from '@/utils/classnames'
 import Field from '@/app/components/workflow/nodes/_base/components/field'
 import Split from '@/app/components/workflow/nodes/_base/components/split'
 import OutputVars, { VarItem } from '@/app/components/workflow/nodes/_base/components/output-vars'
@@ -27,6 +27,7 @@ const Panel: FC<NodePanelProps<HttpNodeType>> = ({
 
   const {
     readOnly,
+    isDataReady,
     inputs,
     handleMethodChange,
     handleUrlChange,
@@ -53,6 +54,9 @@ const Panel: FC<NodePanelProps<HttpNodeType>> = ({
     setInputVarValues,
     runResult,
   } = useConfig(id, data)
+  // To prevent prompt editor in body not update data.
+  if (!isDataReady)
+    return null
 
   return (
     <div className='mt-2'>
@@ -125,6 +129,7 @@ const Panel: FC<NodePanelProps<HttpNodeType>> = ({
       </div>
       {(isShowAuthorization && !readOnly) && (
         <AuthorizationModal
+          nodeId={id}
           isShow
           onHide={hideAuthorization}
           payload={inputs.authorization}

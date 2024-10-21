@@ -44,7 +44,8 @@ const DatasetConfig: FC = () => {
   const handleSave = (newDataset: DataSet) => {
     const index = dataSet.findIndex(item => item.id === newDataset.id)
 
-    setDataSet([...dataSet.slice(0, index), newDataset, ...dataSet.slice(index + 1)])
+    const newDatasets = [...dataSet.slice(0, index), newDataset, ...dataSet.slice(index + 1)]
+    setDataSet(newDatasets)
     formattingChangedDispatcher()
   }
 
@@ -69,12 +70,12 @@ const DatasetConfig: FC = () => {
 
   return (
     <FeaturePanel
-      className='mt-3'
+      className='mt-2'
       headerIcon={Icon}
       title={t('appDebug.feature.dataSet.title')}
       headerRight={
         <div className='flex items-center gap-1'>
-          {!isAgent && <ParamsConfig />}
+          {!isAgent && <ParamsConfig disabled={!hasData} selectedDatasets={dataSet} />}
           <OperationBtn type="add" onClick={showSelectDataSet} />
         </div>
       }
