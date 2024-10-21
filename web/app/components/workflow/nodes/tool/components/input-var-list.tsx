@@ -3,9 +3,9 @@ import type { FC } from 'react'
 import React, { useCallback, useState } from 'react'
 import produce from 'immer'
 import { useTranslation } from 'react-i18next'
-import cn from 'classnames'
 import type { ToolVarInputs } from '../types'
 import { VarType as VarKindType } from '../types'
+import cn from '@/utils/classnames'
 import type { ValueSelector, Var } from '@/app/components/workflow/types'
 import type { CredentialFormSchema } from '@/app/components/header/account-setting/model-provider-page/declarations'
 import { FormTypeEnum } from '@/app/components/header/account-setting/model-provider-page/declarations'
@@ -40,7 +40,7 @@ const InputVarList: FC<Props> = ({
   const { availableVars, availableNodesWithParent } = useAvailableVarList(nodeId, {
     onlyLeafNodeVar: false,
     filterVar: (varPayload: Var) => {
-      return [VarType.string, VarType.number].includes(varPayload.type)
+      return [VarType.string, VarType.number, VarType.secret].includes(varPayload.type)
     },
   })
   const paramType = (type: string) => {
@@ -48,6 +48,8 @@ const InputVarList: FC<Props> = ({
       return 'Number'
     else if (type === FormTypeEnum.files)
       return 'Files'
+    else if (type === FormTypeEnum.select)
+      return 'Options'
     else
       return 'String'
   }
@@ -114,23 +116,26 @@ const InputVarList: FC<Props> = ({
   return (
     <div className='space-y-3'>
       {
-        schema.map(({
-          variable,
-          label,
-          type,
-          required,
-          tooltip,
-        }, index) => {
+        schema.map((schema, index) => {
+          const {
+            variable,
+            label,
+            type,
+            required,
+            tooltip,
+          } = schema
           const varInput = value[variable]
           const isNumber = type === FormTypeEnum.textNumber
-          const isFile = type === FormTypeEnum.files
-          const isString = type !== FormTypeEnum.textNumber && type !== FormTypeEnum.files
+          const isSelect = type === FormTypeEnum.select
+          const isFile = type === FormTypeEnum.file
+          const isFileArray = type === FormTypeEnum.files
+          const isString = type !== FormTypeEnum.textNumber && type !== FormTypeEnum.files && type !== FormTypeEnum.select
           return (
             <div key={variable} className='space-y-1'>
               <div className='flex items-center h-[18px] space-x-2'>
-                <span className='text-[13px] font-medium text-gray-900'>{label[language] || label.en_US}</span>
-                <span className='text-xs font-normal text-gray-500'>{paramType(type)}</span>
-                {required && <span className='leading-[18px] text-xs font-normal text-[#EC4A0A]'>Required</span>}
+                <span className='text-text-secondary code-sm-semibold'>{label[language] || label.en_US}</span>
+                <span className='text-text-tertiary system-xs-regular'>{paramType(type)}</span>
+                {required && <span className='text-util-colors-orange-dark-orange-dark-600 system-xs-regular'>Required</span>}
               </div>
               {isString && (
                 <Input
@@ -145,7 +150,7 @@ const InputVarList: FC<Props> = ({
                   placeholderClassName='!leading-[21px]'
                 />
               )}
-              {isNumber && (
+              {(isNumber || isSelect) && (
                 <VarReferencePicker
                   readonly={readOnly}
                   isShowNodeName
@@ -155,7 +160,9 @@ const InputVarList: FC<Props> = ({
                   onOpen={handleOpen(index)}
                   isSupportConstantValue={isSupportConstantValue}
                   defaultVarKindType={varInput?.type}
-                  filterVar={filterVar}
+                  filterVar={isNumber ? filterVar : undefined}
+                  availableVars={isSelect ? availableVars : undefined}
+                  schema={schema}
                 />
               )}
               {isFile && (
@@ -167,10 +174,22 @@ const InputVarList: FC<Props> = ({
                   onChange={handleNotMixedTypeChange(variable)}
                   onOpen={handleOpen(index)}
                   defaultVarKindType={VarKindType.variable}
+                  filterVar={(varPayload: Var) => varPayload.type === VarType.file}
+                />
+              )}
+              {isFileArray && (
+                <VarReferencePicker
+                  readonly={readOnly}
+                  isShowNodeName
+                  nodeId={nodeId}
+                  value={varInput?.type === VarKindType.constant ? (varInput?.value || '') : (varInput?.value || [])}
+                  onChange={handleNotMixedTypeChange(variable)}
+                  onOpen={handleOpen(index)}
+                  defaultVarKindType={VarKindType.variable}
                   filterVar={(varPayload: Var) => varPayload.type === VarType.arrayFile}
                 />
               )}
-              {tooltip && <div className='leading-[18px] text-xs font-normal text-gray-600'>{tooltip[language] || tooltip.en_US}</div>}
+              {tooltip && <div className='text-text-tertiary body-xs-regular'>{tooltip[language] || tooltip.en_US}</div>}
             </div>
           )
         })

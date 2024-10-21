@@ -25,7 +25,7 @@ const navClassName = `
 `
 
 const Header = () => {
-  const { isCurrentWorkspaceManager } = useAppContext()
+  const { isCurrentWorkspaceEditor, isCurrentWorkspaceDatasetOperator } = useAppContext()
 
   const selectedSegment = useSelectedLayoutSegment()
   const media = useBreakpoints()
@@ -71,10 +71,10 @@ const Header = () => {
       )}
       {!isMobile && (
         <div className='flex items-center'>
-          <ExploreNav className={navClassName} />
-          <AppNav />
-          {isCurrentWorkspaceManager && <DatasetNav />}
-          <ToolsNav className={navClassName} />
+          {!isCurrentWorkspaceDatasetOperator && <ExploreNav className={navClassName} />}
+          {!isCurrentWorkspaceDatasetOperator && <AppNav />}
+          {(isCurrentWorkspaceEditor || isCurrentWorkspaceDatasetOperator) && <DatasetNav />}
+          {!isCurrentWorkspaceDatasetOperator && <ToolsNav className={navClassName} />}
         </div>
       )}
       <div className='flex items-center flex-shrink-0'>
@@ -90,10 +90,10 @@ const Header = () => {
       </div>
       {(isMobile && isShowNavMenu) && (
         <div className='w-full flex flex-col p-2 gap-y-1'>
-          <ExploreNav className={navClassName} />
-          <AppNav />
-          {isCurrentWorkspaceManager && <DatasetNav />}
-          <ToolsNav className={navClassName} />
+          {!isCurrentWorkspaceDatasetOperator && <ExploreNav className={navClassName} />}
+          {!isCurrentWorkspaceDatasetOperator && <AppNav />}
+          {(isCurrentWorkspaceEditor || isCurrentWorkspaceDatasetOperator) && <DatasetNav />}
+          {!isCurrentWorkspaceDatasetOperator && <ToolsNav className={navClassName} />}
         </div>
       )}
     </div>

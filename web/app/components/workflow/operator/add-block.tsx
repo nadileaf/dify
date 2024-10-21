@@ -3,7 +3,7 @@ import {
   useCallback,
   useState,
 } from 'react'
-import cn from 'classnames'
+import { RiAddCircleFill } from '@remixicon/react'
 import { useStoreApi } from 'reactflow'
 import { useTranslation } from 'react-i18next'
 import type { OffsetOptions } from '@floating-ui/react'
@@ -11,15 +11,15 @@ import {
   generateNewNode,
 } from '../utils'
 import {
-  useNodesExtraData,
+  useAvailableBlocks,
   useNodesReadOnly,
   usePanelInteractions,
 } from '../hooks'
 import { NODES_INITIAL_DATA } from '../constants'
 import { useWorkflowStore } from '../store'
 import TipPopup from './tip-popup'
+import cn from '@/utils/classnames'
 import BlockSelector from '@/app/components/workflow/block-selector'
-import { Plus } from '@/app/components/base/icons/src/vender/line/general'
 import type {
   OnSelectBlock,
 } from '@/app/components/workflow/types'
@@ -38,11 +38,10 @@ const AddBlock = ({
   const { t } = useTranslation()
   const store = useStoreApi()
   const workflowStore = useWorkflowStore()
-  const nodesExtraData = useNodesExtraData()
   const { nodesReadOnly } = useNodesReadOnly()
   const { handlePaneContextmenuCancel } = usePanelInteractions()
   const [open, setOpen] = useState(false)
-  const availableNextNodes = nodesExtraData[BlockEnum.Start].availableNextNodes
+  const { availableNextBlocks } = useAvailableBlocks(BlockEnum.Start, false)
 
   const handleOpenChange = useCallback((open: boolean) => {
     setOpen(open)
@@ -56,7 +55,7 @@ const AddBlock = ({
     } = store.getState()
     const nodes = getNodes()
     const nodesWithSameType = nodes.filter(node => node.data.type === type)
-    const newNode = generateNewNode({
+    const { newNode } = generateNewNode({
       data: {
         ...NODES_INITIAL_DATA[type],
         title: nodesWithSameType.length > 0 ? `${t(`workflow.blocks.${type}`)} ${nodesWithSameType.length + 1}` : t(`workflow.blocks.${type}`),
@@ -83,7 +82,7 @@ const AddBlock = ({
           `${nodesReadOnly && '!cursor-not-allowed opacity-50'}`,
           open && '!bg-black/5',
         )}>
-          <Plus className='w-4 h-4' />
+          <RiAddCircleFill className='w-4 h-4' />
         </div>
       </TipPopup>
     )
@@ -102,7 +101,7 @@ const AddBlock = ({
       }}
       trigger={renderTrigger || renderTriggerElement}
       popupClassName='!min-w-[256px]'
-      availableBlocksTypes={availableNextNodes}
+      availableBlocksTypes={availableNextBlocks}
     />
   )
 }

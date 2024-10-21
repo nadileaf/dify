@@ -2,9 +2,9 @@ import {
   memo,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react'
+import { RiCloseLine } from '@remixicon/react'
 import {
   useStore,
   useWorkflowStore,
@@ -13,65 +13,87 @@ import { useWorkflowRun } from '../../hooks'
 import UserInput from './user-input'
 import Chat from '@/app/components/base/chat/chat'
 import type { ChatItem } from '@/app/components/base/chat/types'
-import { fetchConvesationMessages } from '@/service/debug'
+import { fetchConversationMessages } from '@/service/debug'
 import { useStore as useAppStore } from '@/app/components/app/store'
 import Loading from '@/app/components/base/loading'
-import { XClose } from '@/app/components/base/icons/src/vender/line/general'
+import { UUID_NIL } from '@/app/components/base/chat/constants'
+import { getProcessedFilesFromResponse } from '@/app/components/base/file-uploader/utils'
+
+function appendQAToChatList(newChatList: ChatItem[], item: any) {
+  const answerFiles = item.message_files?.filter((file: any) => file.belongs_to === 'assistant') || []
+  newChatList.push({
+    id: item.id,
+    content: item.answer,
+    feedback: item.feedback,
+    isAnswer: true,
+    citation: item.metadata?.retriever_resources,
+    message_files: getProcessedFilesFromResponse(answerFiles.map((item: any) => ({ ...item, related_id: item.id }))),
+    workflow_run_id: item.workflow_run_id,
+  })
+  const questionFiles = item.message_files?.filter((file: any) => file.belongs_to === 'user') || []
+  newChatList.push({
+    id: `question-${item.id}`,
+    content: item.query,
+    isAnswer: false,
+    message_files: getProcessedFilesFromResponse(questionFiles.map((item: any) => ({ ...item, related_id: item.id }))),
+  })
+}
+
+function getFormattedChatList(messages: any[]) {
+  const newChatList: ChatItem[] = []
+  let nextMessageId = null
+  for (const item of messages) {
+    if (!item.parent_message_id) {
+      appendQAToChatList(newChatList, item)
+      break
+    }
+
+    if (!nextMessageId) {
+      appendQAToChatList(newChatList, item)
+      nextMessageId = item.parent_message_id
+    }
+    else {
+      if (item.id === nextMessageId || nextMessageId === UUID_NIL) {
+        appendQAToChatList(newChatList, item)
+        nextMessageId = item.parent_message_id
+      }
+    }
+  }
+  return newChatList.reverse()
+}
 
 const ChatRecord = () => {
   const [fetched, setFetched] = useState(false)
-  const [chatList, setChatList] = useState([])
+  const [chatList, setChatList] = useState<ChatItem[]>([])
   const appDetail = useAppStore(s => s.appDetail)
   const workflowStore = useWorkflowStore()
   const { handleLoadBackupDraft } = useWorkflowRun()
   const historyWorkflowData = useStore(s => s.historyWorkflowData)
   const currentConversationID = historyWorkflowData?.conversation_id
 
-  const chatMessageList = useMemo(() => {
-    const res: ChatItem[] = []
-    if (chatList.length) {
-      chatList.forEach((item: any) => {
-        res.push({
-          id: `question-${item.id}`,
-          content: item.query,
-          isAnswer: false,
-          message_files: item.message_files?.filter((file: any) => file.belongs_to === 'user') || [],
-        })
-        res.push({
-          id: item.id,
-          content: item.answer,
-          feedback: item.feedback,
-          isAnswer: true,
-          citation: item.metadata?.retriever_resources,
-          message_files: item.message_files?.filter((file: any) => file.belongs_to === 'assistant') || [],
-          workflow_run_id: item.workflow_run_id,
-        })
-      })
-    }
-    return res
-  }, [chatList])
-
-  const handleFetchConvesationMessages = useCallback(async () => {
+  const handleFetchConversationMessages = useCallback(async () => {
     if (appDetail && currentConversationID) {
       try {
         setFetched(false)
-        const res = await fetchConvesationMessages(appDetail.id, currentConversationID)
-        setFetched(true)
-        setChatList((res as any).data)
+        const res = await fetchConversationMessages(appDetail.id, currentConversationID)
+        setChatList(getFormattedChatList((res as any).data))
       }
       catch (e) {
-
+        console.error(e)
+      }
+      finally {
+        setFetched(true)
       }
     }
   }, [appDetail, currentConversationID])
   useEffect(() => {
-    handleFetchConvesationMessages()
-  }, [currentConversationID, appDetail, handleFetchConvesationMessages])
+    handleFetchConversationMessages()
+  }, [currentConversationID, appDetail, handleFetchConversationMessages])
 
   return (
     <div
       className={`
-        flex flex-col w-[400px] rounded-l-2xl h-full border border-black/[0.02] shadow-xl
+        flex flex-col w-[420px] rounded-l-2xl h-full border border-black/2 shadow-xl
       `}
       style={{
         background: 'linear-gradient(156deg, rgba(242, 244, 247, 0.80) 0%, rgba(242, 244, 247, 0.00) 99.43%), var(--white, #FFF)',
@@ -93,7 +115,7 @@ const ChatRecord = () => {
                 workflowStore.setState({ historyWorkflowData: undefined })
               }}
             >
-              <XClose className='w-4 h-4 text-gray-500' />
+              <RiCloseLine className='w-4 h-4 text-gray-500' />
             </div>
           </div>
           <div className='grow h-0'>
@@ -101,15 +123,17 @@ const ChatRecord = () => {
               config={{
                 supportCitationHitInfo: true,
               } as any}
-              chatList={chatMessageList}
-              chatContainerClassName='px-4'
-              chatContainerInnerClassName='pt-6'
+              chatList={chatList}
+              chatContainerClassName='px-3'
+              chatContainerInnerClassName='pt-6 w-full max-w-full mx-auto'
               chatFooterClassName='px-4 rounded-b-2xl'
-              chatFooterInnerClassName='pb-4'
+              chatFooterInnerClassName='pb-4 w-full max-w-full mx-auto'
               chatNode={<UserInput />}
               noChatInput
               allToolIcons={{}}
               showPromptLog
+              noSpacing
+              chatAnswerContainerInner='!pr-2'
             />
           </div>
         </>

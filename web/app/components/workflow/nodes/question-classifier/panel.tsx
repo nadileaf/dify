@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import VarReferencePicker from '../_base/components/variable/var-reference-picker'
+import ConfigVision from '../_base/components/config-vision'
 import useConfig from './use-config'
 import ClassList from './components/class-list'
 import AdvancedSetting from './components/advanced-setting'
@@ -27,18 +28,26 @@ const Panel: FC<NodePanelProps<QuestionClassifierNodeType>> = ({
     inputs,
     handleModelChanged,
     isChatMode,
+    isChatModel,
     handleCompletionParamsChange,
     handleQueryVarChange,
     handleTopicsChange,
+    hasSetBlockStatus,
+    availableVars,
+    availableNodesWithParent,
     handleInstructionChange,
+    inputVarValues,
+    varInputs,
+    setInputVarValues,
     handleMemoryChange,
+    isVisionModel,
+    handleVisionResolutionChange,
+    handleVisionResolutionEnabledChange,
     isShowSingleRun,
     hideSingleRun,
     runningStatus,
     handleRun,
     handleStop,
-    query,
-    setQuery,
     runResult,
     filterVar,
   } = useConfig(id, data)
@@ -48,18 +57,6 @@ const Panel: FC<NodePanelProps<QuestionClassifierNodeType>> = ({
   return (
     <div className='mt-2'>
       <div className='px-4 pb-4 space-y-4'>
-        <Field
-          title={t(`${i18nPrefix}.inputVars`)}
-        >
-          <VarReferencePicker
-            readonly={readOnly}
-            isShowNodeName
-            nodeId={id}
-            value={inputs.query_variable_selector}
-            onChange={handleQueryVarChange}
-            filterVar={filterVar}
-          />
-        </Field>
         <Field
           title={t(`${i18nPrefix}.model`)}
         >
@@ -78,6 +75,28 @@ const Panel: FC<NodePanelProps<QuestionClassifierNodeType>> = ({
             readonly={readOnly}
           />
         </Field>
+        <Field
+          title={t(`${i18nPrefix}.inputVars`)}
+        >
+          <VarReferencePicker
+            readonly={readOnly}
+            isShowNodeName
+            nodeId={id}
+            value={inputs.query_variable_selector}
+            onChange={handleQueryVarChange}
+            filterVar={filterVar}
+          />
+        </Field>
+        <Split />
+        <ConfigVision
+          nodeId={id}
+          readOnly={readOnly}
+          isVisionModel={isVisionModel}
+          enabled={inputs.vision?.enabled}
+          onEnabledChange={handleVisionResolutionEnabledChange}
+          config={inputs.vision?.configs}
+          onConfigChange={handleVisionResolutionChange}
+        />
         <Field
           title={t(`${i18nPrefix}.class`)}
         >
@@ -99,6 +118,11 @@ const Panel: FC<NodePanelProps<QuestionClassifierNodeType>> = ({
             memory={inputs.memory}
             onMemoryChange={handleMemoryChange}
             readonly={readOnly}
+            isChatApp={isChatMode}
+            isChatModel={isChatModel}
+            hasSetBlockStatus={hasSetBlockStatus}
+            nodesOutputVars={availableVars}
+            availableNodes={availableNodesWithParent}
           />
         </Field>
       </div>
@@ -125,9 +149,9 @@ const Panel: FC<NodePanelProps<QuestionClassifierNodeType>> = ({
                 variable: 'query',
                 type: InputVarType.paragraph,
                 required: true,
-              }],
-              values: { query },
-              onChange: keyValue => setQuery((keyValue as any).query),
+              }, ...varInputs],
+              values: inputVarValues,
+              onChange: setInputVarValues,
             },
           ]}
           runningStatus={runningStatus}

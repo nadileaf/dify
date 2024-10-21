@@ -1,5 +1,4 @@
 from core.rag.datasource.vdb.pgvector.pgvector import PGVector, PGVectorConfig
-from core.rag.models.document import Document
 from tests.integration_tests.vdb.test_vector_store import (
     AbstractVectorTest,
     get_example_text,
@@ -7,7 +6,7 @@ from tests.integration_tests.vdb.test_vector_store import (
 )
 
 
-class TestPGVector(AbstractVectorTest):
+class PGVectorTest(AbstractVectorTest):
     def __init__(self):
         super().__init__()
         self.vector = PGVector(
@@ -18,13 +17,11 @@ class TestPGVector(AbstractVectorTest):
                 user="postgres",
                 password="difyai123456",
                 database="dify",
+                min_connection=1,
+                max_connection=5,
             ),
         )
 
-    def search_by_full_text(self):
-        hits_by_full_text: list[Document] = self.vector.search_by_full_text(query=get_example_text())
-        assert len(hits_by_full_text) == 0
-
 
 def test_pgvector(setup_mock_redis):
-    TestPGVector().run_all_tests()
+    PGVectorTest().run_all_tests()

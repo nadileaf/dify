@@ -1,25 +1,29 @@
 const translation = {
   common: {
-    welcome: '欢迎使用',
-    appUnavailable: '应用不可用',
-    appUnkonwError: '应用不可用',
+    welcome: '',
+    appUnavailable: 'App is unavailable',
+    appUnknownError: 'App is unavailable',
   },
   chat: {
-    newChat: '新对话',
-    pinnedTitle: '已置顶',
-    unpinnedTitle: '对话列表',
-    newChatDefaultName: '新的对话',
-    resetChat: '重置对话',
-    powerBy: 'Powered by',
-    prompt: '提示词',
-    privatePromptConfigTitle: '对话设置',
-    publicPromptConfigTitle: '对话前提示词',
-    configStatusDes: '开始前，您可以修改对话设置',
-    configDisabled: '此次会话已使用上次会话表单',
-    startChat: '开始对话',
-    privacyPolicyLeft: '请阅读由该应用开发者提供的',
-    privacyPolicyMiddle: '隐私政策',
-    privacyPolicyRight: '。',
+    newChat: 'New chat',
+    pinnedTitle: 'Pinned',
+    unpinnedTitle: 'Chats',
+    newChatDefaultName: 'New conversation',
+    resetChat: 'Reset conversation',
+    poweredBy: 'Powered by',
+    prompt: 'Prompt',
+    privatePromptConfigTitle: 'Conversation settings',
+    publicPromptConfigTitle: 'Initial Prompt',
+    configStatusDes: 'Before start, you can modify conversation settings',
+    configDisabled:
+      'Previous session settings have been used for this session.',
+    startChat: 'Start Chat',
+    privacyPolicyLeft:
+      'Please read the ',
+    privacyPolicyMiddle:
+      'privacy policy',
+    privacyPolicyRight:
+      ' provided by the app developer.',
     deleteConversation: {
       title: '删除对话',
       content: '您确定要删除此对话吗？',

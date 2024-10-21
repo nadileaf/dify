@@ -42,9 +42,12 @@ const ConfigPanel = () => {
               <>
                 <div className='flex items-center h-8 text-2xl font-semibold text-gray-800'>
                   <AppIcon
+                    iconType={appData?.site.icon_type}
                     icon={appData?.site.icon}
                     background='transparent'
+                    imageUrl={appData?.site.icon_url}
                     size='small'
+                    className="mr-2"
                   />
                   {appData?.site.title}
                 </div>
@@ -66,7 +69,9 @@ const ConfigPanel = () => {
                   {t('share.chat.configStatusDes')}
                 </div>
                 <Button
-                  className='shrink-0 px-2 py-0 h-6 bg-white text-xs font-medium text-primary-600 rounded-md'
+                  variant='secondary-accent'
+                  size='small'
+                  className='shrink-0'
                   onClick={() => setCollapsed(false)}
                 >
                   <Edit02 className='mr-1 w-3 h-3' />
@@ -92,8 +97,8 @@ const ConfigPanel = () => {
               <Form />
               <div className={`pl-[136px] flex items-center ${isMobile && '!pl-0'}`}>
                 <Button
-                  type='primary'
-                  className='mr-2 text-sm font-medium'
+                  variant='primary'
+                  className='mr-2'
                   onClick={() => {
                     setCollapsed(true)
                     handleStartChat()
@@ -102,7 +107,6 @@ const ConfigPanel = () => {
                   {t('common.operation.save')}
                 </Button>
                 <Button
-                  className='text-sm font-medium'
                   onClick={() => setCollapsed(true)}
                 >
                   {t('common.operation.cancel')}
@@ -116,8 +120,9 @@ const ConfigPanel = () => {
             <div className='p-6 rounded-b-xl'>
               <Form />
               <Button
-                className={`px-4 py-0 h-9 ${inputsForms.length && !isMobile && 'ml-[136px]'}`}
-                type='primary'
+                className={`${inputsForms.length && !isMobile && 'ml-[136px]'}`}
+                variant='primary'
+                size='large'
                 onClick={handleStartChat}
               >
                 <MessageDotsCircle className='mr-2 w-4 h-4 text-white' />

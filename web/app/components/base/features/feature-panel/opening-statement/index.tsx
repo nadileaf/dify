@@ -3,7 +3,10 @@
 import type { FC } from 'react'
 import React, { useEffect, useRef, useState } from 'react'
 import produce from 'immer'
-import cn from 'classnames'
+import {
+  RiAddLine,
+  RiDeleteBinLine,
+} from '@remixicon/react'
 import { useTranslation } from 'react-i18next'
 import { useBoolean } from 'ahooks'
 import { ReactSortable } from 'react-sortablejs'
@@ -12,6 +15,7 @@ import {
   useFeaturesStore,
 } from '../../hooks'
 import type { OnFeaturesChange } from '../../types'
+import cn from '@/utils/classnames'
 import Panel from '@/app/components/app/configuration/base/feature-panel'
 import Button from '@/app/components/base/button'
 import OperationBtn from '@/app/components/app/configuration/base/operation-btn'
@@ -19,8 +23,8 @@ import { getInputKeys } from '@/app/components/base/block-input'
 import ConfirmAddVar from '@/app/components/app/configuration/config-prompt/confirm-add-var'
 import { getNewVar } from '@/utils/var'
 import { varHighlightHTML } from '@/app/components/app/configuration/base/var-highlight'
-import { Plus, Trash03 } from '@/app/components/base/icons/src/vender/line/general'
 import type { PromptVariable } from '@/models/debug'
+import type { InputVar } from '@/app/components/workflow/types'
 
 const MAX_QUESTION_NUM = 5
 
@@ -29,6 +33,7 @@ export type OpeningStatementProps = {
   readonly?: boolean
   promptVariables?: PromptVariable[]
   onAutoAddPromptVariable: (variable: PromptVariable[]) => void
+  workflowVariables?: InputVar[]
 }
 
 // regex to match the {{}} and replace it with a span
@@ -39,6 +44,7 @@ const OpeningStatement: FC<OpeningStatementProps> = ({
   readonly,
   promptVariables = [],
   onAutoAddPromptVariable,
+  workflowVariables = [],
 }) => {
   const { t } = useTranslation()
   const featureStore = useFeaturesStore()
@@ -93,14 +99,18 @@ const OpeningStatement: FC<OpeningStatementProps> = ({
   const handleConfirm = () => {
     const keys = getInputKeys(tempValue)
     const promptKeys = promptVariables.map(item => item.key)
+    const workflowVariableKeys = workflowVariables.map(item => item.variable)
     let notIncludeKeys: string[] = []
 
-    if (promptKeys.length === 0) {
+    if (promptKeys.length === 0 && workflowVariables.length === 0) {
       if (keys.length > 0)
         notIncludeKeys = keys
     }
     else {
-      notIncludeKeys = keys.filter(key => !promptKeys.includes(key))
+      if (workflowVariables.length > 0)
+        notIncludeKeys = keys.filter(key => !workflowVariableKeys.includes(key))
+
+      else notIncludeKeys = keys.filter(key => !promptKeys.includes(key))
     }
 
     if (notIncludeKeys.length > 0) {
@@ -168,8 +178,14 @@ const OpeningStatement: FC<OpeningStatementProps> = ({
   const headerRight = !readonly ? (
     isFocus ? (
       <div className='flex items-center space-x-1'>
-        <div className='px-3 leading-[18px] text-xs font-medium text-gray-700 cursor-pointer' onClick={handleCancel}>{t('common.operation.cancel')}</div>
-        <Button className='!h-8 !px-3 text-xs' onClick={handleConfirm} type="primary">{t('common.operation.save')}</Button>
+        <Button
+          variant='ghost'
+          size='small'
+          onClick={handleCancel}
+        >
+          {t('common.operation.cancel')}
+        </Button>
+        <Button size='small' onClick={handleConfirm} variant="primary">{t('common.operation.save')}</Button>
       </div>
     ) : (
       <OperationBtn type='edit' actionName={hasValue ? '' : t('appDebug.openingStatement.writeOpener') as string} onClick={handleEdit} />
@@ -229,7 +245,7 @@ const OpeningStatement: FC<OpeningStatementProps> = ({
                     setTempSuggestedQuestions(tempSuggestedQuestions.filter((_, i) => index !== i))
                   }}
                 >
-                  <Trash03 className='w-3.5 h-3.5' />
+                  <RiDeleteBinLine className='w-3.5 h-3.5' />
                 </div>
               </div>
             )
@@ -238,8 +254,8 @@ const OpeningStatement: FC<OpeningStatementProps> = ({
           <div
             onClick={() => { setTempSuggestedQuestions([...tempSuggestedQuestions, '']) }}
             className='mt-1 flex items-center h-9 px-3 gap-2 rounded-lg cursor-pointer text-gray-400  bg-gray-100 hover:bg-gray-200'>
-            <Plus className='w-4 h-4'></Plus>
-            <div className='text-gray-500 text-[13px]'>{t('appDebug.variableConig.addOption')}</div>
+            <RiAddLine className='w-4 h-4' />
+            <div className='text-gray-500 text-[13px]'>{t('appDebug.variableConfig.addOption')}</div>
           </div>
         )}
       </div>
@@ -299,7 +315,7 @@ const OpeningStatement: FC<OpeningStatementProps> = ({
         {isShowConfirmAddVar && (
           <ConfirmAddVar
             varNameArr={notIncludeKeys}
-            onConfrim={autoAddVar}
+            onConfirm={autoAddVar}
             onCancel={cancelAutoAddVar}
             onHide={hideConfirmAddVar}
           />
