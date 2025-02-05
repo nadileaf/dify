@@ -21,6 +21,9 @@
     <a href="https://twitter.com/intent/follow?screen_name=dify_ai" target="_blank">
         <img src="https://img.shields.io/twitter/follow/dify_ai?logo=X&color=%20%23f5f5f5"
             alt="X(Twitter)'da takip et"></a>
+    <a href="https://www.linkedin.com/company/langgenius/" target="_blank">
+        <img src="https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff"
+            alt="LinkedIn'da takip et"></a>
     <a href="https://hub.docker.com/u/langgenius" target="_blank">
         <img alt="Docker Çekmeleri" src="https://img.shields.io/docker/pulls/langgenius/dify-web?labelColor=%20%23FDB062&color=%20%23f79009"></a>
     <a href="https://github.com/langgenius/dify/graphs/commit-activity" target="_blank">
@@ -210,6 +213,13 @@ Dify'ı bulut platformuna tek tıklamayla dağıtın [terraform](https://www.ter
 
 ##### Google Cloud
 - [Google Cloud Terraform tarafından @sotazum](https://github.com/DeNA/dify-google-cloud-terraform)
+
+#### AWS CDK ile Dağıtım
+
+[CDK](https://aws.amazon.com/cdk/) kullanarak Dify'ı AWS'ye dağıtın
+
+##### AWS 
+- [AWS CDK tarafından @KevinZhao](https://github.com/aws-samples/solution-for-deploying-dify-on-aws)
 
 ## Katkıda Bulunma
 

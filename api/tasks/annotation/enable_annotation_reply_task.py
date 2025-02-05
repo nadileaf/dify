@@ -3,7 +3,7 @@ import logging
 import time
 
 import click
-from celery import shared_task
+from celery import shared_task  # type: ignore
 from werkzeug.exceptions import NotFound
 
 from core.rag.datasource.vdb.vector_factory import Vector
@@ -52,7 +52,7 @@ def enable_annotation_reply_task(
             annotation_setting.score_threshold = score_threshold
             annotation_setting.collection_binding_id = dataset_collection_binding.id
             annotation_setting.updated_user_id = user_id
-            annotation_setting.updated_at = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+            annotation_setting.updated_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             db.session.add(annotation_setting)
         else:
             new_app_annotation_setting = AppAnnotationSetting(

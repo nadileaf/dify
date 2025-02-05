@@ -42,7 +42,7 @@
 5. Install dependencies
 
    ```bash
-   poetry env use 3.10
+   poetry env use 3.12
    poetry install
    ```
 
@@ -79,7 +79,5 @@
 2. Run the tests locally with mocked system environment variables in `tool.pytest_env` section in `pyproject.toml`
 
    ```bash
-   poetry run -C api bash dev/pytest/pytest_all_tests.sh
+   poetry run -P api bash dev/pytest/pytest_all_tests.sh
    ```
-
-

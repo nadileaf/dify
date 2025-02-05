@@ -25,6 +25,9 @@
     <a href="https://twitter.com/intent/follow?screen_name=dify_ai" target="_blank">
         <img src="https://img.shields.io/twitter/follow/dify_ai?logo=X&color=%20%23f5f5f5"
             alt="follow on X(Twitter)"></a>
+    <a href="https://www.linkedin.com/company/langgenius/" target="_blank">
+        <img src="https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff"
+            alt="follow on LinkedIn"></a>
     <a href="https://hub.docker.com/u/langgenius" target="_blank">
         <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/langgenius/dify-web?labelColor=%20%23FDB062&color=%20%23f79009"></a>
     <a href="https://github.com/langgenius/dify/graphs/commit-activity" target="_blank">
@@ -146,6 +149,13 @@ Deploy Dify to Cloud Platform with a single click using [terraform](https://www.
 
 ##### Google Cloud
 - [Google Cloud Terraform by @sotazum](https://github.com/DeNA/dify-google-cloud-terraform)
+
+#### Using AWS CDK for Deployment
+
+Deploy Dify to AWS with [CDK](https://aws.amazon.com/cdk/)
+
+##### AWS 
+- [AWS CDK by @KevinZhao](https://github.com/aws-samples/solution-for-deploying-dify-on-aws)
 
 ## Contributing
 
