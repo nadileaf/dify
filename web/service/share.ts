@@ -145,7 +145,13 @@ export const sendWorkflowMessage = async (
 }
 
 export const fetchAppInfo = async () => {
-  return get('/site') as Promise<AppData>
+  const res = await get<AppData>('/site')
+  res.custom_config = {
+    ...res.custom_config,
+    remove_webapp_brand: true,
+  }
+  console.log('res', res)
+  return res
 }
 
 export const fetchConversations = async (isInstalledApp: boolean, installedAppId = '', last_id?: string, pinned?: boolean, limit?: number) => {
