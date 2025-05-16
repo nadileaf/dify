@@ -50,6 +50,14 @@ const translation = {
     submit: 'Gönder',
     skip: 'Gemi',
     imageCopied: 'Kopyalanan görüntü',
+    deleteApp: 'Uygulamayı Sil',
+    copied: 'Kopya -lanan',
+    in: 'içinde',
+    viewDetails: 'Detayları Görüntüle',
+    downloadSuccess: 'İndirme Tamamlandı.',
+    format: 'Format',
+    more: 'Daha fazla',
+    downloadFailed: 'İndirme başarısız oldu. Lütfen daha sonra tekrar deneyin.',
   },
   errorMsg: {
     fieldRequired: '{{field}} gereklidir',
@@ -126,6 +134,8 @@ const translation = {
       Custom: 'Özel',
     },
     addMoreModel: 'Daha fazla model eklemek için ayarlara gidin',
+    capabilities: 'MultiModal Yetenekler',
+    settingsLink: 'Model Sağlayıcı Ayarları',
   },
   menus: {
     status: 'beta',
@@ -138,6 +148,7 @@ const translation = {
     newApp: 'Yeni Uygulama',
     newDataset: 'Bilgi Oluştur',
     tools: 'Araçlar',
+    exploreMarketplace: 'Marketplace\'i Keşfedin',
   },
   userProfile: {
     settings: 'Ayarlar',
@@ -150,6 +161,9 @@ const translation = {
     community: 'Topluluk',
     about: 'Hakkında',
     logout: 'Çıkış Yap',
+    support: 'Destek',
+    compliance: 'Uygunluk',
+    github: 'GitHub',
   },
   settings: {
     accountGroup: 'HESAP',
@@ -163,6 +177,7 @@ const translation = {
     dataSource: 'Veri Kaynağı',
     plugin: 'Eklentiler',
     apiBasedExtension: 'API Uzantısı',
+    generalGroup: 'GENEL',
   },
   account: {
     avatar: 'Avatar',
@@ -198,6 +213,9 @@ const translation = {
     permanentlyDeleteButton: 'Hesabı Kalıcı Olarak Sil',
     deletePrivacyLinkTip: 'Verilerinizi nasıl işlediğimiz hakkında daha fazla bilgi için lütfen',
     sendVerificationButton: 'Doğrulama Kodu Gönder',
+    workspaceName: 'Çalışma Alanı Adı',
+    workspaceIcon: 'Çalışma Alanı İkonu',
+    editWorkspaceInfo: 'Çalışma Alanı Bilgilerini Düzenle',
   },
   members: {
     team: 'Takım',
@@ -290,6 +308,7 @@ const translation = {
       usedUp: 'Deneme kotası kullanıldı. Kendi Model Sağlayıcınızı ekleyin.',
       useYourModel: 'Şu anda kendi Model Sağlayıcınızı kullanıyorsunuz.',
       close: 'Kapat',
+      trialQuotaTip: 'Antropik deneme kotanız 11/03/2025 tarihinde sona erecek ve bu tarihten sonra kullanılamayacaktır. Lütfen zamanında kullanın.',
     },
     anthropic: {
       using: 'Yerleştirme yeteneği,',
@@ -401,6 +420,12 @@ const translation = {
     loadBalancingLeastKeyWarning: 'Yük dengeleme etkinleştirmek için en az 2 anahtar etkinleştirilmelidir.',
     loadBalancingInfo: 'Varsayılan olarak, yük dengeleme Yuvarlakrobin stratejisini kullanır. Hız sınırlaması tetiklenirse, 1 dakikalık bir soğuma süresi uygulanacaktır.',
     upgradeForLoadBalancing: 'Yük Dengelemeyi etkinleştirmek için planınızı yükseltin.',
+    installProvider: 'Model sağlayıcılarını yükleme',
+    toBeConfigured: 'Yapılandırılacak',
+    emptyProviderTip: 'Lütfen önce bir model sağlayıcı yükleyin.',
+    emptyProviderTitle: 'Model sağlayıcı ayarlanmadı',
+    discoverMore: 'Daha fazlasını keşfedin',
+    configureTip: 'Api-key\'i ayarlayın veya kullanmak için model ekleyin',
   },
   dataSource: {
     add: 'Bir veri kaynağı ekle',
@@ -444,7 +469,7 @@ const translation = {
   apiBasedExtension: {
     title: 'API uzantıları merkezi API yönetimi sağlar, Dify\'nin uygulamaları arasında kolay kullanım için yapılandırmayı basitleştirir.',
     link: 'Kendi API Uzantınızı nasıl geliştireceğinizi öğrenin.',
-    linkUrl: 'https://docs.dify.ai/features/extension/api_based_extension',
+    linkUrl: 'https://docs.dify.ai/en/guides/extension/api-based-extension/README',
     add: 'API Uzantısı Ekle',
     selector: {
       title: 'API Uzantısı',
@@ -530,6 +555,9 @@ const translation = {
       hitScore: 'Geri Alım Skoru:',
     },
     inputPlaceholder: 'Bot ile konuş',
+    thought: 'Düşünce',
+    thinking: 'Düşünü...',
+    resend: 'Yeniden gönder',
   },
   promptEditor: {
     placeholder: 'Prompt kelimenizi buraya yazın, değişken eklemek için \'{\' tuşuna, prompt içerik bloğu eklemek için \'/\' tuşuna basın',
@@ -619,6 +647,25 @@ const translation = {
   },
   pagination: {
     perPage: 'Sayfa başına öğe sayısı',
+  },
+  theme: {
+    light: 'ışık',
+    dark: 'koyu',
+    auto: 'sistem',
+    theme: 'Tema',
+  },
+  compliance: {
+    soc2Type1: 'SOC 2 Tip I Raporu',
+    sandboxUpgradeTooltip: 'Yalnızca Profesyonel veya Takım planı ile kullanılabilir.',
+    iso27001: 'ISO 27001:2022 Sertifikası',
+    professionalUpgradeTooltip: 'Yalnızca Takım planı veya üstü ile mevcuttur.',
+    gdpr: 'GDPR DPA',
+    soc2Type2: 'SOC 2 Tip II Raporu',
+  },
+  imageInput: {
+    supportedFormats: 'PNG, JPG, JPEG, WEBP ve GIF\'i destekler',
+    dropImageHere: 'Görüntünüzü buraya bırakın veya',
+    browse: 'tarayıcı',
   },
 }
 

@@ -172,9 +172,30 @@ const translation = {
       removeConfirmTitle: '删除 {{key}} 配置?',
       removeConfirmContent: '当前配置正在使用中，删除它将关闭追踪功能。',
     },
+    weave: {
+      title: '编织',
+      description: 'Weave是一个开源平台，用于评估、测试和监控大型语言模型应用程序。',
+    },
+  },
+  appSelector: {
+    label: '应用',
+    placeholder: '选择一个应用',
+    params: '应用参数',
+    noParams: '无需参数',
   },
   openInExplore: '在“探索”中打开',
   showMyCreatedAppsOnly: '我创建的',
+  structOutput: {
+    moreFillTip: '最多显示 10 级嵌套',
+    required: '必填',
+    LLMResponse: 'LLM 的响应',
+    configure: '配置',
+    notConfiguredTip: '结构化输出尚未配置',
+    structured: '结构化输出',
+    structuredTip: '结构化输出是一项功能，可确保模型始终生成符合您提供的 JSON 模式的响应',
+    modelNotSupported: '模型不支持',
+    modelNotSupportedTip: '当前模型不支持此功能，将自动降级为提示注入。',
+  },
 }
 
 export default translation
