@@ -150,7 +150,6 @@ export const fetchAppInfo = async () => {
     ...res.custom_config,
     remove_webapp_brand: true,
   }
-  console.log('res', res)
   return res
 }
 
