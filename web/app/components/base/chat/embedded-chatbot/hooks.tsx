@@ -111,6 +111,12 @@ export const useEmbeddedChatbot = () => {
   const [conversationIdInfo, setConversationIdInfo] = useLocalStorageState<Record<string, Record<string, string>>>(CONVERSATION_ID_INFO, {
     defaultValue: {},
   })
+
+  // remove conversation id info when app info is changed
+  useEffect(() => {
+    localStorage.removeItem(CONVERSATION_ID_INFO)
+  }, [])
+
   const allowResetChat = !conversationId
   const currentConversationId = useMemo(() => conversationIdInfo?.[appId || '']?.[userId || 'DEFAULT'] || conversationId || '',
     [appId, conversationIdInfo, userId, conversationId])
