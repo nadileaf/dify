@@ -40,6 +40,8 @@ export const userInputsFormToPromptVariables = (useInputs: UserInputFormItem[] |
         max_length: content.max_length,
         options: [],
         is_context_var,
+        hide: content.hide,
+        default: content.default,
       })
     }
     else if (type === 'number') {
@@ -49,6 +51,8 @@ export const userInputsFormToPromptVariables = (useInputs: UserInputFormItem[] |
         required: content.required,
         type,
         options: [],
+        hide: content.hide,
+        default: content.default,
       })
     }
     else if (type === 'select') {
@@ -59,6 +63,8 @@ export const userInputsFormToPromptVariables = (useInputs: UserInputFormItem[] |
         type: 'select',
         options: content.options,
         is_context_var,
+        hide: content.hide,
+        default: content.default,
       })
     }
     else if (type === 'file') {
@@ -73,6 +79,8 @@ export const userInputsFormToPromptVariables = (useInputs: UserInputFormItem[] |
           allowed_file_upload_methods: content.allowed_file_upload_methods,
           number_limits: 1,
         },
+        hide: content.hide,
+        default: content.default,
       })
     }
     else if (type === 'file-list') {
@@ -87,6 +95,8 @@ export const userInputsFormToPromptVariables = (useInputs: UserInputFormItem[] |
           allowed_file_upload_methods: content.allowed_file_upload_methods,
           number_limits: content.max_length,
         },
+        hide: content.hide,
+        default: content.default,
       })
     }
     else {
@@ -100,6 +110,7 @@ export const userInputsFormToPromptVariables = (useInputs: UserInputFormItem[] |
         icon: content.icon,
         icon_background: content.icon_background,
         is_context_var,
+        hide: content.hide,
       })
     }
   })
@@ -119,6 +130,7 @@ export const promptVariablesToUserInputsForm = (promptVariables: PromptVariable[
           required: item.required !== false, // default true
           max_length: item.max_length,
           default: '',
+          hide: item.hide,
         },
       } as any)
       return
@@ -130,6 +142,7 @@ export const promptVariablesToUserInputsForm = (promptVariables: PromptVariable[
           variable: item.key,
           required: item.required !== false, // default true
           default: '',
+          hide: item.hide,
         },
       } as any)
     }
@@ -140,7 +153,8 @@ export const promptVariablesToUserInputsForm = (promptVariables: PromptVariable[
           variable: item.key,
           required: item.required !== false, // default true
           options: item.options,
-          default: '',
+          default: item.default ?? '',
+          hide: item.hide,
         },
       } as any)
     }
@@ -155,6 +169,7 @@ export const promptVariablesToUserInputsForm = (promptVariables: PromptVariable[
           required: item.required,
           icon: item.icon,
           icon_background: item.icon_background,
+          hide: item.hide,
         },
       } as any)
     }

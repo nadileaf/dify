@@ -2,20 +2,20 @@ import logging
 
 from flask import request
 from flask_login import current_user
-from flask_restful import Resource, fields, inputs, marshal, marshal_with, reqparse
+from flask_restx import Resource, fields, inputs, marshal, marshal_with, reqparse
 from sqlalchemy import select
 from werkzeug.exceptions import Unauthorized
 
 import services
-from controllers.common.errors import FilenameNotExistsError
-from controllers.console import api
-from controllers.console.admin import admin_required
-from controllers.console.datasets.error import (
+from controllers.common.errors import (
+    FilenameNotExistsError,
     FileTooLargeError,
     NoFileUploadedError,
     TooManyFilesError,
     UnsupportedFileTypeError,
 )
+from controllers.console import api
+from controllers.console.admin import admin_required
 from controllers.console.error import AccountNotLinkTenantError
 from controllers.console.wraps import (
     account_initialization_required,
@@ -68,16 +68,24 @@ class TenantListApi(Resource):
     @account_initialization_required
     def get(self):
         tenants = TenantService.get_join_tenants(current_user)
+        tenant_dicts = []
 
         for tenant in tenants:
             features = FeatureService.get_features(tenant.id)
-            if features.billing.enabled:
-                tenant.plan = features.billing.subscription.plan
-            else:
-                tenant.plan = "sandbox"
-            if tenant.id == current_user.current_tenant_id:
-                tenant.current = True  # Set current=True for current tenant
-        return {"workspaces": marshal(tenants, tenants_fields)}, 200
+
+            # Create a dictionary with tenant attributes
+            tenant_dict = {
+                "id": tenant.id,
+                "name": tenant.name,
+                "status": tenant.status,
+                "created_at": tenant.created_at,
+                "plan": features.billing.subscription.plan if features.billing.enabled else "sandbox",
+                "current": tenant.id == current_user.current_tenant_id,
+            }
+
+            tenant_dicts.append(tenant_dict)
+
+        return {"workspaces": marshal(tenant_dicts, tenants_fields)}, 200
 
 
 class WorkspaceListApi(Resource):
@@ -183,9 +191,6 @@ class WebappLogoWorkspaceApi(Resource):
     @account_initialization_required
     @cloud_edition_billing_resource_check("workspace_custom")
     def post(self):
-        # get file from request
-        file = request.files["file"]
-
         # check file
         if "file" not in request.files:
             raise NoFileUploadedError()
@@ -193,6 +198,8 @@ class WebappLogoWorkspaceApi(Resource):
         if len(request.files) > 1:
             raise TooManyFilesError()
 
+        # get file from request
+        file = request.files["file"]
         if not file.filename:
             raise FilenameNotExistsError
 

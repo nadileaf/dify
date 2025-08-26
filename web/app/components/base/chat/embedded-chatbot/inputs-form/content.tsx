@@ -36,9 +36,11 @@ const InputsFormContent = ({ showTip }: Props) => {
     })
   }, [newConversationInputsRef, handleNewConversationInputsChange, currentConversationInputs, setCurrentConversationInputs])
 
+  const visibleInputsForms = inputsForms.filter(form => form.hide !== true)
+
   return (
     <div className='space-y-4'>
-      {inputsForms.map(form => (
+      {visibleInputsForms.map(form => (
         <div key={form.variable} className='space-y-1'>
           <div className='flex h-6 items-center gap-1'>
             <div className='system-md-semibold text-text-secondary'>{form.label}</div>
@@ -71,7 +73,7 @@ const InputsFormContent = ({ showTip }: Props) => {
           {form.type === InputVarType.select && (
             <PortalSelect
               popupClassName='w-[200px]'
-              value={inputsFormValue?.[form.variable]}
+              value={inputsFormValue?.[form.variable] ?? form.default ?? ''}
               items={form.options.map((option: string) => ({ value: option, name: option }))}
               onSelect={item => handleFormChange(form.variable, item.value as string)}
               placeholder={form.label}
