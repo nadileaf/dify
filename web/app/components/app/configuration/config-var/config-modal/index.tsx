@@ -1,5 +1,5 @@
 'use client'
-import type { FC } from 'react'
+import type { ChangeEvent, FC } from 'react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useContext } from 'use-context-selector'
@@ -11,7 +11,7 @@ import SelectTypeItem from '../select-type-item'
 import Field from './field'
 import Input from '@/app/components/base/input'
 import Toast from '@/app/components/base/toast'
-import { checkKeys, getNewVarInWorkflow } from '@/utils/var'
+import { checkKeys, getNewVarInWorkflow, replaceSpaceWithUnderscoreInVarNameInput } from '@/utils/var'
 import ConfigContext from '@/context/debug-configuration'
 import type { InputVar, MoreInfo, UploadFileSetting } from '@/app/components/workflow/types'
 import Modal from '@/app/components/base/modal'
@@ -20,6 +20,11 @@ import FileUploadSetting from '@/app/components/workflow/nodes/_base/components/
 import Checkbox from '@/app/components/base/checkbox'
 import { DEFAULT_FILE_UPLOAD_SETTING } from '@/app/components/workflow/constants'
 import { DEFAULT_VALUE_MAX_LEN } from '@/config'
+import { SimpleSelect } from '@/app/components/base/select'
+import Textarea from '@/app/components/base/textarea'
+import { FileUploaderInAttachmentWrapper } from '@/app/components/base/file-uploader'
+import { TransferMethod } from '@/types/app'
+import type { FileEntity } from '@/app/components/base/file-uploader/types'
 
 const TEXT_MAX_LENGTH = 256
 
@@ -81,6 +86,8 @@ const ConfigModal: FC<IConfigModalProps> = ({
     return () => {
       const newPayload = produce(tempPayload, (draft) => {
         draft.type = type
+        // Clear default value when switching types
+        draft.default = undefined
         if ([InputVarType.singleFile, InputVarType.multiFiles].includes(type)) {
           (Object.keys(DEFAULT_FILE_UPLOAD_SETTING)).forEach((key) => {
             if (key !== 'max_length')
@@ -108,6 +115,20 @@ const ConfigModal: FC<IConfigModalProps> = ({
       }
     })
   }, [checkVariableName, tempPayload.label])
+
+  const handleVarNameChange = useCallback((e: ChangeEvent<any>) => {
+    replaceSpaceWithUnderscoreInVarNameInput(e.target)
+    const value = e.target.value
+    const { isValid, errorKey, errorMessageKey } = checkKeys([value], true)
+    if (!isValid) {
+      Toast.notify({
+        type: 'error',
+        message: t(`appDebug.varKeyError.${errorMessageKey}`, { key: errorKey }),
+      })
+      return
+    }
+    handlePayloadChange('variable')(e.target.value)
+  }, [handlePayloadChange, t])
 
   const handleConfirm = () => {
     const moreInfo = tempPayload.variable === payload?.variable
@@ -200,7 +221,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
           <Field title={t('appDebug.variableConfig.varName')}>
             <Input
               value={variable}
-              onChange={e => handlePayloadChange('variable')(e.target.value)}
+              onChange={handleVarNameChange}
               onBlur={handleVarKeyBlur}
               placeholder={t('appDebug.variableConfig.inputPlaceholder')!}
             />
@@ -219,18 +240,94 @@ const ConfigModal: FC<IConfigModalProps> = ({
             </Field>
 
           )}
-          {type === InputVarType.select && (
-            <Field title={t('appDebug.variableConfig.options')}>
-              <ConfigSelect options={options || []} onChange={handlePayloadChange('options')} />
+
+          {/* Default value for text input */}
+          {type === InputVarType.textInput && (
+            <Field title={t('appDebug.variableConfig.defaultValue')}>
+              <Input
+                value={tempPayload.default || ''}
+                onChange={e => handlePayloadChange('default')(e.target.value || undefined)}
+                placeholder={t('appDebug.variableConfig.inputPlaceholder')!}
+              />
             </Field>
           )}
 
+          {/* Default value for paragraph */}
+          {type === InputVarType.paragraph && (
+            <Field title={t('appDebug.variableConfig.defaultValue')}>
+              <Textarea
+                value={tempPayload.default || ''}
+                onChange={e => handlePayloadChange('default')(e.target.value || undefined)}
+                placeholder={t('appDebug.variableConfig.inputPlaceholder')!}
+              />
+            </Field>
+          )}
+
+          {/* Default value for number input */}
+          {type === InputVarType.number && (
+            <Field title={t('appDebug.variableConfig.defaultValue')}>
+              <Input
+                type="number"
+                value={tempPayload.default || ''}
+                onChange={e => handlePayloadChange('default')(e.target.value || undefined)}
+                placeholder={t('appDebug.variableConfig.inputPlaceholder')!}
+              />
+            </Field>
+          )}
+
+          {type === InputVarType.select && (
+            <>
+              <Field title={t('appDebug.variableConfig.options')}>
+                <ConfigSelect options={options || []} onChange={handlePayloadChange('options')} />
+              </Field>
+              {options && options.length > 0 && (
+                <Field title={t('appDebug.variableConfig.defaultValue')}>
+                  <SimpleSelect
+                    key={`default-select-${options.join('-')}`}
+                    className="w-full"
+                    optionWrapClassName="max-h-[140px] overflow-y-auto"
+                    items={[
+                      { value: '', name: t('appDebug.variableConfig.noDefaultValue') },
+                      ...options.filter(opt => opt.trim() !== '').map(option => ({
+                        value: option,
+                        name: option,
+                      })),
+                    ]}
+                    defaultValue={tempPayload.default || ''}
+                    onSelect={item => handlePayloadChange('default')(item.value === '' ? undefined : item.value)}
+                    placeholder={t('appDebug.variableConfig.selectDefaultValue')}
+                    allowSearch={false}
+                  />
+                </Field>
+              )}
+            </>
+          )}
+
           {[InputVarType.singleFile, InputVarType.multiFiles].includes(type) && (
-            <FileUploadSetting
-              payload={tempPayload as UploadFileSetting}
-              onChange={(p: UploadFileSetting) => setTempPayload(p as InputVar)}
-              isMultiple={type === InputVarType.multiFiles}
-            />
+            <>
+              <FileUploadSetting
+                payload={tempPayload as UploadFileSetting}
+                onChange={(p: UploadFileSetting) => setTempPayload(p as InputVar)}
+                isMultiple={type === InputVarType.multiFiles}
+              />
+              <Field title={t('appDebug.variableConfig.defaultValue')}>
+                <FileUploaderInAttachmentWrapper
+                  value={(type === InputVarType.singleFile ? (tempPayload.default ? [tempPayload.default] : []) : (tempPayload.default || [])) as unknown as FileEntity[]}
+                  onChange={(files) => {
+                    if (type === InputVarType.singleFile)
+                      handlePayloadChange('default')(files?.[0] || undefined)
+                    else
+                      handlePayloadChange('default')(files || undefined)
+                  }}
+                  fileConfig={{
+                    allowed_file_types: tempPayload.allowed_file_types || [SupportUploadFileTypes.document],
+                    allowed_file_extensions: tempPayload.allowed_file_extensions || [],
+                    allowed_file_upload_methods: tempPayload.allowed_file_upload_methods || [TransferMethod.remote_url],
+                    number_limits: type === InputVarType.singleFile ? 1 : tempPayload.max_length || 5,
+                  }}
+                />
+              </Field>
+            </>
           )}
 
           <div className='!mt-5 flex h-6 items-center space-x-2'>
