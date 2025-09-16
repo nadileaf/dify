@@ -13,7 +13,6 @@ import type { ChatItem } from '../types'
 import type { Theme } from '../embedded-chatbot/theme/theme-context'
 import { CssTransform } from '../embedded-chatbot/theme/utils'
 import ContentSwitch from './content-switch'
-import { User } from '@/app/components/base/icons/src/public/avatar'
 import { Markdown } from '@/app/components/base/markdown'
 import { FileList } from '@/app/components/base/file-uploader'
 import ActionButton from '../../action-button'
@@ -98,7 +97,7 @@ const Question: FC<QuestionProps> = ({
 
   return (
     <div className='mb-2 flex justify-end last:mb-0'>
-      <div className={cn('group relative mr-4 flex max-w-full items-start overflow-x-hidden pl-14', isEditing && 'flex-1')}>
+      <div className={cn('group relative flex max-w-full items-start overflow-x-hidden pl-14', isEditing && 'flex-1')}>
         <div className={cn('mr-2 gap-1', isEditing ? 'hidden' : 'flex')}>
           <div
             className="absolute hidden gap-0.5 rounded-[10px] border-[0.5px] border-components-actionbar-border bg-components-actionbar-bg p-0.5 shadow-md backdrop-blur-sm group-hover:flex"
@@ -162,15 +161,7 @@ const Question: FC<QuestionProps> = ({
         </div>
         <div className='mt-1 h-[18px]' />
       </div>
-      <div className='h-10 w-10 shrink-0'>
-        {
-          questionIcon || (
-            <div className='h-full w-full rounded-full border-[0.5px] border-black/5'>
-              <User className='h-full w-full' />
-            </div>
-          )
-        }
-      </div>
+
     </div>
   )
 }

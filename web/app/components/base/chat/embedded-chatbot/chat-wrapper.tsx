@@ -190,16 +190,19 @@ const ChatWrapper = () => {
       return null
     if (welcomeMessage.suggestedQuestions && welcomeMessage.suggestedQuestions?.length > 0) {
       return (
-        <div className={cn('flex items-center justify-center px-4 py-12', isMobile ? 'min-h-[30vh] py-0' : 'h-[50vh]')}>
-          <div className='flex max-w-[720px] grow gap-4'>
+        <div className={cn('flex h-[50vh] items-center justify-center px-4 py-12')}>
+          <div className='flex max-w-[720px] grow flex-col gap-4'>
+            <div className='flex items-center justify-center rounded-full'>
             <AppIcon
               size='xl'
               iconType={appData?.site.icon_type}
               icon={appData?.site.icon}
               background={appData?.site.icon_background}
               imageUrl={appData?.site.icon_url}
+              className='rounded-full'
             />
-            <div className='body-lg-regular grow rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary'>
+            </div>
+            <div className='body-lg-regular grow px-4 py-3 text-text-primary'>
               <Markdown content={welcomeMessage.content} />
               <SuggestedQuestions item={welcomeMessage} />
             </div>

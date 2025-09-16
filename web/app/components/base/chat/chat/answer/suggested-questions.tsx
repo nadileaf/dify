@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import type { ChatItem } from '../../types'
 import { useChatContext } from '../context'
+import { Button } from '@heroui/react'
 
 type SuggestedQuestionsProps = {
   item: ChatItem
@@ -20,16 +21,13 @@ const SuggestedQuestions: FC<SuggestedQuestionsProps> = ({
     return null
 
   return (
-    <div className='flex flex-wrap'>
+    <div className='mt-2 flex flex-wrap gap-2'>
       {suggestedQuestions.filter(q => !!q && q.trim()).map((question, index) => (
-        <div
-          key={index}
-          className='system-sm-medium mr-1 mt-1 inline-flex max-w-full shrink-0 cursor-pointer flex-wrap rounded-lg border-[0.5px] border-components-button-secondary-border bg-components-button-secondary-bg px-3.5 py-2 text-components-button-secondary-accent-text shadow-xs last:mr-0 hover:border-components-button-secondary-border-hover hover:bg-components-button-secondary-bg-hover'
-          onClick={() => onSend?.(question)}
-        >
+        <Button key={index} variant='flat' size='sm' onPress={() => onSend?.(question)}>
           {question}
-        </div>),
-      )}
+        </Button>
+      ))}
+
     </div>
   )
 }

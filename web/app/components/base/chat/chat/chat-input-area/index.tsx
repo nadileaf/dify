@@ -83,6 +83,7 @@ const ChatInputArea = ({
   const historyRef = useRef([''])
   const [currentIndex, setCurrentIndex] = useState(-1)
   const isComposingRef = useRef(false)
+  const [isFocused, setIsFocused] = useState(false)
   const handleSend = () => {
     if (isResponding) {
       notify({ type: 'info', message: t('appDebug.errorMessage.waitForResponse') })
@@ -171,9 +172,10 @@ const ChatInputArea = ({
     <>
       <div
         className={cn(
-          'relative z-10 rounded-xl border border-components-chat-input-border bg-components-panel-bg-blur pb-[9px] shadow-md',
+          'relative z-10 rounded-xl border border-components-chat-input-border bg-components-panel-bg-blur pb-[9px] shadow-md transition-all',
           isDragActive && 'border border-dashed border-components-option-card-option-selected-border',
           disabled && 'pointer-events-none border-components-panel-border opacity-50 shadow-none',
+          isFocused && '!border-primary-400 shadow-xl',
         )}
       >
         <div className='relative max-h-[158px] overflow-y-auto overflow-x-hidden px-[9px] pt-[9px]'>
@@ -211,6 +213,8 @@ const ChatInputArea = ({
                 onDragLeave={handleDragFileLeave}
                 onDragOver={handleDragFileOver}
                 onDrop={handleDropFile}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
               />
             </div>
             {

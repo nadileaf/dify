@@ -78,35 +78,31 @@ const Operation: FC<OperationProps> = ({
     setLocalFeedback({ rating })
   }
 
-  const operationWidth = useMemo(() => {
-    let width = 0
-    if (!isOpeningStatement)
-      width += 26
-    if (!isOpeningStatement && showPromptLog)
-      width += 28 + 8
-    if (!isOpeningStatement && config?.text_to_speech?.enabled)
-      width += 26
-    if (!isOpeningStatement && config?.supportAnnotation && config?.annotation_reply?.enabled)
-      width += 26
-    if (config?.supportFeedback && !localFeedback?.rating && onFeedback && !isOpeningStatement)
-      width += 60 + 8
-    if (config?.supportFeedback && localFeedback?.rating && onFeedback && !isOpeningStatement)
-      width += 28 + 8
-    return width
-  }, [isOpeningStatement, showPromptLog, config?.text_to_speech?.enabled, config?.supportAnnotation, config?.annotation_reply?.enabled, config?.supportFeedback, localFeedback?.rating, onFeedback])
+  // const operationWidth = useMemo(() => {
+  //   let width = 0
+  //   if (!isOpeningStatement)
+  //     width += 26
+  //   if (!isOpeningStatement && showPromptLog)
+  //     width += 28 + 8
+  //   if (!isOpeningStatement && config?.text_to_speech?.enabled)
+  //     width += 26
+  //   if (!isOpeningStatement && config?.supportAnnotation && config?.annotation_reply?.enabled)
+  //     width += 26
+  //   if (config?.supportFeedback && !localFeedback?.rating && onFeedback && !isOpeningStatement)
+  //     width += 60 + 8
+  //   if (config?.supportFeedback && localFeedback?.rating && onFeedback && !isOpeningStatement)
+  //     width += 28 + 8
+  //   return width
+  // }, [isOpeningStatement, showPromptLog, config?.text_to_speech?.enabled, config?.supportAnnotation, config?.annotation_reply?.enabled, config?.supportFeedback, localFeedback?.rating, onFeedback])
 
-  const positionRight = useMemo(() => operationWidth < maxSize, [operationWidth, maxSize])
+  // const positionRight = useMemo(() => operationWidth < maxSize, [operationWidth, maxSize])
 
   return (
     <>
       <div
         className={cn(
-          'absolute flex justify-end gap-1',
-          hasWorkflowProcess && '-bottom-4 right-2',
-          !positionRight && '-bottom-4 right-2',
-          !hasWorkflowProcess && positionRight && '!top-[9px]',
+          'flex gap-1 px-2',
         )}
-        style={(!hasWorkflowProcess && positionRight) ? { left: contentWidth + 8 } : {}}
       >
         {showPromptLog && !isOpeningStatement && (
           <div className='hidden group-hover:block'>
@@ -114,7 +110,7 @@ const Operation: FC<OperationProps> = ({
           </div>
         )}
         {!isOpeningStatement && (
-          <div className='ml-1 hidden items-center gap-0.5 rounded-[10px] border-[0.5px] border-components-actionbar-border bg-components-actionbar-bg p-0.5 shadow-md backdrop-blur-sm group-hover:flex'>
+          <div className='flex items-center gap-0.5 p-1 backdrop-blur-sm'>
             {(config?.text_to_speech?.enabled) && (
               <NewAudioButton
                 id={id}
@@ -147,7 +143,8 @@ const Operation: FC<OperationProps> = ({
           </div>
         )}
         {!isOpeningStatement && config?.supportFeedback && !localFeedback?.rating && onFeedback && (
-          <div className='ml-1 hidden items-center gap-0.5 rounded-[10px] border-[0.5px] border-components-actionbar-border bg-components-actionbar-bg p-0.5 shadow-md backdrop-blur-sm group-hover:flex'>
+          <div className='flex items-center gap-0.5 p-1  backdrop-blur-sm'>
+            <div className='mr-2 h-4 w-px bg-default-200' />
             {!localFeedback?.rating && (
               <>
                 <ActionButton onClick={() => handleFeedback('like')}>
