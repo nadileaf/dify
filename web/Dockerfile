@@ -18,6 +18,7 @@ WORKDIR /app/web
 
 COPY package.json .
 COPY pnpm-lock.yaml .
+COPY .npmrc .
 
 # Use packageManager from package.json
 RUN corepack install

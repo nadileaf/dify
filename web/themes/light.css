@@ -401,7 +401,7 @@ html[data-theme="light"] {
   --color-background-gradient-mask-side-panel-2: rgb(16 24 40 / 0.3);
   --color-background-gradient-mask-side-panel-1: rgb(16 24 40 / 0.02);
 
-  --color-background-default-burn: #e9ebf0;
+  --color-background-default-burn: #f9f9f9;
   --color-background-overlay-fullscreen: rgb(249 250 251 / 0.95);
   --color-background-default-lighter: rgb(255 255 255 / 0.5);
   --color-background-section: #f9fafb;

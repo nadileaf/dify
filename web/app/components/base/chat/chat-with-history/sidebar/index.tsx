@@ -11,13 +11,13 @@ import {
 import { useChatWithHistoryContext } from '../context'
 import AppIcon from '@/app/components/base/app-icon'
 import ActionButton from '@/app/components/base/action-button'
-import Button from '@/app/components/base/button'
 import List from '@/app/components/base/chat/chat-with-history/sidebar/list'
 import MenuDropdown from '@/app/components/share/text-generation/menu-dropdown'
 import Confirm from '@/app/components/base/confirm'
 import RenameModal from '@/app/components/base/chat/chat-with-history/sidebar/rename-modal'
 import type { ConversationItem } from '@/models/share'
 import cn from '@/utils/classnames'
+import { Button } from '@heroui/react'
 // import { useGlobalPublicStore } from '@/context/global-public-context'
 
 type Props = {
@@ -107,7 +107,7 @@ const Sidebar = ({ isPanel }: Props) => {
         )}
       </div>
       <div className='shrink-0 px-3 py-4'>
-        <Button variant='secondary-accent' disabled={isResponding} className='w-full justify-center' onClick={handleNewConversation}>
+        <Button variant='flat' size="sm" isDisabled={isResponding} disabled={isResponding} className='w-full justify-center' onClick={handleNewConversation}>
           <RiEditBoxLine className='mr-1 h-4 w-4' />
           {t('share.chat.newChat')}
         </Button>
@@ -136,7 +136,7 @@ const Sidebar = ({ isPanel }: Props) => {
           />
         )}
       </div>
-      <div className='flex shrink-0 items-center justify-between p-3'>
+      <div className='flex hidden shrink-0 items-center justify-between p-3'>
         <MenuDropdown hideLogout={isInstalledApp} placement='top-start' data={appData?.site} />
         {/* powered by */}
         {/* <div className='shrink-0'>
