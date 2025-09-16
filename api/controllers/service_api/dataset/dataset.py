@@ -318,10 +318,6 @@ class DatasetApi(DatasetApiResource):
         except services.errors.account.NoPermissionError as e:
             raise Forbidden(str(e))
         data = marshal(dataset, dataset_detail_fields)
-        if data.get("permission") == "partial_members":
-            part_users_list = DatasetPermissionService.get_dataset_partial_member_list(dataset_id_str)
-            data.update({"partial_member_list": part_users_list})
-
         # check embedding setting
         provider_manager = ProviderManager()
         assert isinstance(current_user, Account)
@@ -343,6 +339,9 @@ class DatasetApi(DatasetApiResource):
                 data["embedding_available"] = False
         else:
             data["embedding_available"] = True
+
+            # force update search method to keyword_search if indexing_technique is economic
+            data["retrieval_model_dict"]["search_method"] = "keyword_search"
 
         if data.get("permission") == "partial_members":
             part_users_list = DatasetPermissionService.get_dataset_partial_member_list(dataset_id_str)
@@ -563,7 +562,7 @@ class DatasetTagsApi(DatasetApiResource):
     def post(self, _, dataset_id):
         """Add a knowledge type tag."""
         assert isinstance(current_user, Account)
-        if not (current_user.is_editor or current_user.is_dataset_editor):
+        if not (current_user.has_edit_permission or current_user.is_dataset_editor):
             raise Forbidden()
 
         args = tag_create_parser.parse_args()
@@ -587,7 +586,7 @@ class DatasetTagsApi(DatasetApiResource):
     @validate_dataset_token
     def patch(self, _, dataset_id):
         assert isinstance(current_user, Account)
-        if not (current_user.is_editor or current_user.is_dataset_editor):
+        if not (current_user.has_edit_permission or current_user.is_dataset_editor):
             raise Forbidden()
 
         args = tag_update_parser.parse_args()
@@ -614,7 +613,7 @@ class DatasetTagsApi(DatasetApiResource):
     def delete(self, _, dataset_id):
         """Delete a knowledge type tag."""
         assert isinstance(current_user, Account)
-        if not current_user.is_editor:
+        if not current_user.has_edit_permission:
             raise Forbidden()
         args = tag_delete_parser.parse_args()
         TagService.delete_tag(args.get("tag_id"))
@@ -638,7 +637,7 @@ class DatasetTagBindingApi(DatasetApiResource):
     def post(self, _, dataset_id):
         # The role of the current user in the ta table must be admin, owner, editor, or dataset_operator
         assert isinstance(current_user, Account)
-        if not (current_user.is_editor or current_user.is_dataset_editor):
+        if not (current_user.has_edit_permission or current_user.is_dataset_editor):
             raise Forbidden()
 
         args = tag_binding_parser.parse_args()
@@ -664,7 +663,7 @@ class DatasetTagUnbindingApi(DatasetApiResource):
     def post(self, _, dataset_id):
         # The role of the current user in the ta table must be admin, owner, editor, or dataset_operator
         assert isinstance(current_user, Account)
-        if not (current_user.is_editor or current_user.is_dataset_editor):
+        if not (current_user.has_edit_permission or current_user.is_dataset_editor):
             raise Forbidden()
 
         args = tag_unbinding_parser.parse_args()

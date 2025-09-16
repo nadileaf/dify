@@ -35,6 +35,8 @@ class InstalledAppWorkflowRunApi(InstalledAppResource):
         Run workflow
         """
         app_model = installed_app.app
+        if not app_model:
+            raise NotWorkflowAppError()
         app_mode = AppMode.value_of(app_model.mode)
         if app_mode != AppMode.WORKFLOW:
             raise NotWorkflowAppError()
@@ -63,7 +65,7 @@ class InstalledAppWorkflowRunApi(InstalledAppResource):
         except ValueError as e:
             raise e
         except Exception:
-            logging.exception("internal server error.")
+            logger.exception("internal server error.")
             raise InternalServerError()
 
 
@@ -73,6 +75,8 @@ class InstalledAppWorkflowTaskStopApi(InstalledAppResource):
         Stop workflow task
         """
         app_model = installed_app.app
+        if not app_model:
+            raise NotWorkflowAppError()
         app_mode = AppMode.value_of(app_model.mode)
         if app_mode != AppMode.WORKFLOW:
             raise NotWorkflowAppError()
