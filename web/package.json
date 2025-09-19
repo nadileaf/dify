@@ -59,6 +59,7 @@
     "@lexical/selection": "^0.30.0",
     "@lexical/text": "^0.30.0",
     "@lexical/utils": "^0.30.0",
+    "@lottiefiles/dotlottie-react": "^0.17.1",
     "@monaco-editor/react": "^4.6.0",
     "@octokit/core": "^6.1.2",
     "@octokit/request-error": "^6.1.5",

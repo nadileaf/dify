@@ -36,6 +36,7 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
     isMobile,
     themeBuilder,
     sidebarCollapseState,
+    currentConversationId,
   } = useChatWithHistoryContext()
   const isSidebarCollapsed = sidebarCollapseState
   const customConfig = appData?.custom_config
@@ -51,10 +52,10 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
 
   return (
     <div className={cn(
-      'flex h-full bg-background-default-burn',
-      isMobile && 'flex-col',
+      'relative z-[1] flex h-full bg-gradient-to-b from-[#F6F5F2] to-[#F7F5F2] max-sm:flex-col',
       className,
     )}>
+      <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />
       {!isMobile && (
         <div className={cn(
           'flex w-[236px] flex-col p-1 pr-0 transition-all duration-200 ease-in-out',
@@ -66,7 +67,7 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
       {isMobile && (
         <HeaderInMobile />
       )}
-      <div className={cn('relative grow bg-white', isMobile && 'h-[calc(100%_-_56px)]')}>
+      <div className={cn('relative grow', currentConversationId && 'bg-chatbot-bg', isMobile && 'h-[calc(100%_-_56px)]')}>
         {isSidebarCollapsed && (
           <div
             className={cn(

@@ -6,9 +6,11 @@ import { Button } from '@heroui/react'
 
 type SuggestedQuestionsProps = {
   item: ChatItem
+  isWelcome?: boolean
 }
 const SuggestedQuestions: FC<SuggestedQuestionsProps> = ({
   item,
+  isWelcome,
 }) => {
   const { onSend } = useChatContext()
 
@@ -21,9 +23,9 @@ const SuggestedQuestions: FC<SuggestedQuestionsProps> = ({
     return null
 
   return (
-    <div className='mt-2 flex flex-wrap gap-2'>
+    <div className='mt-2 flex flex-wrap gap-3 max-sm:gap-2'>
       {suggestedQuestions.filter(q => !!q && q.trim()).map((question, index) => (
-        <Button key={index} variant='flat' size='sm' onPress={() => onSend?.(question)}>
+        <Button key={index} variant={isWelcome ? 'shadow' : 'flat'} size={isWelcome ? 'md' : 'sm'} onPress={() => onSend?.(question)} radius={isWelcome ? 'full' : 'md'} className={isWelcome ? 'border-default-200 bg-default-50 text-foreground-700 max-sm:p-2 max-sm:text-xs' : ''}>
           {question}
         </Button>
       ))}

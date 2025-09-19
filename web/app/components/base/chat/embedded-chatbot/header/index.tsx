@@ -82,7 +82,7 @@ const Header: FC<IHeaderProps> = ({
   }, [isIframe, parentOrigin, showToggleExpandButton, expanded])
 
   return (
-    <div className="bg-default/ flex h-14 shrink-0 items-center justify-between border-b border-divider-subtle p-3">
+    <div className="flex h-14 shrink-0 items-center justify-between border-b border-divider-subtle p-3">
       <div
           className="system-md-semibold flex items-center gap-1 truncate"
         >

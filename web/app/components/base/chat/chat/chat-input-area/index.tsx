@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react'
@@ -14,6 +15,7 @@ import type { Theme } from '../../embedded-chatbot/theme/theme-context'
 import type { InputForm } from '../type'
 import { useCheckInputsForms } from '../check-input-forms-hooks'
 import { useTextAreaHeight } from './hooks'
+import { useTypewriter } from './hooks/use-typewriter'
 import Operation from './operation'
 import cn from '@/utils/classnames'
 import { FileListInChatInput } from '@/app/components/base/file-uploader'
@@ -42,6 +44,9 @@ type ChatInputAreaProps = {
   theme?: Theme | null
   isResponding?: boolean
   disabled?: boolean
+  minRows?: number
+  autoFocus?: boolean
+  suggestedQuestions?: string[]
 }
 const ChatInputArea = ({
   botName,
@@ -57,6 +62,9 @@ const ChatInputArea = ({
   theme,
   isResponding,
   disabled,
+  minRows = 2,
+  autoFocus = true,
+  suggestedQuestions,
 }: ChatInputAreaProps) => {
   const { t } = useTranslation()
   const { notify } = useToastContext()
@@ -84,6 +92,31 @@ const ChatInputArea = ({
   const [currentIndex, setCurrentIndex] = useState(-1)
   const isComposingRef = useRef(false)
   const [isFocused, setIsFocused] = useState(false)
+
+  const validSuggestedQuestions = suggestedQuestions?.filter(q => q && q.trim()) || []
+  const { displayText, isActive, startTypewriter, stopTypewriter } = useTypewriter({
+    texts: validSuggestedQuestions,
+    typingSpeed: 80,
+    deletingSpeed: 40,
+    pauseDuration: 2000,
+    loop: true,
+  })
+
+  // 当有推荐问题且输入框为空且未聚焦时启动打字机效果
+  useEffect(() => {
+    if (validSuggestedQuestions.length > 0 && !query && !isFocused && !isResponding)
+      startTypewriter()
+    else
+      stopTypewriter()
+  }, [validSuggestedQuestions.length, query, isFocused, isResponding, startTypewriter, stopTypewriter])
+
+  // 获取动态placeholder
+  const getDynamicPlaceholder = useCallback(() => {
+    if (validSuggestedQuestions.length > 0 && !query && !isFocused && isActive)
+      return displayText
+    else
+      return t('common.chat.inputPlaceholder', { botName }) || ''
+  }, [validSuggestedQuestions.length, query, isFocused, isActive, displayText, t, botName])
   const handleSend = () => {
     if (isResponding) {
       notify({ type: 'info', message: t('appDebug.errorMessage.waitForResponse') })
@@ -182,7 +215,7 @@ const ChatInputArea = ({
           <FileListInChatInput fileConfig={visionConfig!} />
           <div
             ref={wrapperRef}
-            className='flex items-center justify-between'
+            className='flex items-end justify-between'
           >
             <div className='relative flex w-full grow items-center'>
               <div
@@ -196,14 +229,14 @@ const ChatInputArea = ({
                 className={cn(
                   'body-lg-regular w-full resize-none bg-transparent p-1 leading-6 text-text-primary outline-none',
                 )}
-                placeholder={t('common.chat.inputPlaceholder', { botName }) || ''}
-                autoFocus
-                minRows={1}
+                placeholder={getDynamicPlaceholder()}
+                autoFocus={autoFocus}
+                minRows={minRows}
                 onResize={handleTextareaResize}
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value)
-                  setTimeout(handleTextareaResize, 0)
+                  // setTimeout(handleTextareaResize, 0)
                 }}
                 onKeyDown={handleKeyDown}
                 onCompositionStart={handleCompositionStart}

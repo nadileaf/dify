@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import Chat from '../chat'
 import type {
   ChatConfig,
@@ -12,20 +12,20 @@ import { useEmbeddedChatbotContext } from './context'
 import { isDify } from './utils'
 import { InputVarType } from '@/app/components/workflow/types'
 import { TransferMethod } from '@/types/app'
-import InputsForm from '@/app/components/base/chat/embedded-chatbot/inputs-form'
 import {
   fetchSuggestedQuestions,
   getUrl,
   stopChatMessageResponding,
 } from '@/service/share'
-import AppIcon from '@/app/components/base/app-icon'
 import LogoAvatar from '@/app/components/base/logo/logo-embedded-chat-avatar'
 import AnswerIcon from '@/app/components/base/answer-icon'
 import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
+import ChatInputArea from '@/app/components/base/chat/chat/chat-input-area'
 import { Markdown } from '@/app/components/base/markdown'
 import cn from '@/utils/classnames'
 import type { FileEntity } from '../../file-uploader/types'
 import Avatar from '../../avatar'
+import BgMascot from '../chat-with-history/bg-mascot'
 
 const ChatWrapper = () => {
   const {
@@ -163,68 +163,44 @@ const ChatWrapper = () => {
     return chatList.filter(item => !item.isOpeningStatement)
   }, [chatList, currentConversationId])
 
-  const [collapsed, setCollapsed] = useState(!!currentConversationId)
-
-  const chatNode = useMemo(() => {
-    if (allInputsHidden || !inputsForms.length)
-      return null
-    if (isMobile) {
-      if (!currentConversationId)
-        return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-      return <div className='mb-4'></div>
-    }
-    else {
-      return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-    }
-  }, [inputsForms.length, isMobile, currentConversationId, collapsed, allInputsHidden])
-
   const welcome = useMemo(() => {
     const welcomeMessage = chatList.find(item => item.isOpeningStatement)
     if (respondingState)
       return null
     if (currentConversationId)
       return null
-    if (!welcomeMessage)
-      return null
-    if (!collapsed && inputsForms.length > 0 && !allInputsHidden)
-      return null
-    if (welcomeMessage.suggestedQuestions && welcomeMessage.suggestedQuestions?.length > 0) {
-      return (
-        <div className={cn('flex h-[50vh] items-center justify-center px-4 py-12')}>
+
+    return (
+        <div className={cn('flex min-h-[90%] items-center justify-center px-4 py-12')}>
           <div className='flex max-w-[720px] grow flex-col gap-4'>
-            <div className='flex items-center justify-center rounded-full'>
-            <AppIcon
-              size='xl'
-              iconType={appData?.site.icon_type}
-              icon={appData?.site.icon}
-              background={appData?.site.icon_background}
-              imageUrl={appData?.site.icon_url}
-              className='rounded-full'
-            />
-            </div>
+            <BgMascot url={appData?.site.icon_url || ''} />
             <div className='body-lg-regular grow px-4 py-3 text-text-primary'>
-              <Markdown content={welcomeMessage.content} />
-              <SuggestedQuestions item={welcomeMessage} />
+                <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className='!text-center !text-3xl max-sm:!text-xl' />
+                <div className='my-10'>
+                  <ChatInputArea
+                    botName={appData?.site.title || 'Bot'}
+                    disabled={inputDisabled}
+                    showFeatureBar={false}
+                    showFileUpload={false}
+                    featureBarDisabled={respondingState}
+                    visionConfig={appConfig?.file_upload}
+                    speechToTextConfig={appConfig?.speech_to_text}
+                    onSend={doSend}
+                    inputs={currentConversationId ? currentConversationInputs as any : newConversationInputs}
+                    inputsForm={inputsForms}
+                    theme={themeBuilder?.theme}
+                    isResponding={respondingState}
+                    minRows={4}
+                    autoFocus={false}
+                    suggestedQuestions={welcomeMessage?.suggestedQuestions}
+                  />
+                </div>
+                {welcomeMessage?.suggestedQuestions && welcomeMessage?.suggestedQuestions?.length > 0 && <SuggestedQuestions item={welcomeMessage} isWelcome />}
             </div>
           </div>
         </div>
       )
-    }
-    return (
-      <div className={cn('flex h-[50vh] flex-col items-center justify-center gap-3 py-12', isMobile ? 'min-h-[30vh] py-0' : 'h-[50vh]')}>
-        <AppIcon
-          size='xl'
-          iconType={appData?.site.icon_type}
-          icon={appData?.site.icon}
-          background={appData?.site.icon_background}
-          imageUrl={appData?.site.icon_url}
-        />
-        <div className='max-w-[768px] px-4'>
-          <Markdown className='!body-2xl-regular !text-text-tertiary' content={welcomeMessage.content} />
-        </div>
-      </div>
-    )
-  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, collapsed, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
+  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
 
   const answerIcon = isDify()
     ? <LogoAvatar className='relative shrink-0' />
@@ -253,7 +229,6 @@ const ChatWrapper = () => {
       onStopResponding={handleStop}
       chatNode={
         <>
-          {chatNode}
           {welcome}
         </>
       }
@@ -274,6 +249,7 @@ const ChatWrapper = () => {
             size={40}
           /> : undefined
       }
+      noChatInput={!currentConversationId}
     />
   )
 }
