@@ -5,12 +5,11 @@ import BrowserInitializer from './components/browser-initializer'
 import SentryInitializer from './components/sentry-initializer'
 import { getLocaleOnServer } from '@/i18n-config/server'
 import { TanstackQueryInitializer } from '@/context/query-client'
-import { ThemeProvider } from 'next-themes'
 import './styles/globals.css'
 import './styles/markdown.scss'
 import GlobalPublicStoreProvider from '@/context/global-public-context'
 import { DatasetAttr } from '@/types/feature'
-import { HeroUIProvider } from '@heroui/react'
+import ThemeProvider from '@/context/theme'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -73,7 +72,6 @@ const LocaleLayout = async ({ children }: { children: React.ReactNode }) => {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="color-scheme h-full select-auto" {...datasetMap}>
-        <HeroUIProvider>
           <ThemeProvider
             attribute="data-theme"
             defaultTheme="light"
@@ -93,7 +91,6 @@ const LocaleLayout = async ({ children }: { children: React.ReactNode }) => {
               </SentryInitializer>
             </BrowserInitializer>
           </ThemeProvider>
-        </HeroUIProvider>
         <RoutePrefixHandle />
       </body>
     </html>
