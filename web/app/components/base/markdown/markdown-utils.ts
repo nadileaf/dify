@@ -92,3 +92,24 @@ export const customUrlTransform = (uri: string): string | undefined => {
 
   return undefined
 }
+
+/**
+ * 预处理自定义HTML块，将 :::html 语法转换为特殊的代码块
+ * 这样可以避免与现有的HTML处理逻辑冲突
+ */
+export const preprocessCustomHtml = (content: string) => {
+  if (typeof content !== 'string')
+    return content
+
+  // 匹配 :::html 代码块
+  const customHtmlRegex = /:::html\s*\n([\s\S]*?)\n:::/g
+
+  // 将自定义HTML块转换为特殊的代码块，使用 'custom-html' 作为语言标识
+  const processedContent = content.replace(customHtmlRegex, (match, htmlContent) => {
+    // 清理HTML内容的首尾空白
+    const cleanHtml = htmlContent.trim()
+    return `\`\`\`custom-html\n${cleanHtml}\n\`\`\``
+  })
+
+  return processedContent
+}

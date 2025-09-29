@@ -1,3 +1,4 @@
+import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import 'katex/dist/katex.min.css'
 import RemarkMath from 'remark-math'
@@ -7,7 +8,7 @@ import RemarkGfm from 'remark-gfm'
 import RehypeRaw from 'rehype-raw'
 import { flow } from 'lodash-es'
 import cn from '@/utils/classnames'
-import { customUrlTransform, preprocessLaTeX, preprocessThinkTag } from './markdown-utils'
+import { customUrlTransform, preprocessCustomHtml, preprocessLaTeX, preprocessThinkTag } from './markdown-utils'
 import {
   AudioBlock,
   CodeBlock,
@@ -40,6 +41,7 @@ export const Markdown = (props: MarkdownProps) => {
   const latexContent = flow([
     preprocessThinkTag,
     preprocessLaTeX,
+    preprocessCustomHtml,
   ])(props.content)
 
   return (
@@ -76,6 +78,14 @@ export const Markdown = (props: MarkdownProps) => {
         disallowedElements={['iframe', 'head', 'html', 'meta', 'link', 'style', 'body', ...(props.customDisallowedElements || [])]}
         components={{
           code: CodeBlock,
+          pre: ({ children, ...props }: any) => {
+            // 检查是否是 custom-html 代码块
+            const child = React.Children.only(children)
+            if (child && child.props && child.props.className?.includes('language-custom-html'))
+              return children // 直接返回子元素，不包装 pre 标签
+
+            return <pre {...props}>{children}</pre>
+          },
           img: Img,
           video: VideoBlock,
           audio: AudioBlock,

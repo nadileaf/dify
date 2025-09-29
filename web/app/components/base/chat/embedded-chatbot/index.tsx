@@ -27,6 +27,7 @@ const Chatbot = () => {
     chatShouldReloadKey,
     handleNewConversation,
     themeBuilder,
+    currentConversationId,
   } = useEmbeddedChatbotContext()
   // const { t } = useTranslation()
   // const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
@@ -43,8 +44,8 @@ const Chatbot = () => {
   useDocumentTitle(site?.title || 'Chat')
 
   return (
-    <div className='relative z-[1] bg-gradient-to-b from-[#F6F5F2] to-[#F7F5F2]'>
-      <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />
+    <div className={cn('relative z-[1]', currentConversationId ? 'bg-white' : 'bg-gradient-to-b from-[#F6F5F2] to-[#F7F5F2]')}>
+      {!currentConversationId && <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />}
       <div
         className={cn(
           'flex flex-col border border-components-panel-border-subtle', 'h-[100vh] ',
