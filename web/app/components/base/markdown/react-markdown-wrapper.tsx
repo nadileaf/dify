@@ -1,3 +1,4 @@
+import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import RemarkMath from 'remark-math'
 import RemarkBreaks from 'remark-breaks'
@@ -63,6 +64,13 @@ export const ReactMarkdownWrapper: FC<ReactMarkdownWrapperProps> = (props) => {
       disallowedElements={['iframe', 'head', 'html', 'meta', 'link', 'style', 'body', ...(props.customDisallowedElements || [])]}
       components={{
         code: CodeBlock,
+        pre: ({ children, ...props }: any) => {
+          // 检查是否是 custom-html 代码块
+          const child = React.Children.only(children)
+          if (child && child.props && child.props.className?.includes('language-custom-html'))
+            return children
+          return <pre {...props}>{children}</pre>
+        },
         img: Img,
         video: VideoBlock,
         audio: AudioBlock,

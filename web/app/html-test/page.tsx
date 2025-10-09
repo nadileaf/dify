@@ -1,12 +1,290 @@
 'use client'
-import React, { useState } from 'react'
+import React from 'react'
+import { Editor } from '@monaco-editor/react'
 import { Markdown } from '@/app/components/base/markdown'
+import useTheme from '@/hooks/use-theme'
+import { Theme } from '@/types/app'
+import { useLocalStorageState } from 'ahooks'
+import { Button } from '@heroui/react'
 
-const HtmlTestDemo: React.FC = () => {
-  const [testContent, setTestContent] = useState(`
+const DEFAULT_CONTENT = `
 # HTML渲染测试Demo
 
-## 基础HTML标签测试
+## 交互按钮测试
+
+:::html
+<div style="display: flex; gap: 16px; justify-content: center; margin: 24px 0;">
+  <a href="/resume" style="
+    display: inline-block;
+    background: linear-gradient(135deg, #1183CD 0%, #279D9F 100%);
+    color: white;
+    flex: 1;
+    text-align: center;
+    padding: 0 32px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 24px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+  ">
+    查看优化后的简历
+  </a>
+  <a href="/recommend" style="
+    display: inline-block;
+    background: white;
+    color: #1183CD;
+    flex: 1;
+    text-align: center;
+    padding: 0 32px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 24px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid #1183CD;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+  ">
+    为我推荐职位
+  </a>
+</div>
+:::
+
+## 职位推荐卡片测试
+
+:::html
+<div style="background-color: #f7f8fa; padding: 16px; margin: 20px 0;">
+  <!-- 职位卡片列表 -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <!-- 职位卡片1 - 销售经理 -->
+    <a href="/jobs/sales-manager" style="text-decoration: none; color: inherit; display: block;">
+      <div style="
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+      ">
+        <!-- 头部：职位名称 + 薪资 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0; padding: 0;">
+              销售经理
+            </h3>
+            <span style="
+              background-color: #ff6b35;
+              color: white;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-size: 10px;
+              font-weight: 600;
+            ">HOT</span>
+          </div>
+          <div style="font-size: 18px; font-weight: 600; color: #1e88e5;">
+            20-25K
+          </div>
+        </div>
+        
+        <!-- 标签 -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">经验不限</span>
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">能源行业</span>
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">本科</span>
+        </div>
+        
+        <!-- 公司和地点 -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 12px; color: #333;">
+            光明集团
+          </div>
+          <div style="font-size: 12px; color: #999; display: flex; align-items: center; gap: 4px;">
+            <span>📍</span>
+            <span>上海·静安区</span>
+          </div>
+        </div>
+      </div>
+    </a>
+    
+    <!-- 职位卡片2 - 电池研发经理 -->
+    <a href="/jobs/battery-rd-manager" style="text-decoration: none; color: inherit; display: block;">
+      <div style="
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+      ">
+        <!-- 头部：职位名称 + 薪资 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0; padding: 0;">
+              电池研发经理
+            </h3>
+          </div>
+          <div style="font-size: 18px; font-weight: 600; color: #1e88e5;">
+            面议
+          </div>
+        </div>
+        
+        <!-- 标签 -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">3-5年经验</span>
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">储能电池行业</span>
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">本科</span>
+        </div>
+        
+        <!-- 公司和地点 -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 12px; color: #333;">
+            宁德时代电池
+          </div>
+          <div style="font-size: 12px; color: #999; display: flex; align-items: center; gap: 4px;">
+            <span>📍</span>
+            <span>上海·黄浦区</span>
+          </div>
+        </div>
+      </div>
+    </a>
+    
+    <!-- 职位卡片3 - C++开发工程师 -->
+    <a href="/jobs/cpp-developer" style="text-decoration: none; color: inherit; display: block;">
+      <div style="
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+      ">
+        <!-- 头部：职位名称 + 薪资 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0; padding: 0;">
+              C++开发工程师
+            </h3>
+            <span style="
+              background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+              color: white;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-size: 10px;
+              font-weight: 600;
+            ">NEW</span>
+          </div>
+          <div style="font-size: 18px; font-weight: 600; color: #1e88e5;">
+            30-45K
+          </div>
+        </div>
+        
+        <!-- 标签 -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">5年经验</span>
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">跨境电商行业</span>
+          <span style="
+            padding: 2px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            background-color: #fafafa;
+          ">本科</span>
+        </div>
+        
+        <!-- 公司和地点 -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 12px; color: #333;">
+            西门子能源有限公司
+          </div>
+          <div style="font-size: 12px; color: #999; display: flex; align-items: center; gap: 4px;">
+            <span>📍</span>
+            <span>上海·闵行区</span>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  
+  <!-- 查看更多按钮 -->
+  <div style="text-align: center; margin-top: 20px;">
+    <a href="/jobs" style="
+      display: inline-block;
+      background: white;
+      color: #1183CD;
+      padding: 0 24px;
+      height: 40px;
+      line-height: 40px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      border: 1px solid #1183CD;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    ">
+      查看更多职位
+    </a>
+  </div>
+</div>
+:::
 
 这是一个普通的段落，包含普通的**粗体文本**和*斜体文本*。
 
@@ -91,202 +369,64 @@ const HtmlTestDemo: React.FC = () => {
   </details>
 </div>
 :::
+`
 
-## 交互按钮测试
-
-:::html
-<div style="text-align: center; margin: 24px 0;">
-  <a href="https://github.com/langgenius/dify" target="_blank" style="
-    display: inline-block;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 16px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-  " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)'">
-    🚀 访问 Dify GitHub
-  </a>
-</div>
-:::
-
-## 职位推荐卡片测试
-
-按照截图样式实现：
-
-:::html
-<div style="background-color: #f5f5f5; padding: 20px; margin: 20px 0;">
-  <!-- 标题部分 -->
-  <div style="margin-bottom: 20px;">
-    <h2 style="font-size: 18px; font-weight: 600; color: #333; margin: 0 0 8px 0;">
-      为您推荐3个职位
-    </h2>
-    <p style="font-size: 14px; color: #999; margin: 0;">
-      根据你的背景和期望匹配
-    </p>
-  </div>
-  
-  <!-- 职位卡片 - 垂直排列 -->
-  <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px;">
-    <!-- 职位卡片1 -->
-    <div style="
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      position: relative;
-    ">
-      <!-- 高度匹配标签 -->
-      <div style="position: absolute; top: 16px; right: 16px;">
-        <span style="
-          background-color: #fff3e0;
-          color: #ff9800;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-        ">高度匹配</span>
-      </div>
-      
-      <div style="margin-right: 80px;">
-        <h3 style="font-size: 16px; font-weight: 600; color: #333; margin: 0 0 8px 0;">
-          算法工程师
-        </h3>
-        
-        <p style="font-size: 14px; color: #333; margin: 0 0 4px 0;">
-          新兴广告科技公司
-        </p>
-        
-        <p style="font-size: 13px; color: #999; margin: 0 0 16px 0;">
-          上海市 · 1天前
-        </p>
-        
-        <p style="font-size: 14px; color: #666; line-height: 1.5; margin: 0;">
-          在这个职位上，你将 设计、开发并优化AI Agent系统，支持广告投放、创意生成、渠道整合等自动化任务。构建基于LLM的agent应用，涵盖context...
-        </p>
-      </div>
-    </div>
-    
-    <!-- 职位卡片2 -->
-    <div style="
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    ">
-      <h3 style="font-size: 16px; font-weight: 600; color: #333; margin: 0 0 8px 0;">
-        应用工程师 - 大模型
-      </h3>
-      
-      <p style="font-size: 14px; color: #333; margin: 0 0 4px 0;">
-        综合型科技公司
-      </p>
-      
-      <p style="font-size: 13px; color: #999; margin: 0 0 16px 0;">
-        上海市 · ¥200现金 · 5天前
-      </p>
-      
-      <p style="font-size: 14px; color: #666; line-height: 1.5; margin: 0;">
-        在这个职位上，你将 负责仿真情境陪伴类机器人的性格设定以及决策逻辑，为智能设备赋予独特个性与智能决策能力。聚焦于AI Agent项目中的大模...
-      </p>
-    </div>
-    
-    <!-- 职位卡片3 -->
-    <div style="
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    ">
-      <h3 style="font-size: 16px; font-weight: 600; color: #333; margin: 0 0 8px 0;">
-        算法工程师
-      </h3>
-      
-      <p style="font-size: 14px; color: #333; margin: 0 0 4px 0;">
-        AI+算法公司
-      </p>
-      
-      <p style="font-size: 13px; color: #999; margin: 0 0 16px 0;">
-        深圳市
-      </p>
-      
-      <p style="font-size: 14px; color: #666; line-height: 1.5; margin: 0;">
-        在这个职位上，你将负责大模型算法研发工作，推进机器学习技术在实际业务中的应用，探索AI技术前沿...
-      </p>
-    </div>
-  </div>
-
-  <!-- 阿里系岗位列表部分 -->
-  <div>
-    <h2 style="font-size: 18px; font-weight: 600; color: #333; margin: 0 0 16px 0;">
-      为你推荐3个阿里系AI初创公司岗位：
-    </h2>
-    
-    <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
-      <div style="line-height: 1.8;">
-        <p style="margin: 0 0 12px 0; font-size: 14px; color: #333;">
-          <strong>1. 算法总监</strong>（深圳）：多模态大模型研发，阿里系团队，管理30+人
-        </p>
-        
-        <p style="margin: 0 0 12px 0; font-size: 14px; color: #333;">
-          <strong>2. 大模型应用工程师</strong>（上海）：Qwen模型优化，前阿里P8带队
-        </p>
-        
-        <p style="margin: 0 0 16px 0; font-size: 14px; color: #333;">
-          <strong>3. 算法工程师</strong>：LLM系统开发，需Function Calling技术栈
-        </p>
-        
-        <p style="font-size: 14px; color: #333; margin: 0; padding-top: 16px; border-top: 1px solid #f0f0f0;">
-          需要哪个岗位的详细职责？
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
-:::
-  `)
+const HtmlTestDemo: React.FC = () => {
+  const { theme } = useTheme()
+  const [testContent, setTestContent] = useLocalStorageState('html-test-content', {
+    defaultValue: DEFAULT_CONTENT,
+  })
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', overflow: 'auto', height: '100vh' }}>
-      <h1>HTML渲染测试Demo</h1>
-      <div><strong>新语法</strong>：使用 <code>:::html</code> ... <code>:::</code> 来包围需要自定义渲染的HTML</div>
-      <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="content-input" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-          测试内容（可编辑）：
-        </label>
-        <textarea
-          id="content-input"
-          value={testContent}
-          onChange={e => setTestContent(e.target.value)}
-          style={{
-            width: '100%',
-            height: '200px',
-            padding: '12px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            fontSize: '14px',
-            fontFamily: 'monospace',
-          }}
-        />
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+      <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+        <h1 className="text-lg font-bold text-gray-900">HTML渲染测试Demo</h1>
+        <Button size='sm' onClick={() => setTestContent(DEFAULT_CONTENT)}>Reset Content</Button>
       </div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* 左侧编辑区域 */}
+        <div className="w-1/2 flex flex-col border-r border-gray-200 bg-white">
+          {/* 编辑器区域 */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Editor
+              defaultLanguage='markdown'
+              theme={theme === Theme.dark ? 'vs-dark' : 'vs'}
+              value={testContent}
+              onChange={value => setTestContent(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineHeight: 24,
+                tabSize: 2,
+                wordWrap: 'on',
+                wrappingIndent: 'same',
+                scrollBeyondLastLine: false,
+                overviewRulerBorder: false,
+                hideCursorInOverviewRuler: true,
+                renderLineHighlight: 'all',
+                scrollbar: {
+                  vertical: 'auto',
+                  horizontal: 'auto',
+                  verticalScrollbarSize: 8,
+                  horizontalScrollbarSize: 8,
+                },
+                padding: { top: 16, bottom: 16 },
+                lineNumbers: 'on',
+                glyphMargin: false,
+                folding: true,
+                automaticLayout: true,
+              }}
+            />
+          </div>
+        </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <h2>渲染结果：</h2>
-        <div style={{
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          padding: '16px',
-          backgroundColor: '#fff',
-        }}>
-          <Markdown content={testContent} />
+        {/* 右侧预览区域 */}
+        <div className="w-1/2 flex flex-col bg-white overflow-auto">
+          <div className="min-h-full p-4">
+            <Markdown content={testContent} />
+          </div>
         </div>
       </div>
-
     </div>
   )
 }
