@@ -22,9 +22,10 @@ import { Button } from '@heroui/react'
 
 type Props = {
   isPanel?: boolean
+  panelVisible?: boolean
 }
 
-const Sidebar = ({ isPanel }: Props) => {
+const Sidebar = ({ isPanel, panelVisible }: Props) => {
   const { t } = useTranslation()
   const {
     isInstalledApp,

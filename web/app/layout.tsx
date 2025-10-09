@@ -3,6 +3,7 @@ import type { Viewport } from 'next'
 import I18nServer from './components/i18n-server'
 import BrowserInitializer from './components/browser-initializer'
 import SentryInitializer from './components/sentry-initializer'
+import Zendesk from './components/base/zendesk'
 import { getLocaleOnServer } from '@/i18n-config/server'
 import { TanstackQueryInitializer } from '@/context/query-client'
 import './styles/globals.css'
@@ -10,6 +11,8 @@ import './styles/markdown.scss'
 import GlobalPublicStoreProvider from '@/context/global-public-context'
 import { DatasetAttr } from '@/types/feature'
 import ThemeProvider from '@/context/theme'
+import { Instrument_Serif } from 'next/font/google'
+import cn from '@/utils/classnames'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -19,7 +22,18 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-const LocaleLayout = async ({ children }: { children: React.ReactNode }) => {
+const instrumentSerif = Instrument_Serif({
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  variable: '--font-instrument-serif',
+})
+
+const LocaleLayout = async ({
+  children,
+}: {
+  children: React.ReactNode
+}) => {
   const locale = await getLocaleOnServer()
 
   const datasetMap: Record<DatasetAttr, string | undefined> = {
@@ -37,61 +51,63 @@ const LocaleLayout = async ({ children }: { children: React.ReactNode }) => {
     [DatasetAttr.DATA_PUBLIC_MAINTENANCE_NOTICE]:
       process.env.NEXT_PUBLIC_MAINTENANCE_NOTICE,
     [DatasetAttr.DATA_PUBLIC_SITE_ABOUT]: process.env.NEXT_PUBLIC_SITE_ABOUT,
-    [DatasetAttr.DATA_PUBLIC_TEXT_GENERATION_TIMEOUT_MS]:
-      process.env.NEXT_PUBLIC_TEXT_GENERATION_TIMEOUT_MS,
-    [DatasetAttr.DATA_PUBLIC_MAX_TOOLS_NUM]:
-      process.env.NEXT_PUBLIC_MAX_TOOLS_NUM,
-    [DatasetAttr.DATA_PUBLIC_MAX_PARALLEL_LIMIT]:
-      process.env.NEXT_PUBLIC_MAX_PARALLEL_LIMIT,
-    [DatasetAttr.DATA_PUBLIC_TOP_K_MAX_VALUE]:
-      process.env.NEXT_PUBLIC_TOP_K_MAX_VALUE,
-    [DatasetAttr.DATA_PUBLIC_INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH]:
-      process.env.NEXT_PUBLIC_INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH,
-    [DatasetAttr.DATA_PUBLIC_LOOP_NODE_MAX_COUNT]:
-      process.env.NEXT_PUBLIC_LOOP_NODE_MAX_COUNT,
-    [DatasetAttr.DATA_PUBLIC_MAX_ITERATIONS_NUM]:
-      process.env.NEXT_PUBLIC_MAX_ITERATIONS_NUM,
-    [DatasetAttr.DATA_PUBLIC_MAX_TREE_DEPTH]:
-      process.env.NEXT_PUBLIC_MAX_TREE_DEPTH,
-    [DatasetAttr.DATA_PUBLIC_ALLOW_UNSAFE_DATA_SCHEME]:
-      process.env.NEXT_PUBLIC_ALLOW_UNSAFE_DATA_SCHEME,
-    [DatasetAttr.DATA_PUBLIC_ENABLE_WEBSITE_JINAREADER]:
-      process.env.NEXT_PUBLIC_ENABLE_WEBSITE_JINAREADER,
-    [DatasetAttr.DATA_PUBLIC_ENABLE_WEBSITE_FIRECRAWL]:
-      process.env.NEXT_PUBLIC_ENABLE_WEBSITE_FIRECRAWL,
-    [DatasetAttr.DATA_PUBLIC_ENABLE_WEBSITE_WATERCRAWL]:
-      process.env.NEXT_PUBLIC_ENABLE_WEBSITE_WATERCRAWL,
+    [DatasetAttr.DATA_PUBLIC_TEXT_GENERATION_TIMEOUT_MS]: process.env.NEXT_PUBLIC_TEXT_GENERATION_TIMEOUT_MS,
+    [DatasetAttr.DATA_PUBLIC_MAX_TOOLS_NUM]: process.env.NEXT_PUBLIC_MAX_TOOLS_NUM,
+    [DatasetAttr.DATA_PUBLIC_MAX_PARALLEL_LIMIT]: process.env.NEXT_PUBLIC_MAX_PARALLEL_LIMIT,
+    [DatasetAttr.DATA_PUBLIC_TOP_K_MAX_VALUE]: process.env.NEXT_PUBLIC_TOP_K_MAX_VALUE,
+    [DatasetAttr.DATA_PUBLIC_INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH]: process.env.NEXT_PUBLIC_INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH,
+    [DatasetAttr.DATA_PUBLIC_LOOP_NODE_MAX_COUNT]: process.env.NEXT_PUBLIC_LOOP_NODE_MAX_COUNT,
+    [DatasetAttr.DATA_PUBLIC_MAX_ITERATIONS_NUM]: process.env.NEXT_PUBLIC_MAX_ITERATIONS_NUM,
+    [DatasetAttr.DATA_PUBLIC_MAX_TREE_DEPTH]: process.env.NEXT_PUBLIC_MAX_TREE_DEPTH,
+    [DatasetAttr.DATA_PUBLIC_ALLOW_UNSAFE_DATA_SCHEME]: process.env.NEXT_PUBLIC_ALLOW_UNSAFE_DATA_SCHEME,
+    [DatasetAttr.DATA_PUBLIC_ENABLE_WEBSITE_JINAREADER]: process.env.NEXT_PUBLIC_ENABLE_WEBSITE_JINAREADER,
+    [DatasetAttr.DATA_PUBLIC_ENABLE_WEBSITE_FIRECRAWL]: process.env.NEXT_PUBLIC_ENABLE_WEBSITE_FIRECRAWL,
+    [DatasetAttr.DATA_PUBLIC_ENABLE_WEBSITE_WATERCRAWL]: process.env.NEXT_PUBLIC_ENABLE_WEBSITE_WATERCRAWL,
+    [DatasetAttr.NEXT_PUBLIC_ZENDESK_WIDGET_KEY]: process.env.NEXT_PUBLIC_ZENDESK_WIDGET_KEY,
+    [DatasetAttr.NEXT_PUBLIC_ZENDESK_FIELD_ID_ENVIRONMENT]: process.env.NEXT_PUBLIC_ZENDESK_FIELD_ID_ENVIRONMENT,
+    [DatasetAttr.NEXT_PUBLIC_ZENDESK_FIELD_ID_VERSION]: process.env.NEXT_PUBLIC_ZENDESK_FIELD_ID_VERSION,
+    [DatasetAttr.NEXT_PUBLIC_ZENDESK_FIELD_ID_EMAIL]: process.env.NEXT_PUBLIC_ZENDESK_FIELD_ID_EMAIL,
+    [DatasetAttr.NEXT_PUBLIC_ZENDESK_FIELD_ID_WORKSPACE_ID]: process.env.NEXT_PUBLIC_ZENDESK_FIELD_ID_WORKSPACE_ID,
+    [DatasetAttr.NEXT_PUBLIC_ZENDESK_FIELD_ID_PLAN]: process.env.NEXT_PUBLIC_ZENDESK_FIELD_ID_PLAN,
   }
 
   return (
-    <html lang={locale ?? 'en'} className="h-full" suppressHydrationWarning>
+    <html lang={locale ?? 'en'} className={cn('h-full', instrumentSerif.variable)} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#FFFFFF" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1C64F2" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Dify" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icon-192x192.png" />
+        <meta name="msapplication-TileColor" content="#1C64F2" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
       <body className="color-scheme h-full select-auto" {...datasetMap}>
-          <ThemeProvider
-            attribute="data-theme"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-            enableColorScheme={false}
-          >
-            <BrowserInitializer>
-              <SentryInitializer>
-                <TanstackQueryInitializer>
-                  <I18nServer>
-                    <GlobalPublicStoreProvider>
-                      {children}
-                    </GlobalPublicStoreProvider>
-                  </I18nServer>
-                </TanstackQueryInitializer>
-              </SentryInitializer>
-            </BrowserInitializer>
-          </ThemeProvider>
+        <ThemeProvider
+          attribute="data-theme"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+          enableColorScheme={false}
+        >
+          <BrowserInitializer>
+            <SentryInitializer>
+              <TanstackQueryInitializer>
+                <I18nServer>
+                  <GlobalPublicStoreProvider>
+                    {children}
+                  </GlobalPublicStoreProvider>
+                </I18nServer>
+              </TanstackQueryInitializer>
+            </SentryInitializer>
+          </BrowserInitializer>
+        </ThemeProvider>
         <RoutePrefixHandle />
+        <Zendesk />
       </body>
     </html>
   )
