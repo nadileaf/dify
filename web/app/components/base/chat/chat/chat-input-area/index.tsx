@@ -108,7 +108,7 @@ const ChatInputArea = ({
     typingSpeed: 80,
     deletingSpeed: 40,
     pauseDuration: 2000,
-    loop: typewriterTexts.length > 1, // 只有多个文本时才循环
+    loop: true, // 始终循环播放
   })
 
   // 当有打字机文本且输入框为空且未聚焦时启动打字机效果
