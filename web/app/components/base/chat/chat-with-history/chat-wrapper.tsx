@@ -192,6 +192,7 @@ const ChatWrapper = () => {
                   minRows={4}
                   autoFocus={false}
                   suggestedQuestions={welcomeMessage?.suggestedQuestions}
+                  webAppDescription={appData?.site.description}
                 />
               </div>
               {welcomeMessage?.suggestedQuestions && welcomeMessage?.suggestedQuestions?.length > 0 && <SuggestedQuestions item={welcomeMessage} isWelcome />}

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -47,6 +48,7 @@ type ChatInputAreaProps = {
   minRows?: number
   autoFocus?: boolean
   suggestedQuestions?: string[]
+  webAppDescription?: string
 }
 const ChatInputArea = ({
   botName,
@@ -65,6 +67,7 @@ const ChatInputArea = ({
   minRows = 2,
   autoFocus = true,
   suggestedQuestions,
+  webAppDescription,
 }: ChatInputAreaProps) => {
   const { t } = useTranslation()
   const { notify } = useToastContext()
@@ -93,30 +96,36 @@ const ChatInputArea = ({
   const isComposingRef = useRef(false)
   const [isFocused, setIsFocused] = useState(false)
 
-  const validSuggestedQuestions = suggestedQuestions?.filter(q => q && q.trim()) || []
+  // 优先使用 web app 描述，没有则使用推荐问题
+  const typewriterTexts = useMemo(() => {
+    if (webAppDescription && webAppDescription.trim())
+      return [webAppDescription.trim()]
+    return suggestedQuestions?.filter(q => q && q.trim()) || []
+  }, [webAppDescription, suggestedQuestions])
+
   const { displayText, isActive, startTypewriter, stopTypewriter } = useTypewriter({
-    texts: validSuggestedQuestions,
+    texts: typewriterTexts,
     typingSpeed: 80,
     deletingSpeed: 40,
     pauseDuration: 2000,
-    loop: true,
+    loop: typewriterTexts.length > 1, // 只有多个文本时才循环
   })
 
-  // 当有推荐问题且输入框为空且未聚焦时启动打字机效果
+  // 当有打字机文本且输入框为空且未聚焦时启动打字机效果
   useEffect(() => {
-    if (validSuggestedQuestions.length > 0 && !query && !isFocused && !isResponding)
+    if (typewriterTexts.length > 0 && !query && !isFocused && !isResponding)
       startTypewriter()
     else
       stopTypewriter()
-  }, [validSuggestedQuestions.length, query, isFocused, isResponding, startTypewriter, stopTypewriter])
+  }, [typewriterTexts.length, query, isFocused, isResponding, startTypewriter, stopTypewriter])
 
   // 获取动态placeholder
   const getDynamicPlaceholder = useCallback(() => {
-    if (validSuggestedQuestions.length > 0 && !query && !isFocused && isActive)
+    if (typewriterTexts.length > 0 && !query && !isFocused && isActive)
       return displayText
     else
       return t('common.chat.inputPlaceholder', { botName }) || ''
-  }, [validSuggestedQuestions.length, query, isFocused, isActive, displayText, t, botName])
+  }, [typewriterTexts.length, query, isFocused, isActive, displayText, t, botName])
   const handleSend = () => {
     if (isResponding) {
       notify({ type: 'info', message: t('appDebug.errorMessage.waitForResponse') })

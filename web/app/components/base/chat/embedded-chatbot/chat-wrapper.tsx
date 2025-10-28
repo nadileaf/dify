@@ -171,35 +171,36 @@ const ChatWrapper = () => {
       return null
 
     return (
-        <div className={cn('flex min-h-[90%] items-center justify-center px-4 py-12')}>
-          <div className='flex max-w-[720px] grow flex-col gap-4'>
-            <BgMascot url={appData?.site.icon_url || ''} />
-            <div className='body-lg-regular grow px-4 py-3 text-text-primary'>
-                <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className='!text-center !text-3xl max-sm:!text-xl' />
-                <div className='my-10'>
-                  <ChatInputArea
-                    botName={appData?.site.title || 'Bot'}
-                    disabled={inputDisabled}
-                    showFeatureBar={false}
-                    showFileUpload={false}
-                    featureBarDisabled={respondingState}
-                    visionConfig={appConfig?.file_upload}
-                    speechToTextConfig={appConfig?.speech_to_text}
-                    onSend={doSend}
-                    inputs={currentConversationId ? currentConversationInputs as any : newConversationInputs}
-                    inputsForm={inputsForms}
-                    theme={themeBuilder?.theme}
-                    isResponding={respondingState}
-                    minRows={4}
-                    autoFocus={false}
-                    suggestedQuestions={welcomeMessage?.suggestedQuestions}
-                  />
-                </div>
-                {welcomeMessage?.suggestedQuestions && welcomeMessage?.suggestedQuestions?.length > 0 && <SuggestedQuestions item={welcomeMessage} isWelcome />}
+      <div className={cn('flex min-h-[90%] items-center justify-center px-4 py-12')}>
+        <div className='flex max-w-[720px] grow flex-col gap-4'>
+          <BgMascot url={appData?.site.icon_url || ''} />
+          <div className='body-lg-regular grow px-4 py-3 text-text-primary'>
+            <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className='!text-center !text-3xl max-sm:!text-xl' />
+            <div className='my-10'>
+              <ChatInputArea
+                botName={appData?.site.title || 'Bot'}
+                disabled={inputDisabled}
+                showFeatureBar={false}
+                showFileUpload={false}
+                featureBarDisabled={respondingState}
+                visionConfig={appConfig?.file_upload}
+                speechToTextConfig={appConfig?.speech_to_text}
+                onSend={doSend}
+                inputs={currentConversationId ? currentConversationInputs as any : newConversationInputs}
+                inputsForm={inputsForms}
+                theme={themeBuilder?.theme}
+                isResponding={respondingState}
+                minRows={4}
+                autoFocus={false}
+                suggestedQuestions={welcomeMessage?.suggestedQuestions}
+                webAppDescription={appData?.site.description}
+              />
             </div>
+            {welcomeMessage?.suggestedQuestions && welcomeMessage?.suggestedQuestions?.length > 0 && <SuggestedQuestions item={welcomeMessage} isWelcome />}
           </div>
         </div>
-      )
+      </div>
+    )
   }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
 
   const answerIcon = isDify()
