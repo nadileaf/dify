@@ -199,6 +199,8 @@ const ChatInputArea = ({
     })
   }, [t, notify])
 
+  const multipleLine = useMemo(() => minRows > 1 || isMultipleLine, [minRows, isMultipleLine])
+
   const operation = (
     <Operation
       ref={holdSpaceRef}
@@ -260,7 +262,7 @@ const ChatInputArea = ({
               />
             </div>
             {
-              !isMultipleLine && operation
+              !multipleLine && operation
             }
           </div>
           {
@@ -273,7 +275,7 @@ const ChatInputArea = ({
           }
         </div>
         {
-          isMultipleLine && (
+          multipleLine && (
             <div className='px-[9px]'>{operation}</div>
           )
         }
