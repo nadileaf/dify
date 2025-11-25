@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Chat from '../chat'
 import type {
   ChatConfig,
@@ -20,7 +20,7 @@ import {
 import LogoAvatar from '@/app/components/base/logo/logo-embedded-chat-avatar'
 import AnswerIcon from '@/app/components/base/answer-icon'
 import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
-import ChatInputArea from '@/app/components/base/chat/chat/chat-input-area'
+import ChatInputWithTags from '@/app/components/base/chat/entity-tags/chat-input-with-tags'
 import { Markdown } from '@/app/components/base/markdown'
 import cn from '@/utils/classnames'
 import type { FileEntity } from '../../file-uploader/types'
@@ -51,7 +51,9 @@ const ChatWrapper = () => {
     setIsResponding,
     allInputsHidden,
     initUserVariables,
+    initialPrompt,
   } = useEmbeddedChatbotContext()
+  const [promptSent, setPromptSent] = useState(false)
   const appConfig = useMemo(() => {
     const config = appParams || {}
 
@@ -147,6 +149,16 @@ const ChatWrapper = () => {
     )
   }, [currentConversationId, currentConversationInputs, newConversationInputs, chatList, handleSend, isInstalledApp, appId, handleNewConversationCompleted])
 
+  useEffect(() => {
+    if (initialPrompt && !promptSent && !currentConversationId && !respondingState && !inputDisabled) {
+      const timer = setTimeout(() => {
+        doSend(initialPrompt, [])
+        setPromptSent(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [initialPrompt, promptSent, currentConversationId, respondingState, inputDisabled, doSend])
+
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
     const parentAnswer = chatList.find(item => item.id === question.parentMessageId)
@@ -177,7 +189,7 @@ const ChatWrapper = () => {
           <div className='body-lg-regular grow px-4 py-3 text-text-primary'>
             <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className='!text-center !text-3xl max-sm:!text-xl' />
             <div className='my-10'>
-              <ChatInputArea
+              <ChatInputWithTags
                 botName={appData?.site.title || 'Bot'}
                 disabled={inputDisabled}
                 showFeatureBar={false}
@@ -194,6 +206,7 @@ const ChatWrapper = () => {
                 autoFocus={false}
                 suggestedQuestions={welcomeMessage?.suggestedQuestions}
                 webAppDescription={appData?.site.description}
+                initialValue={initialPrompt}
               />
             </div>
             {welcomeMessage?.suggestedQuestions && welcomeMessage?.suggestedQuestions?.length > 0 && <SuggestedQuestions item={welcomeMessage} isWelcome />}

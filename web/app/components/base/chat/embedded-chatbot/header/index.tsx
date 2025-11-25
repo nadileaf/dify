@@ -50,11 +50,11 @@ const Header: FC<IHeaderProps> = ({
       }
       if (event.origin !== currentParentOrigin) return
       if (event.data.type === 'dify-chatbot-config') {
- setShowToggleExpandButton(
+        setShowToggleExpandButton(
           event.data.payload.isToggledByButton
             && !event.data.payload.isDraggable,
         )
-}
+      }
     },
     [parentOrigin],
   )
@@ -84,17 +84,17 @@ const Header: FC<IHeaderProps> = ({
   return (
     <div className="flex h-14 shrink-0 items-center justify-between border-b border-divider-subtle p-3">
       <div
-          className="system-md-semibold flex items-center gap-1 truncate"
-        >
-          <Image
-            src={appData?.site.icon_url || ''}
-            alt={title}
-            width={24}
-            height={24}
-            radius='md'
-          />
-          {title}
-        </div>
+        className="system-md-semibold flex items-center gap-1 truncate"
+      >
+        <Image
+          src={appData?.site.icon_url || ''}
+          alt={title}
+          width={24}
+          height={24}
+          radius='md'
+        />
+        {title}
+      </div>
       <div className="flex items-center gap-1">
 
         {showToggleExpandButton && (

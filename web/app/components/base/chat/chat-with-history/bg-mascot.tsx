@@ -8,7 +8,7 @@ export default function BgMascot({
 }) {
   return (
     <div className='relative flex justify-center'>
-      <div className='absolute -top-10 left-0 right-0 z-[0] m-auto max-w-full grayscale-[1]'>
+      <div className='absolute -top-10 left-0 right-0 z-[-1] m-auto max-w-full grayscale-[1]'>
         <DotLottieReact
           src="https://cdn-fe.mesoor.com/chat/login-circle.json"
           loop

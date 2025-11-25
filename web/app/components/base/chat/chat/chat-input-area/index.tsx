@@ -49,6 +49,7 @@ type ChatInputAreaProps = {
   autoFocus?: boolean
   suggestedQuestions?: string[]
   webAppDescription?: string
+  initialValue?: string
 }
 const ChatInputArea = ({
   botName,
@@ -68,6 +69,7 @@ const ChatInputArea = ({
   autoFocus = true,
   suggestedQuestions,
   webAppDescription,
+  initialValue,
 }: ChatInputAreaProps) => {
   const { t } = useTranslation()
   const { notify } = useToastContext()
@@ -79,8 +81,13 @@ const ChatInputArea = ({
     handleTextareaResize,
     isMultipleLine,
   } = useTextAreaHeight()
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(initialValue || '')
   const [showVoiceInput, setShowVoiceInput] = useState(false)
+
+  useEffect(() => {
+    if (initialValue)
+      setQuery(initialValue)
+  }, [initialValue])
   const filesStore = useFileStore()
   const {
     handleDragFileEnter,

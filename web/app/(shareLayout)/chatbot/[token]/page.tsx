@@ -1,12 +1,12 @@
 'use client'
 import React from 'react'
-import EmbeddedChatbot from '@/app/components/base/chat/embedded-chatbot'
+import EmbeddedChatbotWithQueryParams from '@/app/components/base/chat/embedded-chatbot/with-query-params'
 import AuthenticatedLayout from '../../components/authenticated-layout'
 
 const Chatbot = () => {
   return (
     <AuthenticatedLayout>
-      <EmbeddedChatbot />
+      <EmbeddedChatbotWithQueryParams />
     </AuthenticatedLayout>
   )
 }

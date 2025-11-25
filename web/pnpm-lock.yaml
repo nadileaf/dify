@@ -127,6 +127,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.60.5
         version: 5.83.0(@tanstack/react-query@5.83.0(react@19.1.1))(react@19.1.1)
+      '@types/react-mentions':
+        specifier: ^4.4.1
+        version: 4.4.1
       abcjs:
         specifier: ^6.5.2
         version: 6.5.2
@@ -265,6 +268,9 @@ importers:
       react-markdown:
         specifier: ^9.0.1
         version: 9.1.0(@types/react@19.1.11)(react@19.1.1)
+      react-mentions:
+        specifier: ^4.4.10
+        version: 4.4.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react-multi-email:
         specifier: ^1.0.25
         version: 1.0.25(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -1258,6 +1264,9 @@ packages:
   '@babel/runtime@7.28.4':
     resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.4.5':
+    resolution: {integrity: sha512-TuI4qpWZP6lGOGIuGWtp9sPluqYICmbk8T/1vpSysqJxRPkudh/ofFWyqdcMsDf2s7KvDL4/YHgKyvcS3g9CJQ==}
 
   '@babel/template@7.27.2':
     resolution: {integrity: sha512-LPDZ85aEJyYSd18/DkjNh4/y1ntkE5KwUHWTiqgRxruuZL2F1yuHligVHLvcHY2vMHXttKFpJn6LwfI7cw7ODw==}
@@ -4661,6 +4670,9 @@ packages:
     peerDependencies:
       '@types/react': 19.1.11
 
+  '@types/react-mentions@4.4.1':
+    resolution: {integrity: sha512-65QdcZYkGe2I4GnOLY2OhlXCGz/Csd8NhytwE5r59CoFeYafMltAE/WqFB/Y6SoPU8LvF7EyUrq6Rxrf0Kzxkg==}
+
   '@types/react-slider@1.3.6':
     resolution: {integrity: sha512-RS8XN5O159YQ6tu3tGZIQz1/9StMLTg/FCIPxwqh2gwVixJnlfIodtVx+fpXVMZHe7A58lAX1Q4XTgAGOQaCQg==}
 
@@ -7035,6 +7047,9 @@ packages:
   intl-messageformat@10.7.16:
     resolution: {integrity: sha512-UmdmHUmp5CIKKjSoE10la5yfU+AYJAaiYLsodbjL4lji83JNvgOQUjGaGhGrpFCb0Uh7sl7qfP1IyILa8Z40ug==}
 
+  invariant@2.2.4:
+    resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
+
   is-alphabetical@1.0.4:
     resolution: {integrity: sha512-DwzsA04LQ10FHTZuL0/grVDk4rFoVH1pjAToYwBrHSxcrBIGQuXrQMtD5U1b0U2XVgKZCTLLP8u2Qxqhy3l2Vg==}
 
@@ -8618,6 +8633,12 @@ packages:
       '@types/react': 19.1.11
       react: '>=18'
 
+  react-mentions@4.4.10:
+    resolution: {integrity: sha512-JHiQlgF1oSZR7VYPjq32wy97z1w1oE4x10EuhKjPr4WUKhVzG1uFQhQjKqjQkbVqJrmahf+ldgBTv36NrkpKpA==}
+    peerDependencies:
+      react: '>=16.8.3'
+      react-dom: '>=16.8.3'
+
   react-multi-email@1.0.25:
     resolution: {integrity: sha512-Wmv28FvIk4nWgdpHzlIPonY4iSs7bPV35+fAiWYzSBhTo+vhXfglEhjY1WnjHQINW/Pibu2xlb/q1heVuytQHQ==}
     peerDependencies:
@@ -8774,6 +8795,9 @@ packages:
 
   regenerate@1.4.2:
     resolution: {integrity: sha512-zrceR/XhGYU/d/opr2EKO7aRHUeiBI8qjtfHqADTwZd6Szfy16la6kqD0MIUs5z5hx6AaKa+PixpPrR289+I0A==}
+
+  regenerator-runtime@0.13.11:
+    resolution: {integrity: sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==}
 
   regex-parser@2.3.1:
     resolution: {integrity: sha512-yXLRqatcCuKtVHsWrNg0JL3l1zGfdXeEvDa0bdu4tCDQw0RpMDZsqbkyRTUnKMR0tXF627V2oEWjBEaEdqTwtQ==}
@@ -9264,6 +9288,11 @@ packages:
 
   stylis@4.3.6:
     resolution: {integrity: sha512-yQ3rwFWRfwNUY7H5vpU0wfdkNSnvnJinhF9830Swlaxl03zsOjCfmX0ugac+3LtK0lYSgwL/KXc8oYL3mG4YFQ==}
+
+  substyle@9.4.1:
+    resolution: {integrity: sha512-VOngeq/W1/UkxiGzeqVvDbGDPM8XgUyJVWjrqeh+GgKqspEPiLYndK+XRcsKUHM5Muz/++1ctJ1QCF/OqRiKWA==}
+    peerDependencies:
+      react: '>=16.8.3'
 
   sucrase@3.35.0:
     resolution: {integrity: sha512-8EbVDiu9iN/nESwxeSxDKe0dunta1GOlHufmSSXxMD2z2/tMZpDMpvXQGsc+ajGo8y2uYUmixaSRUc/QPoQ0GA==}
@@ -10917,6 +10946,10 @@ snapshots:
   '@babel/runtime@7.27.6': {}
 
   '@babel/runtime@7.28.4': {}
+
+  '@babel/runtime@7.4.5':
+    dependencies:
+      regenerator-runtime: 0.13.11
 
   '@babel/template@7.27.2':
     dependencies:
@@ -15619,6 +15652,10 @@ snapshots:
     dependencies:
       '@types/react': 19.1.11
 
+  '@types/react-mentions@4.4.1':
+    dependencies:
+      '@types/react': 19.1.11
+
   '@types/react-slider@1.3.6':
     dependencies:
       '@types/react': 19.1.11
@@ -18446,6 +18483,10 @@ snapshots:
       '@formatjs/icu-messageformat-parser': 2.11.2
       tslib: 2.8.1
 
+  invariant@2.2.4:
+    dependencies:
+      loose-envify: 1.4.0
+
   is-alphabetical@1.0.4: {}
 
   is-alphabetical@2.0.1: {}
@@ -20555,6 +20596,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  react-mentions@4.4.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      '@babel/runtime': 7.4.5
+      invariant: 2.2.4
+      prop-types: 15.8.1
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+      substyle: 9.4.1(react@19.1.1)
+
   react-multi-email@1.0.25(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
       react: 19.1.1
@@ -20765,6 +20815,8 @@ snapshots:
       regenerate: 1.4.2
 
   regenerate@1.4.2: {}
+
+  regenerator-runtime@0.13.11: {}
 
   regex-parser@2.3.1: {}
 
@@ -21315,6 +21367,12 @@ snapshots:
       '@babel/core': 7.28.3
 
   stylis@4.3.6: {}
+
+  substyle@9.4.1(react@19.1.1):
+    dependencies:
+      '@babel/runtime': 7.28.4
+      invariant: 2.2.4
+      react: 19.1.1
 
   sucrase@3.35.0:
     dependencies:
@@ -21919,7 +21977,7 @@ snapshots:
       '@apideck/better-ajv-errors': 0.3.6(ajv@8.17.1)
       '@babel/core': 7.28.3
       '@babel/preset-env': 7.28.3(@babel/core@7.28.3)
-      '@babel/runtime': 7.27.6
+      '@babel/runtime': 7.28.4
       '@rollup/plugin-babel': 5.3.1(@babel/core@7.28.3)(@types/babel__core@7.20.5)(rollup@2.79.2)
       '@rollup/plugin-node-resolve': 11.2.1(rollup@2.79.2)
       '@rollup/plugin-replace': 2.4.2(rollup@2.79.2)

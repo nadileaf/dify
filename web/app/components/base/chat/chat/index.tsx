@@ -22,7 +22,7 @@ import type {
 import type { ThemeBuilder } from '../embedded-chatbot/theme/theme-context'
 import Question from './question'
 import Answer from './answer'
-import ChatInputArea from './chat-input-area'
+import ChatInputWithTags from '../entity-tags/chat-input-with-tags'
 import TryToAsk from './try-to-ask'
 import { ChatContextProvider } from './context'
 import type { InputForm } from './type'
@@ -307,7 +307,7 @@ const Chat: FC<ChatProps> = ({
             }
             {
               !noChatInput && (
-                <ChatInputArea
+                <ChatInputWithTags
                   botName={appData?.site.title || 'Bot'}
                   disabled={inputDisabled}
                   showFeatureBar={showFeatureBar}

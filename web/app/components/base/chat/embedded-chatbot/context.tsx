@@ -56,6 +56,9 @@ export type EmbeddedChatbotContextValue = {
     name?: string
     avatar_url?: string
   }
+  initialPrompt?: string
+  hideTitle?: boolean
+  backgroundColor?: string
 }
 
 export const EmbeddedChatbotContext = createContext<EmbeddedChatbotContextValue>({
@@ -86,5 +89,8 @@ export const EmbeddedChatbotContext = createContext<EmbeddedChatbotContextValue>
   setCurrentConversationInputs: noop,
   allInputsHidden: false,
   initUserVariables: {},
+  initialPrompt: undefined,
+  hideTitle: false,
+  backgroundColor: undefined,
 })
 export const useEmbeddedChatbotContext = () => useContext(EmbeddedChatbotContext)

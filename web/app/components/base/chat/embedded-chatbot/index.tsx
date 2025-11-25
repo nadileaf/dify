@@ -28,6 +28,8 @@ const Chatbot = () => {
     handleNewConversation,
     themeBuilder,
     currentConversationId,
+    hideTitle,
+    backgroundColor,
   } = useEmbeddedChatbotContext()
   // const { t } = useTranslation()
   // const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
@@ -43,21 +45,31 @@ const Chatbot = () => {
 
   useDocumentTitle(site?.title || 'Chat')
 
+  const bgStyle = backgroundColor
+    ? { backgroundColor }
+    : undefined
+
+  const bgClassName = backgroundColor
+    ? undefined
+    : (currentConversationId ? 'bg-white' : 'bg-gradient-to-b from-[#F6F5F2] to-[#F7F5F2]')
+
   return (
-    <div className={cn('relative z-[1]', currentConversationId ? 'bg-white' : 'bg-gradient-to-b from-[#F6F5F2] to-[#F7F5F2]')}>
-      {!currentConversationId && <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />}
+    <div className={cn('relative z-[1]', bgClassName)} style={bgStyle}>
+      {!currentConversationId && !backgroundColor && <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />}
       <div
         className={cn(
           'flex flex-col border border-components-panel-border-subtle', 'h-[100vh] ',
         )}
       >
-        <Header
-          isMobile={isMobile}
-          allowResetChat={allowResetChat}
-          title={site?.title || ''}
-          theme={themeBuilder?.theme}
-          onCreateNewChat={handleNewConversation}
-        />
+        {!hideTitle && (
+          <Header
+            isMobile={isMobile}
+            allowResetChat={allowResetChat}
+            title={site?.title || ''}
+            theme={themeBuilder?.theme}
+            onCreateNewChat={handleNewConversation}
+          />
+        )}
         <div className={cn('flex grow flex-col overflow-y-auto')}>
           {appChatListDataLoading && (
             <Loading type='app' />
@@ -72,7 +84,13 @@ const Chatbot = () => {
   )
 }
 
-const EmbeddedChatbotWrapper = () => {
+export type EmbeddedChatbotWrapperProps = {
+  initialPrompt?: string
+  hideTitle?: boolean
+  backgroundColor?: string
+}
+
+const EmbeddedChatbotWrapper = ({ initialPrompt, hideTitle, backgroundColor }: EmbeddedChatbotWrapperProps) => {
   const media = useBreakpoints()
   const isMobile = media === MediaType.mobile
   const themeBuilder = useThemeContext()
@@ -147,13 +165,20 @@ const EmbeddedChatbotWrapper = () => {
     setCurrentConversationInputs,
     allInputsHidden,
     initUserVariables,
+    initialPrompt,
+    hideTitle,
+    backgroundColor,
   }}>
     <Chatbot />
   </EmbeddedChatbotContext.Provider>
 }
 
-const EmbeddedChatbot = () => {
-  return <EmbeddedChatbotWrapper />
+const EmbeddedChatbot = ({ initialPrompt, hideTitle, backgroundColor }: EmbeddedChatbotWrapperProps = {}) => {
+  return <EmbeddedChatbotWrapper
+    initialPrompt={initialPrompt}
+    hideTitle={hideTitle}
+    backgroundColor={backgroundColor}
+  />
 }
 
 export default EmbeddedChatbot
