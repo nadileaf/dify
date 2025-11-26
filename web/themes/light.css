@@ -255,7 +255,7 @@ html[data-theme="light"] {
   --color-components-chat-input-audio-wave-default: rgb(21 90 239 / 0.2);
   --color-components-chat-input-bg-mask-1: rgb(255 255 255 / 0.01);
   --color-components-chat-input-bg-mask-2: #f2f4f7;
-  --color-components-chat-input-border: #ffffff;
+  --color-components-chat-input-border: #f2f4f7;
   --color-components-chat-input-audio-wave-active: #296dff;
   --color-components-chat-input-audio-bg-alt: #fcfcfd;
 
@@ -401,7 +401,7 @@ html[data-theme="light"] {
   --color-background-gradient-mask-side-panel-2: rgb(16 24 40 / 0.3);
   --color-background-gradient-mask-side-panel-1: rgb(16 24 40 / 0.02);
 
-  --color-background-default-burn: #e9ebf0;
+  --color-background-default-burn: #f9f9f9;
   --color-background-overlay-fullscreen: rgb(249 250 251 / 0.95);
   --color-background-default-lighter: rgb(255 255 255 / 0.5);
   --color-background-section: #f9fafb;
@@ -417,6 +417,7 @@ html[data-theme="light"] {
   --color-background-overlay-destructive: rgb(240 68 56 / 0.3);
   --color-background-overlay-backdrop: rgb(242 244 247 / 0.95);
   --color-background-body-transparent: rgb(242 244 247 / 0);
+  --color-background-section-burn-inverted: #f2f4f7;
 
   --color-shadow-shadow-1: rgb(9 9 11 / 0.03);
   --color-shadow-shadow-3: rgb(9 9 11 / 0.05);

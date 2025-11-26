@@ -1,5 +1,7 @@
 import {
   useCallback,
+  useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -14,6 +16,7 @@ import type { Theme } from '../../embedded-chatbot/theme/theme-context'
 import type { InputForm } from '../type'
 import { useCheckInputsForms } from '../check-input-forms-hooks'
 import { useTextAreaHeight } from './hooks'
+import { useTypewriter } from './hooks/use-typewriter'
 import Operation from './operation'
 import cn from '@/utils/classnames'
 import { FileListInChatInput } from '@/app/components/base/file-uploader'
@@ -42,6 +45,11 @@ type ChatInputAreaProps = {
   theme?: Theme | null
   isResponding?: boolean
   disabled?: boolean
+  minRows?: number
+  autoFocus?: boolean
+  suggestedQuestions?: string[]
+  webAppDescription?: string
+  initialValue?: string
 }
 const ChatInputArea = ({
   botName,
@@ -57,6 +65,11 @@ const ChatInputArea = ({
   theme,
   isResponding,
   disabled,
+  minRows = 2,
+  autoFocus = true,
+  suggestedQuestions,
+  webAppDescription,
+  initialValue,
 }: ChatInputAreaProps) => {
   const { t } = useTranslation()
   const { notify } = useToastContext()
@@ -68,8 +81,13 @@ const ChatInputArea = ({
     handleTextareaResize,
     isMultipleLine,
   } = useTextAreaHeight()
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(initialValue || '')
   const [showVoiceInput, setShowVoiceInput] = useState(false)
+
+  useEffect(() => {
+    if (initialValue)
+      setQuery(initialValue)
+  }, [initialValue])
   const filesStore = useFileStore()
   const {
     handleDragFileEnter,
@@ -83,6 +101,37 @@ const ChatInputArea = ({
   const historyRef = useRef([''])
   const [currentIndex, setCurrentIndex] = useState(-1)
   const isComposingRef = useRef(false)
+  const [isFocused, setIsFocused] = useState(false)
+
+  // 优先使用 web app 描述，没有则使用推荐问题
+  const typewriterTexts = useMemo(() => {
+    if (webAppDescription && webAppDescription.trim())
+      return [webAppDescription.trim()]
+    return suggestedQuestions?.filter(q => q && q.trim()) || []
+  }, [webAppDescription, suggestedQuestions])
+
+  const { displayText, isActive, startTypewriter, stopTypewriter } = useTypewriter({
+    texts: typewriterTexts,
+    typingSpeed: 80,
+    pauseDuration: 2000,
+    loop: true,
+  })
+
+  // 当有打字机文本且输入框为空且未聚焦时启动打字机效果
+  useEffect(() => {
+    if (typewriterTexts.length > 0 && !query && !isFocused && !isResponding)
+      startTypewriter()
+    else
+      stopTypewriter()
+  }, [typewriterTexts.length, query, isFocused, isResponding, startTypewriter, stopTypewriter])
+
+  // 获取动态placeholder
+  const getDynamicPlaceholder = useCallback(() => {
+    if (typewriterTexts.length > 0 && !query && !isFocused && isActive)
+      return displayText
+    else
+      return t('common.chat.inputPlaceholder', { botName }) || ''
+  }, [typewriterTexts.length, query, isFocused, isActive, displayText, t, botName])
   const handleSend = () => {
     if (isResponding) {
       notify({ type: 'info', message: t('appDebug.errorMessage.waitForResponse') })
@@ -156,6 +205,8 @@ const ChatInputArea = ({
     })
   }, [t, notify])
 
+  const multipleLine = useMemo(() => minRows > 1 || isMultipleLine, [minRows, isMultipleLine])
+
   const operation = (
     <Operation
       ref={holdSpaceRef}
@@ -171,16 +222,17 @@ const ChatInputArea = ({
     <>
       <div
         className={cn(
-          'relative z-10 rounded-xl border border-components-chat-input-border bg-components-panel-bg-blur pb-[9px] shadow-md',
+          'relative z-10 rounded-xl border border-components-chat-input-border bg-components-panel-bg-blur pb-[9px] shadow-md transition-all',
           isDragActive && 'border border-dashed border-components-option-card-option-selected-border',
           disabled && 'pointer-events-none border-components-panel-border opacity-50 shadow-none',
+          isFocused && '!border-primary-400 shadow-xl',
         )}
       >
         <div className='relative max-h-[158px] overflow-y-auto overflow-x-hidden px-[9px] pt-[9px]'>
           <FileListInChatInput fileConfig={visionConfig!} />
           <div
             ref={wrapperRef}
-            className='flex items-center justify-between'
+            className='flex items-end justify-between'
           >
             <div className='relative flex w-full grow items-center'>
               <div
@@ -194,14 +246,14 @@ const ChatInputArea = ({
                 className={cn(
                   'body-lg-regular w-full resize-none bg-transparent p-1 leading-6 text-text-primary outline-none',
                 )}
-                placeholder={t('common.chat.inputPlaceholder', { botName }) || ''}
-                autoFocus
-                minRows={1}
+                placeholder={getDynamicPlaceholder()}
+                autoFocus={autoFocus}
+                minRows={minRows}
                 onResize={handleTextareaResize}
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value)
-                  setTimeout(handleTextareaResize, 0)
+                  // setTimeout(handleTextareaResize, 0)
                 }}
                 onKeyDown={handleKeyDown}
                 onCompositionStart={handleCompositionStart}
@@ -211,10 +263,12 @@ const ChatInputArea = ({
                 onDragLeave={handleDragFileLeave}
                 onDragOver={handleDragFileOver}
                 onDrop={handleDropFile}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
               />
             </div>
             {
-              !isMultipleLine && operation
+              !multipleLine && operation
             }
           </div>
           {
@@ -227,7 +281,7 @@ const ChatInputArea = ({
           }
         </div>
         {
-          isMultipleLine && (
+          multipleLine && (
             <div className='px-[9px]'>{operation}</div>
           )
         }

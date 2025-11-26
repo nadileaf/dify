@@ -22,7 +22,7 @@ import type {
 import type { ThemeBuilder } from '../embedded-chatbot/theme/theme-context'
 import Question from './question'
 import Answer from './answer'
-import ChatInputArea from './chat-input-area'
+import ChatInputWithTags from '../entity-tags/chat-input-with-tags'
 import TryToAsk from './try-to-ask'
 import { ChatContextProvider } from './context'
 import type { InputForm } from './type'
@@ -160,8 +160,13 @@ const Chat: FC<ChatProps> = ({
   })
 
   useEffect(() => {
-    window.addEventListener('resize', debounce(handleWindowResize))
-    return () => window.removeEventListener('resize', handleWindowResize)
+    const debouncedHandler = debounce(handleWindowResize, 200)
+    window.addEventListener('resize', debouncedHandler)
+
+    return () => {
+      window.removeEventListener('resize', debouncedHandler)
+      debouncedHandler.cancel()
+    }
   }, [handleWindowResize])
 
   useEffect(() => {
@@ -274,7 +279,7 @@ const Chat: FC<ChatProps> = ({
           </div>
         </div>
         <div
-          className={`absolute bottom-0 z-10 flex justify-center bg-chat-input-mask ${(hasTryToAsk || !noChatInput || !noStopResponding) && chatFooterClassName}`}
+          className={`absolute bottom-0 z-10 flex justify-center ${(hasTryToAsk || !noChatInput || !noStopResponding) && chatFooterClassName}`}
           ref={chatFooterRef}
         >
           <div
@@ -302,7 +307,7 @@ const Chat: FC<ChatProps> = ({
             }
             {
               !noChatInput && (
-                <ChatInputArea
+                <ChatInputWithTags
                   botName={appData?.site.title || 'Bot'}
                   disabled={inputDisabled}
                   showFeatureBar={showFeatureBar}

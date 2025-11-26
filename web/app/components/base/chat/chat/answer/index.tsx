@@ -18,7 +18,6 @@ import LoadingAnim from '@/app/components/base/chat/chat/loading-anim'
 import Citation from '@/app/components/base/chat/chat/citation'
 import { EditTitle } from '@/app/components/app/annotation/edit-annotation-modal/edit-item'
 import type { AppData } from '@/models/share'
-import AnswerIcon from '@/app/components/base/answer-icon'
 import cn from '@/utils/classnames'
 import { FileList } from '@/app/components/base/file-uploader'
 import ContentSwitch from '../content-switch'
@@ -101,60 +100,33 @@ const Answer: FC<AnswerProps> = ({
   }, [])
 
   const handleSwitchSibling = useCallback((direction: 'prev' | 'next') => {
-    if (direction === 'prev')
-      item.prevSibling && switchSibling?.(item.prevSibling)
-    else
-      item.nextSibling && switchSibling?.(item.nextSibling)
+    if (direction === 'prev') {
+      if (item.prevSibling)
+        switchSibling?.(item.prevSibling)
+    }
+    else {
+      if (item.nextSibling)
+        switchSibling?.(item.nextSibling)
+    }
   }, [switchSibling, item.prevSibling, item.nextSibling])
 
   return (
     <div className='mb-2 flex last:mb-0'>
-      <div className='relative h-10 w-10 shrink-0'>
-        {answerIcon || <AnswerIcon />}
-        {responding && (
-          <div className='absolute left-[-3px] top-[-3px] flex h-4 w-4 items-center rounded-full border-[0.5px] border-divider-subtle bg-background-section-burn pl-[6px] shadow-xs'>
-            <LoadingAnim type='avatar' />
-          </div>
-        )}
-      </div>
-      <div className='chat-answer-container group ml-4 w-0 grow pb-4' ref={containerRef}>
+      <div className='chat-answer-container group w-0 grow pb-4' ref={containerRef}>
         <div className={cn('group relative pr-10', chatAnswerContainerInner)}>
           <div
             ref={contentRef}
-            className={cn('body-lg-regular relative inline-block max-w-full rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary', workflowProcess && 'w-full')}
+            className={cn('relative inline-block max-w-full rounded-2xl px-4 py-3 text-text-primary', workflowProcess && 'w-full')}
           >
-            {
-              !responding && (
-                <Operation
-                  hasWorkflowProcess={!!workflowProcess}
-                  maxSize={containerWidth - contentWidth - 4}
-                  contentWidth={contentWidth}
-                  item={item}
-                  question={question}
-                  index={index}
-                  showPromptLog={showPromptLog}
-                  noChatInput={noChatInput}
-                />
-              )
-            }
+
             {/** Render the normal steps */}
             {
-              workflowProcess && !hideProcessDetail && (
+              workflowProcess && (
                 <WorkflowProcessItem
                   data={workflowProcess}
                   item={item}
                   hideProcessDetail={hideProcessDetail}
-                />
-              )
-            }
-            {/** Hide workflow steps by it's settings in siteInfo */}
-            {
-              workflowProcess && hideProcessDetail && appData && (
-                <WorkflowProcessItem
-                  data={workflowProcess}
-                  item={item}
-                  hideProcessDetail={hideProcessDetail}
-                  readonly={!appData.site.show_workflow_steps}
+                  readonly={hideProcessDetail && appData ? !appData.site.show_workflow_steps : undefined}
                 />
               )
             }
@@ -227,6 +199,20 @@ const Answer: FC<AnswerProps> = ({
               )
             }
           </div>
+          {
+            !responding && (
+              <Operation
+                hasWorkflowProcess={!!workflowProcess}
+                maxSize={containerWidth - contentWidth - 4}
+                contentWidth={contentWidth}
+                item={item}
+                question={question}
+                index={index}
+                showPromptLog={showPromptLog}
+                noChatInput={noChatInput}
+              />
+            )
+          }
         </div>
         <More more={more} />
       </div>

@@ -2,24 +2,21 @@
 import {
   useEffect,
 } from 'react'
-import { useTranslation } from 'react-i18next'
+// import { useTranslation } from 'react-i18next'
 import {
   EmbeddedChatbotContext,
   useEmbeddedChatbotContext,
 } from './context'
 import { useEmbeddedChatbot } from './hooks'
-import { isDify } from './utils'
 import { useThemeContext } from './theme/theme-context'
-import { CssTransform } from './theme/utils'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import Loading from '@/app/components/base/loading'
-import LogoHeader from '@/app/components/base/logo/logo-embedded-chat-header'
+// import LogoHeader from '@/app/components/base/logo/logo-embedded-chat-header'
 import Header from '@/app/components/base/chat/embedded-chatbot/header'
 import ChatWrapper from '@/app/components/base/chat/embedded-chatbot/chat-wrapper'
-import DifyLogo from '@/app/components/base/logo/dify-logo'
 import cn from '@/utils/classnames'
 import useDocumentTitle from '@/hooks/use-document-title'
-import { useGlobalPublicStore } from '@/context/global-public-context'
+// import { useGlobalPublicStore } from '@/context/global-public-context'
 
 const Chatbot = () => {
   const {
@@ -30,14 +27,17 @@ const Chatbot = () => {
     chatShouldReloadKey,
     handleNewConversation,
     themeBuilder,
+    currentConversationId,
+    hideTitle,
+    backgroundColor,
   } = useEmbeddedChatbotContext()
-  const { t } = useTranslation()
-  const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
+  // const { t } = useTranslation()
+  // const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
 
   const customConfig = appData?.custom_config
   const site = appData?.site
 
-  const difyIcon = <LogoHeader />
+  // const difyIcon = <LogoHeader />
 
   useEffect(() => {
     themeBuilder?.buildTheme(site?.chat_color_theme, site?.chat_color_theme_inverted)
@@ -45,24 +45,32 @@ const Chatbot = () => {
 
   useDocumentTitle(site?.title || 'Chat')
 
+  const bgStyle = backgroundColor
+    ? { backgroundColor }
+    : undefined
+
+  const bgClassName = backgroundColor
+    ? undefined
+    : (currentConversationId ? 'bg-white' : 'bg-gradient-to-b from-[#F6F5F2] to-[#F7F5F2]')
+
   return (
-    <div className='relative'>
+    <div className={cn('relative z-[1]', bgClassName)} style={bgStyle}>
+      {!currentConversationId && !backgroundColor && <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />}
       <div
         className={cn(
-          'flex flex-col rounded-2xl border border-components-panel-border-subtle',
-          isMobile ? 'h-[calc(100vh_-_60px)] border-[0.5px] border-components-panel-border shadow-xs' : 'h-[100vh] bg-chatbot-bg',
+          'flex flex-col border border-components-panel-border-subtle', 'h-[100vh] ',
         )}
-        style={isMobile ? Object.assign({}, CssTransform(themeBuilder?.theme?.backgroundHeaderColorStyle ?? '')) : {}}
       >
-        <Header
-          isMobile={isMobile}
-          allowResetChat={allowResetChat}
-          title={site?.title || ''}
-          customerIcon={isDify() ? difyIcon : ''}
-          theme={themeBuilder?.theme}
-          onCreateNewChat={handleNewConversation}
-        />
-        <div className={cn('flex grow flex-col overflow-y-auto', isMobile && '!h-[calc(100vh_-_3rem)] rounded-2xl bg-chatbot-bg')}>
+        {!hideTitle && (
+          <Header
+            isMobile={isMobile}
+            allowResetChat={allowResetChat}
+            title={site?.title || ''}
+            theme={themeBuilder?.theme}
+            onCreateNewChat={handleNewConversation}
+          />
+        )}
+        <div className={cn('flex grow flex-col overflow-y-auto')}>
           {appChatListDataLoading && (
             <Loading type='app' />
           )}
@@ -71,30 +79,18 @@ const Chatbot = () => {
           )}
         </div>
       </div>
-      {/* powered by */}
-      {isMobile && (
-        <div className='flex h-[60px] shrink-0 items-center pl-2'>
-          {!appData?.custom_config?.remove_webapp_brand && (
-            <div className={cn(
-              'flex shrink-0 items-center gap-1.5 px-2',
-            )}>
-              <div className='system-2xs-medium-uppercase text-text-tertiary'>{t('share.chat.poweredBy')}</div>
-              {
-                systemFeatures.branding.enabled && systemFeatures.branding.workspace_logo
-                  ? <img src={systemFeatures.branding.workspace_logo} alt='logo' className='block h-5 w-auto' />
-                  : appData?.custom_config?.replace_webapp_logo
-                    ? <img src={`${appData?.custom_config?.replace_webapp_logo}`} alt='logo' className='block h-5 w-auto' />
-                    : <DifyLogo size='small' />
-              }
-            </div>
-          )}
-        </div>
-      )}
+
     </div>
   )
 }
 
-const EmbeddedChatbotWrapper = () => {
+export type EmbeddedChatbotWrapperProps = {
+  initialPrompt?: string
+  hideTitle?: boolean
+  backgroundColor?: string
+}
+
+const EmbeddedChatbotWrapper = ({ initialPrompt, hideTitle, backgroundColor }: EmbeddedChatbotWrapperProps) => {
   const media = useBreakpoints()
   const isMobile = media === MediaType.mobile
   const themeBuilder = useThemeContext()
@@ -169,13 +165,20 @@ const EmbeddedChatbotWrapper = () => {
     setCurrentConversationInputs,
     allInputsHidden,
     initUserVariables,
+    initialPrompt,
+    hideTitle,
+    backgroundColor,
   }}>
     <Chatbot />
   </EmbeddedChatbotContext.Provider>
 }
 
-const EmbeddedChatbot = () => {
-  return <EmbeddedChatbotWrapper />
+const EmbeddedChatbot = ({ initialPrompt, hideTitle, backgroundColor }: EmbeddedChatbotWrapperProps = {}) => {
+  return <EmbeddedChatbotWrapper
+    initialPrompt={initialPrompt}
+    hideTitle={hideTitle}
+    backgroundColor={backgroundColor}
+  />
 }
 
 export default EmbeddedChatbot

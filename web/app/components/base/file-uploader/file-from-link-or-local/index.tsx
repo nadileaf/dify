@@ -13,9 +13,9 @@ import {
   PortalToFollowElemContent,
   PortalToFollowElemTrigger,
 } from '@/app/components/base/portal-to-follow-elem'
-import Button from '@/app/components/base/button'
 import type { FileUpload } from '@/app/components/base/features/types'
 import cn from '@/utils/classnames'
+import { Button } from '@heroui/react'
 
 type FileFromLinkOrLocalProps = {
   showFromLink?: boolean
@@ -80,8 +80,7 @@ const FileFromLinkOrLocal = ({
                   />
                   <Button
                     className='shrink-0'
-                    size='small'
-                    variant='primary'
+                    variant='flat'
                     disabled={!url || disabled}
                     onClick={handleSaveUrl}
                   >
@@ -111,8 +110,8 @@ const FileFromLinkOrLocal = ({
             showFromLocal && (
               <Button
                 className='relative w-full'
-                variant='secondary-accent'
-                disabled={disabled}
+                isDisabled={disabled}
+                variant='flat'
               >
                 <RiUploadCloud2Line className='mr-1 h-4 w-4' />
                 {t('common.fileUploader.uploadFromComputer')}

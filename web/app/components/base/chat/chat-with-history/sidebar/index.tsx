@@ -11,21 +11,21 @@ import {
 import { useChatWithHistoryContext } from '../context'
 import AppIcon from '@/app/components/base/app-icon'
 import ActionButton from '@/app/components/base/action-button'
-import Button from '@/app/components/base/button'
 import List from '@/app/components/base/chat/chat-with-history/sidebar/list'
 import MenuDropdown from '@/app/components/share/text-generation/menu-dropdown'
 import Confirm from '@/app/components/base/confirm'
 import RenameModal from '@/app/components/base/chat/chat-with-history/sidebar/rename-modal'
-import DifyLogo from '@/app/components/base/logo/dify-logo'
 import type { ConversationItem } from '@/models/share'
 import cn from '@/utils/classnames'
-import { useGlobalPublicStore } from '@/context/global-public-context'
+import { Button } from '@heroui/react'
+// import { useGlobalPublicStore } from '@/context/global-public-context'
 
 type Props = {
   isPanel?: boolean
+  panelVisible?: boolean
 }
 
-const Sidebar = ({ isPanel }: Props) => {
+const Sidebar = ({ isPanel, panelVisible }: Props) => {
   const { t } = useTranslation()
   const {
     isInstalledApp,
@@ -46,7 +46,7 @@ const Sidebar = ({ isPanel }: Props) => {
     isResponding,
   } = useChatWithHistoryContext()
   const isSidebarCollapsed = sidebarCollapseState
-  const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
+  // const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
   const [showConfirm, setShowConfirm] = useState<ConversationItem | null>(null)
   const [showRename, setShowRename] = useState<ConversationItem | null>(null)
 
@@ -108,7 +108,7 @@ const Sidebar = ({ isPanel }: Props) => {
         )}
       </div>
       <div className='shrink-0 px-3 py-4'>
-        <Button variant='secondary-accent' disabled={isResponding} className='w-full justify-center' onClick={handleNewConversation}>
+        <Button variant='flat' size="sm" isDisabled={isResponding} disabled={isResponding} className='w-full justify-center' onClick={handleNewConversation}>
           <RiEditBoxLine className='mr-1 h-4 w-4' />
           {t('share.chat.newChat')}
         </Button>
@@ -137,10 +137,10 @@ const Sidebar = ({ isPanel }: Props) => {
           />
         )}
       </div>
-      <div className='flex shrink-0 items-center justify-between p-3'>
+      <div className='flex hidden shrink-0 items-center justify-between p-3'>
         <MenuDropdown hideLogout={isInstalledApp} placement='top-start' data={appData?.site} />
         {/* powered by */}
-        <div className='shrink-0'>
+        {/* <div className='shrink-0'>
           {!appData?.custom_config?.remove_webapp_brand && (
             <div className={cn(
               'flex shrink-0 items-center gap-1.5 px-1',
@@ -155,7 +155,7 @@ const Sidebar = ({ isPanel }: Props) => {
               }
             </div>
           )}
-        </div>
+        </div> */}
         {!!showConfirm && (
           <Confirm
             title={t('share.chat.deleteConversation.title')}

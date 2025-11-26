@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import Chat from '../chat'
 import type {
   ChatConfig,
@@ -11,19 +11,19 @@ import { getLastAnswer, isValidGeneratedAnswer } from '../utils'
 import { useChatWithHistoryContext } from './context'
 import { InputVarType } from '@/app/components/workflow/types'
 import { TransferMethod } from '@/types/app'
-import InputsForm from '@/app/components/base/chat/chat-with-history/inputs-form'
 import {
   fetchSuggestedQuestions,
   getUrl,
   stopChatMessageResponding,
 } from '@/service/share'
-import AppIcon from '@/app/components/base/app-icon'
 import AnswerIcon from '@/app/components/base/answer-icon'
 import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
 import { Markdown } from '@/app/components/base/markdown'
-import cn from '@/utils/classnames'
 import type { FileEntity } from '../../file-uploader/types'
+import { formatBooleanInputs } from '@/utils/model-config'
 import Avatar from '../../avatar'
+import ChatInputArea from '../chat/chat-input-area'
+import BgMascot from './bg-mascot'
 
 const ChatWrapper = () => {
   const {
@@ -51,6 +51,10 @@ const ChatWrapper = () => {
     allInputsHidden,
     initUserVariables,
   } = useChatWithHistoryContext()
+
+  // Semantic variable for better code readability
+  const isHistoryConversation = !!currentConversationId
+
   const appConfig = useMemo(() => {
     const config = appParams || {}
 
@@ -61,9 +65,9 @@ const ChatWrapper = () => {
         fileUploadConfig: (config as any).system_parameters,
       },
       supportFeedback: true,
-      opening_statement: currentConversationId ? currentConversationItem?.introduction : (config as any).opening_statement,
+      opening_statement: isHistoryConversation ? currentConversationItem?.introduction : (config as any).opening_statement,
     } as ChatConfig
-  }, [appParams, currentConversationItem?.introduction, currentConversationId])
+  }, [appParams, currentConversationItem?.introduction, isHistoryConversation])
   const {
     chatList,
     setTargetMessageId,
@@ -74,7 +78,7 @@ const ChatWrapper = () => {
   } = useChat(
     appConfig,
     {
-      inputs: (currentConversationId ? currentConversationInputs : newConversationInputs) as any,
+      inputs: (isHistoryConversation ? currentConversationInputs : newConversationInputs) as any,
       inputsForm: inputsForms,
     },
     appPrevChatTree,
@@ -82,14 +86,14 @@ const ChatWrapper = () => {
     clearChatList,
     setClearChatList,
   )
-  const inputsFormValue = currentConversationId ? currentConversationInputs : newConversationInputsRef?.current
+  const inputsFormValue = isHistoryConversation ? currentConversationInputs : newConversationInputsRef?.current
   const inputDisabled = useMemo(() => {
     if (allInputsHidden)
       return false
 
     let hasEmptyInput = ''
     let fileIsUploading = false
-    const requiredVars = inputsForms.filter(({ required }) => required)
+    const requiredVars = inputsForms.filter(({ required, type }) => required && type !== InputVarType.checkbox)
     if (requiredVars.length) {
       requiredVars.forEach(({ variable, label, type }) => {
         if (hasEmptyInput)
@@ -110,12 +114,7 @@ const ChatWrapper = () => {
         }
       })
     }
-    if (hasEmptyInput)
-      return true
-
-    if (fileIsUploading)
-      return true
-    return false
+    return !!(hasEmptyInput || fileIsUploading)
   }, [inputsFormValue, inputsForms, allInputsHidden])
 
   useEffect(() => {
@@ -131,7 +130,7 @@ const ChatWrapper = () => {
     const data: any = {
       query: message,
       files,
-      inputs: currentConversationId ? currentConversationInputs : newConversationInputs,
+      inputs: formatBooleanInputs(inputsForms, isHistoryConversation ? currentConversationInputs : newConversationInputs),
       conversation_id: currentConversationId,
       parent_message_id: (isRegenerate ? parentAnswer?.id : getLastAnswer(chatList)?.id) || null,
     }
@@ -141,11 +140,11 @@ const ChatWrapper = () => {
       data,
       {
         onGetSuggestedQuestions: responseItemId => fetchSuggestedQuestions(responseItemId, isInstalledApp, appId),
-        onConversationComplete: currentConversationId ? undefined : handleNewConversationCompleted,
+        onConversationComplete: isHistoryConversation ? undefined : handleNewConversationCompleted,
         isPublicAPI: !isInstalledApp,
       },
     )
-  }, [chatList, handleNewConversationCompleted, handleSend, currentConversationId, currentConversationInputs, newConversationInputs, isInstalledApp, appId])
+  }, [chatList, handleNewConversationCompleted, handleSend, isHistoryConversation, currentConversationInputs, newConversationInputs, isInstalledApp, appId])
 
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
@@ -158,72 +157,51 @@ const ChatWrapper = () => {
   }, [chatList, doSend])
 
   const messageList = useMemo(() => {
-    if (currentConversationId)
-      return chatList
+    // Always filter out opening statement from message list as it's handled separately in welcome component
     return chatList.filter(item => !item.isOpeningStatement)
-  }, [chatList, currentConversationId])
-
-  const [collapsed, setCollapsed] = useState(!!currentConversationId)
-
-  const chatNode = useMemo(() => {
-    if (allInputsHidden || !inputsForms.length)
-      return null
-    if (isMobile) {
-      if (!currentConversationId)
-        return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-      return null
-    }
-    else {
-      return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-    }
-  }, [inputsForms.length, isMobile, currentConversationId, collapsed, allInputsHidden])
+  }, [chatList])
 
   const welcome = useMemo(() => {
     const welcomeMessage = chatList.find(item => item.isOpeningStatement)
     if (respondingState)
       return null
-    if (currentConversationId)
+    if (isHistoryConversation)
       return null
-    if (!welcomeMessage)
-      return null
-    if (!collapsed && inputsForms.length > 0 && !allInputsHidden)
-      return null
-    if (welcomeMessage.suggestedQuestions && welcomeMessage.suggestedQuestions?.length > 0) {
-      return (
-        <div className='flex min-h-[50vh] items-center justify-center px-4 py-12'>
-          <div className='flex max-w-[720px] grow gap-4'>
-            <AppIcon
-              size='xl'
-              iconType={appData?.site.icon_type}
-              icon={appData?.site.icon}
-              background={appData?.site.icon_background}
-              imageUrl={appData?.site.icon_url}
-            />
-            <div className='w-0 grow'>
-              <div className='body-lg-regular grow rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary'>
-                <Markdown content={welcomeMessage.content} />
-                <SuggestedQuestions item={welcomeMessage} />
+
+    return (
+      <div className='flex min-h-[90%] items-center justify-center px-4 py-12'>
+        <div className='relative flex max-w-[800px] grow gap-4'>
+          <div className='w-0 grow'>
+            <BgMascot url={appData?.site.icon_url || ''} />
+            <div className='body-lg-regular grow rounded-2xl px-4 py-3 text-text-primary'>
+              <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className='!text-center !text-3xl  max-sm:!text-xl' />
+              <div className='my-10'>
+                <ChatInputArea
+                  botName={appData?.site.title || 'Bot'}
+                  disabled={inputDisabled}
+                  showFeatureBar={false}
+                  showFileUpload={false}
+                  featureBarDisabled={respondingState}
+                  visionConfig={appConfig?.file_upload}
+                  speechToTextConfig={appConfig?.speech_to_text}
+                  onSend={doSend}
+                  inputs={currentConversationId ? currentConversationInputs as any : newConversationInputs}
+                  inputsForm={inputsForms}
+                  theme={themeBuilder?.theme}
+                  isResponding={respondingState}
+                  minRows={4}
+                  autoFocus={false}
+                  suggestedQuestions={welcomeMessage?.suggestedQuestions}
+                  webAppDescription={appData?.site.description}
+                />
               </div>
+              {welcomeMessage?.suggestedQuestions && welcomeMessage?.suggestedQuestions?.length > 0 && <SuggestedQuestions item={welcomeMessage} isWelcome />}
             </div>
           </div>
         </div>
-      )
-    }
-    return (
-      <div className={cn('flex h-[50vh] flex-col items-center justify-center gap-3 py-12')}>
-        <AppIcon
-          size='xl'
-          iconType={appData?.site.icon_type}
-          icon={appData?.site.icon}
-          background={appData?.site.icon_background}
-          imageUrl={appData?.site.icon_url}
-        />
-        <div className='max-w-[768px] px-4'>
-          <Markdown className='!body-2xl-regular !text-text-tertiary' content={welcomeMessage.content} />
-        </div>
       </div>
     )
-  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, collapsed, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
+  }, [appData?.site.title, chatList, currentConversationId, respondingState])
 
   const answerIcon = (appData?.site && appData.site.use_icon_as_answer_icon)
     ? <AnswerIcon
@@ -236,7 +214,7 @@ const ChatWrapper = () => {
 
   return (
     <div
-      className='h-full overflow-hidden bg-chatbot-bg'
+      className='h-full overflow-hidden'
     >
       <Chat
         appData={appData ?? undefined}
@@ -247,13 +225,12 @@ const ChatWrapper = () => {
         chatFooterClassName='pb-4'
         chatFooterInnerClassName={`mx-auto w-full max-w-[768px] ${isMobile ? 'px-2' : 'px-4'}`}
         onSend={doSend}
-        inputs={currentConversationId ? currentConversationInputs as any : newConversationInputs}
+        inputs={isHistoryConversation ? currentConversationInputs as any : newConversationInputs}
         inputsForm={inputsForms}
         onRegenerate={doRegenerate}
         onStopResponding={handleStop}
         chatNode={
           <>
-            {chatNode}
             {welcome}
           </>
         }
@@ -275,6 +252,7 @@ const ChatWrapper = () => {
               size={40}
             /> : undefined
         }
+        noChatInput={!currentConversationId}
       />
     </div>
   )

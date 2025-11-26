@@ -12,20 +12,20 @@ import { useEmbeddedChatbotContext } from './context'
 import { isDify } from './utils'
 import { InputVarType } from '@/app/components/workflow/types'
 import { TransferMethod } from '@/types/app'
-import InputsForm from '@/app/components/base/chat/embedded-chatbot/inputs-form'
 import {
   fetchSuggestedQuestions,
   getUrl,
   stopChatMessageResponding,
 } from '@/service/share'
-import AppIcon from '@/app/components/base/app-icon'
 import LogoAvatar from '@/app/components/base/logo/logo-embedded-chat-avatar'
 import AnswerIcon from '@/app/components/base/answer-icon'
 import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
+import ChatInputWithTags from '@/app/components/base/chat/entity-tags/chat-input-with-tags'
 import { Markdown } from '@/app/components/base/markdown'
 import cn from '@/utils/classnames'
 import type { FileEntity } from '../../file-uploader/types'
 import Avatar from '../../avatar'
+import BgMascot from '../chat-with-history/bg-mascot'
 
 const ChatWrapper = () => {
   const {
@@ -51,7 +51,9 @@ const ChatWrapper = () => {
     setIsResponding,
     allInputsHidden,
     initUserVariables,
+    initialPrompt,
   } = useEmbeddedChatbotContext()
+  const [promptSent, setPromptSent] = useState(false)
   const appConfig = useMemo(() => {
     const config = appParams || {}
 
@@ -90,7 +92,7 @@ const ChatWrapper = () => {
 
     let hasEmptyInput = ''
     let fileIsUploading = false
-    const requiredVars = inputsForms.filter(({ required }) => required)
+    const requiredVars = inputsForms.filter(({ required, type }) => required && type !== InputVarType.checkbox) // boolean can be not checked
     if (requiredVars.length) {
       requiredVars.forEach(({ variable, label, type }) => {
         if (hasEmptyInput)
@@ -147,6 +149,16 @@ const ChatWrapper = () => {
     )
   }, [currentConversationId, currentConversationInputs, newConversationInputs, chatList, handleSend, isInstalledApp, appId, handleNewConversationCompleted])
 
+  useEffect(() => {
+    if (initialPrompt && !promptSent && !currentConversationId && !respondingState && !inputDisabled) {
+      const timer = setTimeout(() => {
+        doSend(initialPrompt, [])
+        setPromptSent(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [initialPrompt, promptSent, currentConversationId, respondingState, inputDisabled, doSend])
+
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
     const parentAnswer = chatList.find(item => item.id === question.parentMessageId)
@@ -163,65 +175,46 @@ const ChatWrapper = () => {
     return chatList.filter(item => !item.isOpeningStatement)
   }, [chatList, currentConversationId])
 
-  const [collapsed, setCollapsed] = useState(!!currentConversationId)
-
-  const chatNode = useMemo(() => {
-    if (allInputsHidden || !inputsForms.length)
-      return null
-    if (isMobile) {
-      if (!currentConversationId)
-        return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-      return <div className='mb-4'></div>
-    }
-    else {
-      return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-    }
-  }, [inputsForms.length, isMobile, currentConversationId, collapsed, allInputsHidden])
-
   const welcome = useMemo(() => {
     const welcomeMessage = chatList.find(item => item.isOpeningStatement)
     if (respondingState)
       return null
     if (currentConversationId)
       return null
-    if (!welcomeMessage)
-      return null
-    if (!collapsed && inputsForms.length > 0 && !allInputsHidden)
-      return null
-    if (welcomeMessage.suggestedQuestions && welcomeMessage.suggestedQuestions?.length > 0) {
-      return (
-        <div className={cn('flex items-center justify-center px-4 py-12', isMobile ? 'min-h-[30vh] py-0' : 'h-[50vh]')}>
-          <div className='flex max-w-[720px] grow gap-4'>
-            <AppIcon
-              size='xl'
-              iconType={appData?.site.icon_type}
-              icon={appData?.site.icon}
-              background={appData?.site.icon_background}
-              imageUrl={appData?.site.icon_url}
-            />
-            <div className='body-lg-regular grow rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary'>
-              <Markdown content={welcomeMessage.content} />
-              <SuggestedQuestions item={welcomeMessage} />
-            </div>
-          </div>
-        </div>
-      )
-    }
+
     return (
-      <div className={cn('flex h-[50vh] flex-col items-center justify-center gap-3 py-12', isMobile ? 'min-h-[30vh] py-0' : 'h-[50vh]')}>
-        <AppIcon
-          size='xl'
-          iconType={appData?.site.icon_type}
-          icon={appData?.site.icon}
-          background={appData?.site.icon_background}
-          imageUrl={appData?.site.icon_url}
-        />
-        <div className='max-w-[768px] px-4'>
-          <Markdown className='!body-2xl-regular !text-text-tertiary' content={welcomeMessage.content} />
+      <div className={cn('flex min-h-[90%] items-center justify-center px-4 py-12')}>
+        <div className='flex max-w-[720px] grow flex-col gap-4'>
+          <BgMascot url={appData?.site.icon_url || ''} />
+          <div className='body-lg-regular grow px-4 py-3 text-text-primary'>
+            <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className='!text-center !text-3xl max-sm:!text-xl' />
+            <div className='my-10'>
+              <ChatInputWithTags
+                botName={appData?.site.title || 'Bot'}
+                disabled={inputDisabled}
+                showFeatureBar={false}
+                showFileUpload={false}
+                featureBarDisabled={respondingState}
+                visionConfig={appConfig?.file_upload}
+                speechToTextConfig={appConfig?.speech_to_text}
+                onSend={doSend}
+                inputs={currentConversationId ? currentConversationInputs as any : newConversationInputs}
+                inputsForm={inputsForms}
+                theme={themeBuilder?.theme}
+                isResponding={respondingState}
+                minRows={4}
+                autoFocus={false}
+                suggestedQuestions={welcomeMessage?.suggestedQuestions}
+                webAppDescription={appData?.site.description}
+                initialValue={initialPrompt}
+              />
+            </div>
+            {welcomeMessage?.suggestedQuestions && welcomeMessage?.suggestedQuestions?.length > 0 && <SuggestedQuestions item={welcomeMessage} isWelcome />}
+          </div>
         </div>
       </div>
     )
-  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, collapsed, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
+  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
 
   const answerIcon = isDify()
     ? <LogoAvatar className='relative shrink-0' />
@@ -250,7 +243,6 @@ const ChatWrapper = () => {
       onStopResponding={handleStop}
       chatNode={
         <>
-          {chatNode}
           {welcome}
         </>
       }
@@ -271,6 +263,7 @@ const ChatWrapper = () => {
             size={40}
           /> : undefined
       }
+      noChatInput={!currentConversationId}
     />
   )
 }

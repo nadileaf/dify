@@ -8,36 +8,40 @@ import {
 import ActionButton from '@/app/components/base/action-button'
 import CopyIcon from '@/app/components/base/copy-icon'
 import SVGBtn from '@/app/components/base/svg'
-import Flowchart from '@/app/components/base/mermaid'
 import { Theme } from '@/types/app'
 import useTheme from '@/hooks/use-theme'
 import SVGRenderer from '../svg-gallery' // Assumes svg-gallery.tsx is in /base directory
 import MarkdownMusic from '@/app/components/base/markdown-blocks/music'
 import ErrorBoundary from '@/app/components/base/markdown/error-boundary'
+import HtmlRender from './html-render'
+import dynamic from 'next/dynamic'
+
+const Flowchart = dynamic(() => import('@/app/components/base/mermaid'), { ssr: false })
 
 // Available language https://github.com/react-syntax-highlighter/react-syntax-highlighter/blob/master/AVAILABLE_LANGUAGES_HLJS.MD
 const capitalizationLanguageNameMap: Record<string, string> = {
-  sql: 'SQL',
-  javascript: 'JavaScript',
-  java: 'Java',
-  typescript: 'TypeScript',
-  vbscript: 'VBScript',
-  css: 'CSS',
-  html: 'HTML',
-  xml: 'XML',
-  php: 'PHP',
-  python: 'Python',
-  yaml: 'Yaml',
-  mermaid: 'Mermaid',
-  markdown: 'MarkDown',
-  makefile: 'MakeFile',
-  echarts: 'ECharts',
-  shell: 'Shell',
-  powershell: 'PowerShell',
-  json: 'JSON',
-  latex: 'Latex',
-  svg: 'SVG',
-  abc: 'ABC',
+  'sql': 'SQL',
+  'javascript': 'JavaScript',
+  'java': 'Java',
+  'typescript': 'TypeScript',
+  'vbscript': 'VBScript',
+  'css': 'CSS',
+  'html': 'HTML',
+  'xml': 'XML',
+  'php': 'PHP',
+  'python': 'Python',
+  'yaml': 'Yaml',
+  'mermaid': 'Mermaid',
+  'markdown': 'MarkDown',
+  'makefile': 'MakeFile',
+  'echarts': 'ECharts',
+  'shell': 'Shell',
+  'powershell': 'PowerShell',
+  'json': 'JSON',
+  'latex': 'Latex',
+  'svg': 'SVG',
+  'abc': 'ABC',
+  'custom-html': 'Custom HTML',
 }
 const getCorrectCapitalizationLanguageName = (language: string) => {
   if (!language)
@@ -85,9 +89,10 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
   const chartInstanceRef = useRef<any>(null) // Direct reference to ECharts instance
   const resizeTimerRef = useRef<NodeJS.Timeout | null>(null) // For debounce handling
   const finishedEventCountRef = useRef<number>(0) // Track finished event trigger count
-  const match = /language-(\w+)/.exec(className || '')
+  const match = /language-([\w-]+)/.exec(className || '')
   const language = match?.[1]
   const languageShowName = getCorrectCapitalizationLanguageName(language || '')
+
   const isDarkMode = theme === Theme.dark
 
   const echartsStyle = useMemo(() => ({
@@ -125,7 +130,7 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
 
   // Store event handlers in useMemo to avoid recreating them
   const echartsEvents = useMemo(() => ({
-    finished: (params: EChartsEventParams) => {
+    finished: (_params: EChartsEventParams) => {
       // Limit finished event frequency to avoid infinite loops
       finishedEventCountRef.current++
       if (finishedEventCountRef.current > 3) {
@@ -396,6 +401,8 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
             <MarkdownMusic children={content} />
           </ErrorBoundary>
         )
+      case 'custom-html':
+        return <HtmlRender content={content} />
       default:
         return (
           <SyntaxHighlighter
@@ -419,6 +426,10 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
 
   if (inline || !match)
     return <code {...props} className={className}>{children}</code>
+
+  // 对于 custom-html，直接返回渲染内容，不显示代码块样式
+  if (language === 'custom-html')
+    return renderCodeContent
 
   return (
     <div className='relative'>

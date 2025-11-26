@@ -36,6 +36,7 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
     isMobile,
     themeBuilder,
     sidebarCollapseState,
+    currentConversationId,
   } = useChatWithHistoryContext()
   const isSidebarCollapsed = sidebarCollapseState
   const customConfig = appData?.custom_config
@@ -47,14 +48,19 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
     themeBuilder?.buildTheme(site?.chat_color_theme, site?.chat_color_theme_inverted)
   }, [site, customConfig, themeBuilder])
 
+  useEffect(() => {
+    if (!isSidebarCollapsed)
+      setShowSidePanel(false)
+  }, [isSidebarCollapsed])
+
   useDocumentTitle(site?.title || 'Chat')
 
   return (
     <div className={cn(
-      'flex h-full bg-background-default-burn',
-      isMobile && 'flex-col',
+      'relative z-[1] flex h-full bg-gradient-to-b from-[#F6F5F2] to-[#F7F5F2] max-sm:flex-col',
       className,
     )}>
+      <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />
       {!isMobile && (
         <div className={cn(
           'flex w-[236px] flex-col p-1 pr-0 transition-all duration-200 ease-in-out',
@@ -66,7 +72,7 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
       {isMobile && (
         <HeaderInMobile />
       )}
-      <div className={cn('relative grow p-2', isMobile && 'h-[calc(100%_-_56px)] p-0')}>
+      <div className={cn('relative grow', currentConversationId && 'bg-chatbot-bg', isMobile && 'h-[calc(100%_-_56px)]')}>
         {isSidebarCollapsed && (
           <div
             className={cn(
@@ -76,10 +82,10 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
             onMouseEnter={() => setShowSidePanel(true)}
             onMouseLeave={() => setShowSidePanel(false)}
           >
-            <Sidebar isPanel />
+            <Sidebar isPanel panelVisible={showSidePanel} />
           </div>
         )}
-        <div className={cn('flex h-full flex-col overflow-hidden border-[0,5px] border-components-panel-border-subtle bg-chatbot-bg', isMobile ? 'rounded-t-2xl' : 'rounded-2xl')}>
+        <div className={cn('flex h-full flex-col overflow-hidden', isMobile ? 'rounded-t-2xl' : 'rounded-2xl')}>
           {!isMobile && <Header />}
           {appChatListDataLoading && (
             <Loading type='app' />
