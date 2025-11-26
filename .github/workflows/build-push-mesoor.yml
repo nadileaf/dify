@@ -25,14 +25,14 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Version: ${VERSION}"
+          echo "::notice::📦 Version: ${VERSION}"
 
       - name: Get short commit hash
         id: get_hash
         run: |
           SHORT_HASH=$(git rev-parse --short HEAD)
           echo "hash=${SHORT_HASH}" >> $GITHUB_OUTPUT
-          echo "Commit hash: ${SHORT_HASH}"
+          echo "::notice::🔖 Commit: ${SHORT_HASH}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -51,8 +51,7 @@ jobs:
           GHCR_IMAGE_TAG: ${{ env.GHCR_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}
           MESOOR_IMAGE_TAG: ${{ env.MESOOR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}
         run: |
-          echo "Building and pushing to GHCR: ${GHCR_IMAGE_TAG}"
-          
+          echo "::group::Docker Build Process"
           docker buildx build \
             --platform linux/amd64 \
             --build-arg COMMIT_SHA=${{ steps.get_hash.outputs.hash }} \
@@ -62,23 +61,16 @@ jobs:
             --provenance=false \
             --sbom=false \
             .
+          echo "::endgroup::"
           
-          echo "✓ Successfully pushed to GHCR"
           echo ""
-          echo "=========================================="
           echo "镜像已推送到 GHCR，请使用以下命令同步到腾讯云："
           echo ""
-          echo "  ./scripts/sync-image-to-mesoor.sh ${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}"
+          echo "::notice file=sync-command,title=同步命令::./scripts/sync-image-to-mesoor.sh ${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}"
           echo ""
           echo "或者手动同步："
-          echo "  docker pull ${GHCR_IMAGE_TAG}"
-          echo "  docker tag ${GHCR_IMAGE_TAG} ${MESOOR_IMAGE_TAG}"
-          echo "  docker push ${MESOOR_IMAGE_TAG}"
-          echo "=========================================="
+          echo "::notice file=manual-sync,line=1::docker pull ${GHCR_IMAGE_TAG}"
+          echo "::notice file=manual-sync,line=2::docker tag ${GHCR_IMAGE_TAG} ${MESOOR_IMAGE_TAG}"
+          echo "::notice file=manual-sync,line=3::docker push ${MESOOR_IMAGE_TAG}"
 
-      - name: Image info
-        run: |
-          echo "镜像构建信息："
-          echo "GHCR: ${{ env.GHCR_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}"
-          echo "目标: ${{ env.MESOOR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}"
 
