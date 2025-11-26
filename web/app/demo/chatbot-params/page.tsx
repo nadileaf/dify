@@ -96,6 +96,7 @@ document.body.appendChild(iframe);`,
 }
 
 const ChatbotParamsDemo = () => {
+  const [chatbotToken, setChatbotToken] = useState('j49YiDg8s3qQvo94')
   const [prompt, setPrompt] = useState('你好，请介绍一下你自己')
   const [hideTitle, setHideTitle] = useState(true)
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF')
@@ -109,8 +110,6 @@ const ChatbotParamsDemo = () => {
     { key: 'projectid', value: '' },
   ])
   const [showAdvanced, setShowAdvanced] = useState(false)
-
-  const chatbotToken = 'j49YiDg8s3qQvo94'
 
   const { buildChatbotUrl } = require('@/app/utils/chatbot-url-params')
 
@@ -183,7 +182,7 @@ const ChatbotParamsDemo = () => {
       setCurrentUrl(url)
     }
     updateUrl()
-  }, [prompt, hideTitle, backgroundColor, useCustomBg, conversationId, userId, customParams])
+  }, [chatbotToken, prompt, hideTitle, backgroundColor, useCustomBg, conversationId, userId, customParams])
 
   const handleNewConversation = async () => {
     setConversationId('')
@@ -239,6 +238,31 @@ const ChatbotParamsDemo = () => {
         {/* 左侧参数配置区 */}
         <div className="w-96 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4">
           <div className="space-y-4">
+            {/* Chatbot Token 区域 */}
+            <div className="rounded-lg border-2 border-indigo-200 bg-indigo-50 p-4">
+              <h3 className="mb-3 flex items-center text-sm font-bold text-gray-900">
+                <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-indigo-500 text-xs text-white">🔑</span>
+                Chatbot Token
+              </h3>
+              <input
+                type="text"
+                value={chatbotToken}
+                onChange={e => setChatbotToken(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="输入 chatbot token"
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setChatbotToken('j49YiDg8s3qQvo94')}
+                  className="flex-1 rounded-lg bg-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300"
+                >
+                  重置为默认
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-gray-600">修改 token 可切换不同的 chatbot</p>
+            </div>
+
             {/* Prompt 区域 */}
             <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
               <h3 className="mb-3 flex items-center text-sm font-bold text-gray-900">

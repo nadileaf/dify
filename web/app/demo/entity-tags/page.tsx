@@ -10,6 +10,7 @@ type EntityTag = {
 }
 
 const EntityTagsDemo = () => {
+  const [chatbotToken, setChatbotToken] = useState('j49YiDg8s3qQvo94')
   const [entityTags, setEntityTags] = useState<EntityTag[]>([
     { icon: '👤', label: '张三', value: 'user_3391' },
   ])
@@ -118,12 +119,32 @@ const EntityTagsDemo = () => {
               通过 postMessage 向 Chatbot 发送实体标签
             </p>
           </div>
-          <a
-            href="/demo"
-            className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200"
-          >
-            返回首页
-          </a>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Chatbot Token:</label>
+              <input
+                type="text"
+                value={chatbotToken}
+                onChange={e => setChatbotToken(e.target.value)}
+                className="w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="输入 token"
+              />
+              <button
+                type="button"
+                onClick={() => setChatbotToken('j49YiDg8s3qQvo94')}
+                className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200"
+                title="重置为默认"
+              >
+                重置
+              </button>
+            </div>
+            <a
+              href="/demo"
+              className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200"
+            >
+              返回首页
+            </a>
+          </div>
         </div>
       </header>
 
@@ -244,9 +265,10 @@ const EntityTagsDemo = () => {
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
           <iframe
             id="chatbot-iframe"
-            src="/chatbot/j49YiDg8s3qQvo94"
+            src={`/chatbot/${chatbotToken}`}
             className="h-full w-full"
             title="Chatbot"
+            key={chatbotToken}
           />
         </div>
       </div>
