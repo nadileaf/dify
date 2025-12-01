@@ -63,6 +63,23 @@ const DemoIndex = () => {
           </Link>
 
           <Link
+            href="/demo/link-interceptor"
+            className="group block rounded-2xl bg-white p-8 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl"
+          >
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+              <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+            <h2 className="mb-2 text-2xl font-semibold text-gray-900 group-hover:text-cyan-600">
+              链接拦截器测试
+            </h2>
+            <p className="text-gray-600">
+              点击 Chatbot 中的链接，右侧自动加载链接内容
+            </p>
+          </Link>
+
+          <Link
             href="/html-test"
             className="group block rounded-2xl bg-white p-8 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl"
           >
@@ -96,7 +113,11 @@ const DemoIndex = () => {
               <span><strong>实体标签测试：</strong>测试通过 postMessage 向 Chatbot 发送实体对象，以标签形式展示在输入框</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-500 text-xs text-white">3</span>
+              <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-xs text-white">3</span>
+              <span><strong>链接拦截器测试：</strong>展示外部项目集成方式，点击 Chatbot 链接在右侧加载</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-500 text-xs text-white">4</span>
               <span><strong>HTML 渲染测试：</strong>可以在左侧编辑 Markdown 内容，右侧实时预览渲染效果</span>
             </li>
           </ul>

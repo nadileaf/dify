@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { getChatbotToken, getDefaultCustomParams } from '../config'
 
 // 代码示例常量
 const CODE_EXAMPLES = {
@@ -96,19 +97,20 @@ document.body.appendChild(iframe);`,
 }
 
 const ChatbotParamsDemo = () => {
-  const [chatbotToken, setChatbotToken] = useState('j49YiDg8s3qQvo94')
+  const [chatbotToken, setChatbotToken] = useState('')
   const [prompt, setPrompt] = useState('你好，请介绍一下你自己')
   const [hideTitle, setHideTitle] = useState(true)
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF')
   const [useCustomBg, setUseCustomBg] = useState(true)
 
   const [conversationId, setConversationId] = useState('')
-  const userId = 'demo_user_123' // 写死的 userId
-  const [customParams, setCustomParams] = useState<Array<{ key: string, value: string }>>([
-    { key: 'resumeid', value: '' },
-    { key: 'jobid', value: '' },
-    { key: 'projectid', value: '' },
-  ])
+  const userId = 'demo_user_123'
+  const [customParams, setCustomParams] = useState<Array<{ key: string, value: string }>>([])
+
+  useEffect(() => {
+    setChatbotToken(getChatbotToken())
+    setCustomParams(getDefaultCustomParams())
+  }, [])
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const { buildChatbotUrl } = require('@/app/utils/chatbot-url-params')
@@ -254,7 +256,7 @@ const ChatbotParamsDemo = () => {
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setChatbotToken('j49YiDg8s3qQvo94')}
+                  onClick={() => setChatbotToken('igJgPiPgHAEX6uP4')}
                   className="flex-1 rounded-lg bg-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300"
                 >
                   重置为默认

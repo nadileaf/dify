@@ -7,6 +7,7 @@
 - [快速开始](#快速开始)
 - [URL 参数配置](#url-参数配置)
 - [实体标签功能](#实体标签功能)
+- [链接点击功能](#链接点击功能)
 - [完整集成示例](#完整集成示例)
 - [Demo 测试页面](#demo-测试页面)
 
@@ -60,7 +61,7 @@ Chatbot 支持通过 URL 参数自定义外观和行为。参数分为两类：*
 
 **示例 URL：**
 ```
-/chatbot/j49YiDg8s3qQvo94?prompt=你好&hideTitle=true&backgroundColor=%23FFFFFF
+/chatbot/igJgPiPgHAEX6uP4?prompt=你好&hideTitle=true&backgroundColor=%23FFFFFF
 ```
 
 ### 系统参数（压缩编码）
@@ -378,6 +379,63 @@ function MyComponent() {
 - **界面输入**：`[👤 张三] [📦 订单 123456] 请帮我分析风险`
 - **实际发送**：`[张三](user_3391) [订单 123456](order_123456) 请帮我分析风险`
 - **效果**：大模型既能看到 "张三"、"订单 123456" 这样的友好名称，也能获取 `user_3391`、`order_123456` 这样的实体 ID
+
+---
+
+## 链接点击功能
+
+### 链接处理规则
+
+| 类型 | 示例 | 行为 |
+|------|------|------|
+| 内部链接 | `/project/123` | 拦截并发送消息 |
+| 外部链接 | `https://google.com` | 拦截并发送消息 |
+| Hash 锚点 | `#section-1` | 不拦截 |
+| 危险协议 | `javascript:...` | 阻止执行 |
+
+### 外部项目集成
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chatbot 集成示例</title>
+  <style>
+    body { margin: 0; display: flex; height: 100vh; }
+    #chatbot { flex: 1; border: none; }
+    #preview { flex: 1; border: none; border-left: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <!-- Chatbot iframe -->
+  <iframe id="chatbot" src="/chatbot/YOUR_TOKEN"></iframe>
+  
+  <!-- 链接预览 iframe -->
+  <iframe id="preview" style="display: none;"></iframe>
+
+  <script>
+    // 监听链接点击消息
+    window.addEventListener('message', function(event) {
+      // 验证消息来源（可选）
+      // if (event.origin !== 'https://your-chatbot-domain.com') return;
+      
+      // 处理链接点击
+      if (event.data?.type === 'dify-link-click') {
+        const url = event.data.payload.url;
+        const preview = document.getElementById('preview');
+        
+        // 显示并加载链接
+        preview.style.display = 'block';
+        preview.src = url;
+        
+        console.log('Link clicked:', url);
+      }
+    });
+  </script>
+</body>
+</html>
+```
+
 
 ---
 

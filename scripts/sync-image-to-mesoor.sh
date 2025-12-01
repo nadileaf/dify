@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
 GHCR_REGISTRY="ghcr.io"
 MESOOR_REGISTRY="cr.mesoor.com"
 GITHUB_REPO_OWNER="$(git config --get remote.origin.url | sed -n 's/.*github.com[:/]\([^/]*\)\/.*/\1/p')"
@@ -10,107 +18,79 @@ MESOOR_IMAGE_NAME="production/dify-web"
 VERSION_TAG="$1"
 
 if [ -z "$VERSION_TAG" ]; then
-    echo "用法: $0 <version-tag>"
-    echo ""
-    echo "示例: $0 1.9.1-abc1234"
-    echo ""
-    echo "提示: 查看最新的 tag，请运行："
-    echo "  git log -1 --oneline mesoor"
+    echo -e "${RED}用法: $0 <version-tag>${NC}"
+    echo -e "${YELLOW}示例:${NC} $0 1.9.1-abc1234"
     exit 1
 fi
 
 GHCR_IMAGE="${GHCR_REGISTRY}/${GHCR_IMAGE_NAME}:${VERSION_TAG}"
 MESOOR_IMAGE="${MESOOR_REGISTRY}/${MESOOR_IMAGE_NAME}:${VERSION_TAG}"
 
-echo "=========================================="
-echo "镜像同步工具"
-echo "=========================================="
-echo "源镜像: ${GHCR_IMAGE}"
-echo "目标镜像: ${MESOOR_IMAGE}"
-echo "=========================================="
+echo ""
+echo -e "${BOLD}${BLUE}镜像同步: ${NC}${CYAN}${VERSION_TAG}${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-check_command() {
-    if ! command -v $1 &> /dev/null; then
-        echo "错误: 未找到命令 '$1'，请先安装"
-        exit 1
-    fi
-}
-
-check_command docker
-
-echo "步骤 1/4: 检查 Docker 登录状态..."
-if ! docker info > /dev/null 2>&1; then
-    echo "错误: Docker 未运行，请先启动 Docker"
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}✗ 未找到 Docker，请先安装${NC}"
     exit 1
 fi
 
-echo "步骤 2/4: 从 GHCR 拉取镜像..."
+if ! docker info > /dev/null 2>&1; then
+    echo -e "${RED}✗ Docker 未运行${NC}"
+    exit 1
+fi
+
+echo -e "${CYAN}[1/3]${NC} 从 GHCR 拉取镜像..."
 MAX_PULL_RETRIES=3
 RETRY_DELAY=10
 
 for i in $(seq 1 ${MAX_PULL_RETRIES}); do
-    echo "  尝试 ${i}/${MAX_PULL_RETRIES}..."
-    if docker pull "${GHCR_IMAGE}"; then
-        echo "  ✓ 拉取成功"
+    if docker pull "${GHCR_IMAGE}" 2>&1 | grep -E "(Pulling|Digest|Status|Downloaded)" | sed 's/^/      /'; then
+        echo -e "${GREEN}      ✓ 拉取完成${NC}"
         break
     else
         if [ ${i} -lt ${MAX_PULL_RETRIES} ]; then
-            echo "  ✗ 拉取失败，${RETRY_DELAY} 秒后重试..."
+            echo -e "${YELLOW}      ⚠ 重试中 (${i}/${MAX_PULL_RETRIES})...${NC}"
             sleep ${RETRY_DELAY}
         else
-            echo "  ✗ 拉取失败，已达到最大重试次数"
-            echo ""
-            echo "提示: 如果您还未登录 GHCR，请先运行："
-            echo "  echo \$GITHUB_TOKEN | docker login ghcr.io -u <your-github-username> --password-stdin"
+            echo -e "${RED}      ✗ 拉取失败${NC}"
             exit 1
         fi
     fi
 done
 
 echo ""
-echo "步骤 3/4: 标记镜像..."
+echo -e "${CYAN}[2/3]${NC} 推送到 Mesoor..."
 docker tag "${GHCR_IMAGE}" "${MESOOR_IMAGE}"
-echo "  ✓ 标记完成"
-
-echo ""
-echo "步骤 4/4: 推送到 Mesoor 镜像仓库..."
-if ! docker info | grep -q "Registry: ${MESOOR_REGISTRY}" 2>/dev/null; then
-    echo "提示: 请确保已登录到 ${MESOOR_REGISTRY}"
-    echo "如未登录，请运行: docker login ${MESOOR_REGISTRY}"
-    echo ""
-    read -p "按 Enter 继续推送，或 Ctrl+C 取消..."
-fi
 
 MAX_PUSH_RETRIES=5
-RETRY_DELAY=30
+RETRY_DELAY=2
 
 for i in $(seq 1 ${MAX_PUSH_RETRIES}); do
-    echo "  尝试 ${i}/${MAX_PUSH_RETRIES}..."
-    if docker push "${MESOOR_IMAGE}"; then
-        echo "  ✓ 推送成功"
+    if docker push "${MESOOR_IMAGE}" 2>&1 | grep -E "(Pushing|Pushed|Digest|digest)" | sed 's/^/      /'; then
+        echo -e "${GREEN}      ✓ 推送完成${NC}"
         break
     else
         if [ ${i} -lt ${MAX_PUSH_RETRIES} ]; then
-            echo "  ✗ 推送失败，${RETRY_DELAY} 秒后重试..."
+            echo -e "${YELLOW}      ⚠ 重试中 (${i}/${MAX_PUSH_RETRIES})...${NC}"
             sleep ${RETRY_DELAY}
         else
-            echo "  ✗ 推送失败，已达到最大重试次数"
-            echo ""
-            echo "提示: 请检查网络连接和登录状态"
+            echo -e "${RED}      ✗ 推送失败${NC}"
             exit 1
         fi
     fi
 done
 
 echo ""
-echo "=========================================="
-echo "✓ 镜像同步完成！"
-echo "=========================================="
-echo "镜像: ${MESOOR_IMAGE}"
+echo -e "${CYAN}[3/3]${NC} 清理本地镜像..."
+docker rmi "${GHCR_IMAGE}" > /dev/null 2>&1 || true
+docker rmi "${MESOOR_IMAGE}" > /dev/null 2>&1 || true
+echo -e "${GREEN}      ✓ 清理完成${NC}"
+
 echo ""
-echo "清理本地镜像（可选）："
-echo "  docker rmi ${GHCR_IMAGE}"
-echo "  docker rmi ${MESOOR_IMAGE}"
-echo "=========================================="
+echo -e "${GREEN}${BOLD}✓ 同步完成${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "镜像: ${CYAN}${MESOOR_IMAGE}${NC}"
+echo ""
 

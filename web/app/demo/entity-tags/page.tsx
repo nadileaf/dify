@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { RiAddLine, RiCloseLine, RiSendPlaneFill } from '@remixicon/react'
+import { getChatbotToken } from '../config'
 
 type EntityTag = {
   icon?: string
@@ -10,7 +11,11 @@ type EntityTag = {
 }
 
 const EntityTagsDemo = () => {
-  const [chatbotToken, setChatbotToken] = useState('j49YiDg8s3qQvo94')
+  const [chatbotToken, setChatbotToken] = useState('')
+
+  useEffect(() => {
+    setChatbotToken(getChatbotToken())
+  }, [])
   const [entityTags, setEntityTags] = useState<EntityTag[]>([
     { icon: '👤', label: '张三', value: 'user_3391' },
   ])
@@ -131,7 +136,7 @@ const EntityTagsDemo = () => {
               />
               <button
                 type="button"
-                onClick={() => setChatbotToken('j49YiDg8s3qQvo94')}
+                onClick={() => setChatbotToken(getChatbotToken())}
                 className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200"
                 title="重置为默认"
               >
