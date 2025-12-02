@@ -58,7 +58,7 @@ const Chatbot = () => {
       {!currentConversationId && !backgroundColor && <div className='absolute inset-0 z-[-1] bg-[url(https://cdn-fe.mesoor.com/chat/chat-main-background.jpg)] bg-cover bg-center opacity-80' />}
       <div
         className={cn(
-          'flex flex-col border border-components-panel-border-subtle', 'h-[100vh] ',
+          'flex flex-col', 'h-[100vh] ',
         )}
       >
         {!hideTitle && (
