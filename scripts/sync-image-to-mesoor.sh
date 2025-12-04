@@ -46,7 +46,10 @@ MAX_PULL_RETRIES=3
 RETRY_DELAY=10
 
 for i in $(seq 1 ${MAX_PULL_RETRIES}); do
-    if docker pull "${GHCR_IMAGE}" 2>&1 | grep -E "(Pulling|Digest|Status|Downloaded)" | sed 's/^/      /'; then
+    docker pull "${GHCR_IMAGE}" 2>&1 | grep -E "(Pulling|Digest|Status|Downloaded)" | sed 's/^/      /'
+    PULL_EXIT_CODE=${PIPESTATUS[0]}
+    
+    if [ ${PULL_EXIT_CODE} -eq 0 ]; then
         echo -e "${GREEN}      ✓ 拉取完成${NC}"
         break
     else
@@ -68,7 +71,10 @@ MAX_PUSH_RETRIES=5
 RETRY_DELAY=2
 
 for i in $(seq 1 ${MAX_PUSH_RETRIES}); do
-    if docker push "${MESOOR_IMAGE}" 2>&1 | grep -E "(Pushing|Pushed|Digest|digest)" | sed 's/^/      /'; then
+    docker push "${MESOOR_IMAGE}" 2>&1 | grep -E "(Pushing|Pushed|Digest|digest)" | sed 's/^/      /'
+    PUSH_EXIT_CODE=${PIPESTATUS[0]}
+    
+    if [ ${PUSH_EXIT_CODE} -eq 0 ]; then
         echo -e "${GREEN}      ✓ 推送完成${NC}"
         break
     else
