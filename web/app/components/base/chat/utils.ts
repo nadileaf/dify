@@ -11,7 +11,7 @@ async function decodeBase64AndDecompress(base64String: string) {
     return new TextDecoder().decode(decompressedArrayBuffer)
   }
   catch {
-    return undefined
+    return base64String
   }
 }
 
