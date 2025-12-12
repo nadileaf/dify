@@ -16,7 +16,8 @@ import type {
   Feedback,
 } from '../types'
 import { CONVERSATION_ID_INFO } from '../constants'
-import { buildChatItemTree, getProcessedSystemVariablesFromUrlParams, getRawInputsFromUrlParams, getRawUserVariablesFromUrlParams } from '../utils'
+import { buildChatItemTree, getRawInputsFromUrlParams, getRawUserVariablesFromUrlParams } from '../utils'
+import { clearUrlParams, parseUrlParams } from './url-params-handler'
 import { addFileInfos, sortAgentSorts } from '../../../tools/utils'
 import { getProcessedFilesFromResponse } from '@/app/components/base/file-uploader/utils'
 import {
@@ -108,9 +109,24 @@ export const useChatWithHistory = (installedAppInfo?: InstalledApp) => {
   const appId = useMemo(() => appData?.app_id, [appData])
 
   const [userId, setUserId] = useState<string>()
+  const [initialConversationId, setInitialConversationId] = useState<string>()
+  const [initialPrompt, setInitialPrompt] = useState<string>()
+  const [shouldStartNewConversation, setShouldStartNewConversation] = useState(false)
+  const initialConversationIdAppliedRef = useRef(false)
+  const urlParamsProcessedRef = useRef(false)
+
   useEffect(() => {
-    getProcessedSystemVariablesFromUrlParams().then(({ user_id }) => {
-      setUserId(user_id)
+    if (urlParamsProcessedRef.current)
+      return
+    urlParamsProcessedRef.current = true
+
+    parseUrlParams().then(({ userId: uid, conversationId, isNewConversation, prompt }) => {
+      setUserId(uid)
+      setInitialConversationId(conversationId)
+      setShouldStartNewConversation(isNewConversation)
+      if (prompt)
+        setInitialPrompt(prompt)
+      clearUrlParams()
     })
   }, [])
 
@@ -150,9 +166,14 @@ export const useChatWithHistory = (installedAppInfo?: InstalledApp) => {
   const [conversationIdInfo, setConversationIdInfo] = useLocalStorageState<Record<string, Record<string, string>>>(CONVERSATION_ID_INFO, {
     defaultValue: {},
   })
-  const currentConversationId = useMemo(() => conversationIdInfo?.[appId || '']?.[userId || 'DEFAULT'] || '', [appId, conversationIdInfo, userId])
+  const currentConversationId = useMemo(() => {
+    if (initialConversationId && !initialConversationIdAppliedRef.current)
+      return initialConversationId
+    return conversationIdInfo?.[appId || '']?.[userId || 'DEFAULT'] || ''
+  }, [appId, conversationIdInfo, userId, initialConversationId])
   const handleConversationIdInfoChange = useCallback((changeConversationId: string) => {
     if (appId) {
+      initialConversationIdAppliedRef.current = true
       let prevValue = conversationIdInfo?.[appId || '']
       if (typeof prevValue === 'string')
         prevValue = {}
@@ -572,5 +593,7 @@ export const useChatWithHistory = (installedAppInfo?: InstalledApp) => {
     setCurrentConversationInputs,
     allInputsHidden,
     initUserVariables,
+    initialPrompt,
+    shouldStartNewConversation,
   }
 }

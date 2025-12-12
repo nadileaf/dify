@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Chat from '../chat'
 import type {
   ChatConfig,
@@ -50,7 +50,12 @@ const ChatWrapper = () => {
     setIsResponding,
     allInputsHidden,
     initUserVariables,
+    initialPrompt,
+    shouldStartNewConversation,
+    handleNewConversation,
   } = useChatWithHistoryContext()
+  const [promptSent, setPromptSent] = useState(false)
+  const newConversationTriggeredRef = useRef(false)
 
   // Semantic variable for better code readability
   const isHistoryConversation = !!currentConversationId
@@ -145,6 +150,23 @@ const ChatWrapper = () => {
       },
     )
   }, [chatList, handleNewConversationCompleted, handleSend, isHistoryConversation, currentConversationInputs, newConversationInputs, isInstalledApp, appId])
+
+  useEffect(() => {
+    if (shouldStartNewConversation && !newConversationTriggeredRef.current) {
+      newConversationTriggeredRef.current = true
+      handleNewConversation()
+    }
+  }, [shouldStartNewConversation, handleNewConversation])
+
+  useEffect(() => {
+    if (initialPrompt && !promptSent && !respondingState && !inputDisabled) {
+      const timer = setTimeout(() => {
+        doSend(initialPrompt, [])
+        setPromptSent(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [initialPrompt, promptSent, respondingState, inputDisabled, doSend])
 
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
