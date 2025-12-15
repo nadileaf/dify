@@ -547,6 +547,14 @@ export const useChatWithHistory = (installedAppInfo?: InstalledApp) => {
     notify({ type: 'success', message: t('common.api.success') })
   }, [isInstalledApp, appId, t, notify])
 
+  const resetNewConversationFlag = useCallback(() => {
+    setShouldStartNewConversation(false)
+  }, [])
+
+  const resetInitialPrompt = useCallback(() => {
+    setInitialPrompt(undefined)
+  }, [])
+
   return {
     isInstalledApp,
     appId,
@@ -595,5 +603,7 @@ export const useChatWithHistory = (installedAppInfo?: InstalledApp) => {
     initUserVariables,
     initialPrompt,
     shouldStartNewConversation,
+    resetNewConversationFlag,
+    resetInitialPrompt,
   }
 }

@@ -53,6 +53,8 @@ const ChatWrapper = () => {
     initialPrompt,
     shouldStartNewConversation,
     handleNewConversation,
+    resetNewConversationFlag,
+    resetInitialPrompt,
   } = useChatWithHistoryContext()
   const [promptSent, setPromptSent] = useState(false)
   const newConversationTriggeredRef = useRef(false)
@@ -155,18 +157,20 @@ const ChatWrapper = () => {
     if (shouldStartNewConversation && !newConversationTriggeredRef.current) {
       newConversationTriggeredRef.current = true
       handleNewConversation()
+      resetNewConversationFlag()
     }
-  }, [shouldStartNewConversation, handleNewConversation])
+  }, [shouldStartNewConversation, handleNewConversation, resetNewConversationFlag])
 
   useEffect(() => {
     if (initialPrompt && !promptSent && !respondingState && !inputDisabled) {
       const timer = setTimeout(() => {
         doSend(initialPrompt, [])
         setPromptSent(true)
+        resetInitialPrompt()
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [initialPrompt, promptSent, respondingState, inputDisabled, doSend])
+  }, [initialPrompt, promptSent, respondingState, inputDisabled, doSend, resetInitialPrompt])
 
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!

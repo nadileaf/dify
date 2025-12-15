@@ -62,6 +62,8 @@ export type ChatWithHistoryContextValue = {
   }
   initialPrompt?: string
   shouldStartNewConversation?: boolean
+  resetNewConversationFlag: () => void
+  resetInitialPrompt: () => void
 }
 
 export const ChatWithHistoryContext = createContext<ChatWithHistoryContextValue>({
@@ -99,5 +101,7 @@ export const ChatWithHistoryContext = createContext<ChatWithHistoryContextValue>
   initUserVariables: {},
   initialPrompt: undefined,
   shouldStartNewConversation: false,
+  resetNewConversationFlag: noop,
+  resetInitialPrompt: noop,
 })
 export const useChatWithHistoryContext = () => useContext(ChatWithHistoryContext)

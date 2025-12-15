@@ -151,6 +151,8 @@ const ChatWithHistoryWrap: FC<ChatWithHistoryWrapProps> = ({
     initUserVariables,
     initialPrompt,
     shouldStartNewConversation,
+    resetNewConversationFlag,
+    resetInitialPrompt,
   } = useChatWithHistory(installedAppInfo)
 
   return (
@@ -196,6 +198,8 @@ const ChatWithHistoryWrap: FC<ChatWithHistoryWrapProps> = ({
       initUserVariables,
       initialPrompt,
       shouldStartNewConversation,
+      resetNewConversationFlag,
+      resetInitialPrompt,
     }}>
       <ChatWithHistory className={className} />
     </ChatWithHistoryContext.Provider>
