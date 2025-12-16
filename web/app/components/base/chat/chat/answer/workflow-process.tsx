@@ -13,6 +13,7 @@ import TracingPanel from '@/app/components/workflow/run/tracing-panel'
 import cn from '@/utils/classnames'
 import { CheckCircle } from '@/app/components/base/icons/src/vender/solid/general'
 import { WorkflowRunningStatus } from '@/app/components/workflow/types'
+import BlockIcon from '@/app/components/workflow/block-icon'
 
 type WorkflowProcessProps = {
   data: WorkflowProcess
@@ -34,6 +35,8 @@ const WorkflowProcessItem = ({
   const running = data.status === WorkflowRunningStatus.Running
   const succeeded = data.status === WorkflowRunningStatus.Succeeded
   const failed = data.status === WorkflowRunningStatus.Failed || data.status === WorkflowRunningStatus.Stopped
+
+  const runningNode = running ? data.tracing.find(node => node.status === 'running') : null
 
   useEffect(() => {
     setCollapse(!expand)
@@ -71,9 +74,22 @@ const WorkflowProcessItem = ({
             <RiErrorWarningFill className='mr-1 h-3.5 w-3.5 shrink-0 text-text-destructive' />
           )
         }
-        <div className={cn('system-xs-medium text-text-secondary', !collapse && 'grow')}>
+        <div className='system-xs-medium grow text-text-secondary'>
           {t('workflow.common.workflowProcess')}
         </div>
+        {runningNode && (
+          <div className='flex items-center gap-1.5'>
+            <BlockIcon size='xs' className='shrink-0' type={runningNode.node_type} toolIcon={runningNode.extras?.icon || runningNode.extras} />
+            <span className='system-xs-regular flex items-center text-text-tertiary'>
+              {runningNode.title}
+              <span className='ml-0.5 inline-flex'>
+                <span className='animate-fade'>.</span>
+                <span className='animate-fade [animation-delay:0.2s]'>.</span>
+                <span className='animate-fade [animation-delay:0.4s]'>.</span>
+              </span>
+            </span>
+          </div>
+        )}
         <RiArrowRightSLine className={cn('ml-1 h-4 w-4 text-text-tertiary', !collapse && 'rotate-90')} />
       </div>
       {

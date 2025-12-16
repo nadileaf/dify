@@ -139,6 +139,13 @@ const config = {
       },
       animation: {
         'spin-slow': 'spin 2s linear infinite',
+        'fade': 'fade 1.4s ease-in-out infinite',
+      },
+      keyframes: {
+        fade: {
+          '0%, 100%': { opacity: '0.2' },
+          '50%': { opacity: '1' },
+        },
       },
     },
   },
