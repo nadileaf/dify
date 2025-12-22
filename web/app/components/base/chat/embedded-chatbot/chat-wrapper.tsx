@@ -154,7 +154,7 @@ const ChatWrapper = () => {
       const timer = setTimeout(() => {
         doSend(initialPrompt, [])
         setPromptSent(true)
-      }, 500)
+      }, 100)
       return () => clearTimeout(timer)
     }
   }, [initialPrompt, promptSent, currentConversationId, respondingState, inputDisabled, doSend])
@@ -180,6 +180,8 @@ const ChatWrapper = () => {
     if (respondingState)
       return null
     if (currentConversationId)
+      return null
+    if (initialPrompt && !promptSent)
       return null
 
     return (
@@ -214,7 +216,7 @@ const ChatWrapper = () => {
         </div>
       </div>
     )
-  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
+  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, currentConversationId, inputsForms.length, respondingState, allInputsHidden, initialPrompt, promptSent])
 
   const answerIcon = isDify()
     ? <LogoAvatar className='relative shrink-0' />

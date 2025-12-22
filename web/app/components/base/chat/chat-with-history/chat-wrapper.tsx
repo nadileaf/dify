@@ -167,7 +167,7 @@ const ChatWrapper = () => {
         doSend(initialPrompt, [])
         setPromptSent(true)
         resetInitialPrompt()
-      }, 500)
+      }, 100)
       return () => clearTimeout(timer)
     }
   }, [initialPrompt, promptSent, respondingState, inputDisabled, doSend, resetInitialPrompt])
@@ -192,6 +192,8 @@ const ChatWrapper = () => {
     if (respondingState)
       return null
     if (isHistoryConversation)
+      return null
+    if (initialPrompt && !promptSent)
       return null
 
     return (
@@ -227,7 +229,7 @@ const ChatWrapper = () => {
         </div>
       </div>
     )
-  }, [appData?.site.title, chatList, currentConversationId, respondingState])
+  }, [appData?.site.title, chatList, currentConversationId, respondingState, initialPrompt, promptSent])
 
   const answerIcon = (appData?.site && appData.site.use_icon_as_answer_icon)
     ? <AnswerIcon
