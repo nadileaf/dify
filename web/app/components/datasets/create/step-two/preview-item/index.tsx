@@ -62,11 +62,11 @@ const PreviewItem: FC<IPreviewItemProps> = ({
         {type === PreviewType.QA && (
           <div style={{ whiteSpace: 'pre-line' }}>
             <div className='flex'>
-              <div className='text-medium mr-2 shrink-0 text-gray-400'>Q</div>
+              <div className='mr-2 shrink-0 text-gray-400 text-medium'>Q</div>
               <div style={{ whiteSpace: 'pre-line' }}>{qa?.question}</div>
             </div>
             <div className='flex'>
-              <div className='text-medium mr-2 shrink-0 text-gray-400'>A</div>
+              <div className='mr-2 shrink-0 text-gray-400 text-medium'>A</div>
               <div style={{ whiteSpace: 'pre-line' }}>{qa?.answer}</div>
             </div>
           </div>

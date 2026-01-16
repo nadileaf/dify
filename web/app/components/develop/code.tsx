@@ -92,7 +92,7 @@ function CodePanelHeader({ tag, label }: { tag?: string; label?: string }) {
   return (
     <div className="border-b-white/7.5 bg-white/2.5 dark:bg-white/1 flex h-9 items-center gap-2 border-y border-t-transparent bg-zinc-900 px-4 dark:border-b-white/5">
       {tag && (
-        <div className="dark flex">
+        <div className="flex dark">
           <Tag variant="small">{tag}</Tag>
         </div>
       )}

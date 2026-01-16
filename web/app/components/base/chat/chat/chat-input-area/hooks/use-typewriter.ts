@@ -39,14 +39,14 @@ export const useTypewriter = ({
         setDisplayText(currentText.slice(0, displayText.length + 1))
       }, typingSpeed)
     }
- else {
+    else {
       timeout = setTimeout(() => {
         setDisplayText('')
         if (loop)
           setCurrentIndex(prevIndex => (prevIndex + 1) % texts.length)
-         else if (currentIndex < texts.length - 1)
+        else if (currentIndex < texts.length - 1)
           setCurrentIndex(currentIndex + 1)
-         else
+        else
           setIsActive(false)
       }, pauseDuration)
     }

@@ -378,16 +378,16 @@ const HtmlTestDemo: React.FC = () => {
   })
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
-      <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+    <div className="flex h-screen flex-col overflow-hidden bg-gray-50">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2">
         <h1 className="text-lg font-bold text-gray-900">HTML渲染测试Demo</h1>
         <Button size='sm' onClick={() => setTestContent(DEFAULT_CONTENT)}>Reset Content</Button>
       </div>
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* 左侧编辑区域 */}
-        <div className="w-1/2 flex flex-col border-r border-gray-200 bg-white">
+        <div className="flex w-1/2 flex-col border-r border-gray-200 bg-white">
           {/* 编辑器区域 */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex flex-1 flex-col overflow-hidden">
             <Editor
               defaultLanguage='markdown'
               theme={theme === Theme.dark ? 'vs-dark' : 'vs'}
@@ -421,7 +421,7 @@ const HtmlTestDemo: React.FC = () => {
         </div>
 
         {/* 右侧预览区域 */}
-        <div className="w-1/2 flex flex-col bg-white overflow-auto">
+        <div className="flex w-1/2 flex-col overflow-auto bg-white">
           <div className="min-h-full p-4">
             <Markdown content={testContent} />
           </div>
