@@ -23,7 +23,7 @@ jobs:
         id: get_version
         working-directory: api
         run: |
-          VERSION=$(grep -m 1 '^version = ' pyproject.toml | cut -d'=' -f2 | tr -d ' "'"'"'')
+          VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed 's/.*= *"\(.*\)".*/\1/')
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "::notice::📦 Version: ${VERSION}"
 
