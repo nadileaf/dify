@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class ConversationService:
     @classmethod
-    def get_end_user_ids_by_session(user: EndUser) -> list[str]:
+    def get_end_user_ids_by_session(cls,user: EndUser) -> list[str]:
         same_session_users = (
             db.session.query(EndUser.id)
             .where(
@@ -59,7 +59,7 @@ class ConversationService:
         if not user:
             return InfiniteScrollPagination(data=[], limit=limit, has_more=False)
 
-        user_ids = get_end_user_ids_by_session(user) if isinstance(user, EndUser) else None
+        user_ids = cls.get_end_user_ids_by_session(user) if isinstance(user, EndUser) else None
         stmt = select(Conversation).where(
             Conversation.is_deleted == False,
             Conversation.app_id == app_model.id,
