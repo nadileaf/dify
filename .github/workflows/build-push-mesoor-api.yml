@@ -1,4 +1,4 @@
-name: Build and Push Mesoor Branch
+name: Build and Push Mesoor Branch API
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
 env:
   GHCR_REGISTRY: ghcr.io
   MESOOR_REGISTRY: cr.mesoor.com
-  IMAGE_NAME: production/dify-web
-  GITHUB_IMAGE_NAME: ${{ github.repository_owner }}/dify-web
+  IMAGE_NAME: production/dify-api
+  GITHUB_IMAGE_NAME: ${{ github.repository_owner }}/dify-api
 
 jobs:
   build-and-push:
@@ -19,11 +19,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get version from package.json
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Get version from pyproject.toml
         id: get_version
-        working-directory: web
+        working-directory: api
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "::notice::📦 Version: ${VERSION}"
 
@@ -46,7 +51,7 @@ jobs:
 
       - name: Build and Push to GHCR
         timeout-minutes: 20
-        working-directory: web
+        working-directory: api
         env:
           GHCR_IMAGE_TAG: ${{ env.GHCR_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}
           MESOOR_IMAGE_TAG: ${{ env.MESOOR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}
