@@ -197,9 +197,8 @@ class MessageService:
 
     @classmethod
     def get_message(cls, app_model: App, user: Union[Account, EndUser] | None, message_id: str):
-        from services.conversation_service import ConversationService
 
-        user_ids = ConversationService._get_end_user_ids_by_session(user) if isinstance(user, EndUser) else None
+        user_ids = ConversationService.get_end_user_ids_by_session(user) if isinstance(user, EndUser) else None
         message = (
             db.session.query(Message)
             .where(
