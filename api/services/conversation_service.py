@@ -30,6 +30,18 @@ logger = logging.getLogger(__name__)
 
 
 class ConversationService:
+    @staticmethod
+    def _get_end_user_ids_by_session(user: EndUser) -> list[str]:
+        same_session_users = (
+            db.session.query(EndUser.id)
+            .where(
+                EndUser.tenant_id == user.tenant_id,
+                EndUser.app_id == user.app_id,
+                EndUser.session_id == user.session_id,
+            )
+            .all()
+        )
+        return [str(uid[0]) for uid in same_session_users]
     @classmethod
     def pagination_by_last_id(
         cls,
@@ -47,12 +59,13 @@ class ConversationService:
         if not user:
             return InfiniteScrollPagination(data=[], limit=limit, has_more=False)
 
+        user_ids = cls._get_end_user_ids_by_session(user) if isinstance(user, EndUser) else None
         stmt = select(Conversation).where(
             Conversation.is_deleted == False,
             Conversation.app_id == app_model.id,
             Conversation.from_source == ("api" if isinstance(user, EndUser) else "console"),
-            Conversation.from_end_user_id == (user.id if isinstance(user, EndUser) else None),
-            Conversation.from_account_id == (user.id if isinstance(user, Account) else None),
+            Conversation.from_end_user_id.in_(user_ids) if user_ids else Conversation.from_end_user_id.is_(None),
+            Conversation.from_account_id == (None if isinstance(user, EndUser) else (user.id if user else None)),
             or_(Conversation.invoke_from.is_(None), Conversation.invoke_from == invoke_from.value),
         )
         # Check if include_ids is not None to apply filter
@@ -159,14 +172,15 @@ class ConversationService:
 
     @classmethod
     def get_conversation(cls, app_model: App, conversation_id: str, user: Union[Account, EndUser] | None):
+        user_ids = cls._get_end_user_ids_by_session(user) if isinstance(user, EndUser) else None
         conversation = (
             db.session.query(Conversation)
             .where(
                 Conversation.id == conversation_id,
                 Conversation.app_id == app_model.id,
                 Conversation.from_source == ("api" if isinstance(user, EndUser) else "console"),
-                Conversation.from_end_user_id == (user.id if isinstance(user, EndUser) else None),
-                Conversation.from_account_id == (user.id if isinstance(user, Account) else None),
+                Conversation.from_end_user_id.in_(user_ids) if user_ids else Conversation.from_end_user_id.is_(None),
+                Conversation.from_account_id == (None if isinstance(user, EndUser) else (user.id if user else None)),
                 Conversation.is_deleted == False,
             )
             .first()

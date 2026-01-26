@@ -197,14 +197,17 @@ class MessageService:
 
     @classmethod
     def get_message(cls, app_model: App, user: Union[Account, EndUser] | None, message_id: str):
+        from services.conversation_service import ConversationService
+
+        user_ids = ConversationService._get_end_user_ids_by_session(user) if isinstance(user, EndUser) else None
         message = (
             db.session.query(Message)
             .where(
                 Message.id == message_id,
                 Message.app_id == app_model.id,
                 Message.from_source == ("api" if isinstance(user, EndUser) else "console"),
-                Message.from_end_user_id == (user.id if isinstance(user, EndUser) else None),
-                Message.from_account_id == (user.id if isinstance(user, Account) else None),
+                Message.from_end_user_id.in_(user_ids) if user_ids else Message.from_end_user_id.is_(None),
+                Message.from_account_id == (None if isinstance(user, EndUser) else (user.id if user else None)),
             )
             .first()
         )
