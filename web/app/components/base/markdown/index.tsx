@@ -2,7 +2,7 @@ import dynamic from 'next/dynamic'
 import 'katex/dist/katex.min.css'
 import { flow } from 'lodash-es'
 import cn from '@/utils/classnames'
-import { preprocessCustomHtml, preprocessLaTeX, preprocessThinkTag } from './markdown-utils'
+import { preprocessCustomHtml, preprocessLaTeX, preprocessThinkTag, preprocessToolTag } from './markdown-utils'
 import type { ReactMarkdownWrapperProps } from './react-markdown-wrapper'
 
 const ReactMarkdown = dynamic(() => import('./react-markdown-wrapper').then(mod => mod.ReactMarkdownWrapper), { ssr: false })
@@ -23,6 +23,7 @@ export const Markdown = (props: MarkdownProps) => {
   const { customComponents = {} } = props
   const latexContent = flow([
     preprocessThinkTag,
+    preprocessToolTag,
     preprocessLaTeX,
     preprocessCustomHtml,
   ])(props.content)

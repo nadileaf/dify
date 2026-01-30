@@ -5,7 +5,7 @@
 
 'use client'
 import type { FC } from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { OnSend } from '../types'
 import type { Theme } from '../embedded-chatbot/theme/theme-context'
 import type { InputForm } from '../chat/type'
@@ -45,41 +45,8 @@ export const ChatInputWithTags: FC<ChatInputWithTagsProps> = (props) => {
       setInputValue(props.initialValue)
   }, [props.initialValue])
 
-  // 当标签被添加时，将 [label] 文本插入输入框
-  const handleTagsAdded = useCallback((tagsText: string) => {
-    setInputValue((prev) => {
-      // 如果输入框有内容且不以空格结尾，加空格分隔
-      if (prev && !prev.endsWith(' ')) return `${prev} ${tagsText} `
-      return `${prev}${tagsText} `
-    })
-  }, [])
-
-  const { entityTags, removeTag, clearTags, tagsToText, tagToInputText }
-    = useEntityTags({ onTagsAdded: handleTagsAdded })
-
-  // 删除标签时，也从输入框中移除对应的 [label] 文本
-  const handleRemoveTag = useCallback(
-    (id: string) => {
-      const tagToRemove = entityTags.find(t => t.id === id)
-      if (tagToRemove) {
-        const tagText = tagToInputText({
-          label: tagToRemove.label,
-          value: tagToRemove.value,
-          icon: tagToRemove.icon,
-        })
-        setInputValue((prev) => {
-          // 移除标签文本（包括可能跟随的空格）
-          const pattern = new RegExp(
-            `\\s*${tagText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`,
-            'g',
-          )
-          return prev.replace(pattern, ' ').trim()
-        })
-      }
-      removeTag(id)
-    },
-    [entityTags, removeTag, tagToInputText],
-  )
+  const { entityTags, removeTag, clearTags, tagsToText }
+    = useEntityTags()
 
   // 包装 onSend 函数，在发送前添加标签文本
   const handleSend = useMemo(() => {
@@ -115,7 +82,7 @@ export const ChatInputWithTags: FC<ChatInputWithTagsProps> = (props) => {
 
   return (
     <div className="relative rounded-xl border border-components-chat-input-border bg-components-panel-bg-blur shadow-md transition-all">
-      <EntityTags tags={entityTags} onRemoveTag={handleRemoveTag} size="sm" />
+      <EntityTags tags={entityTags} onRemoveTag={removeTag} size="sm" />
       <div className="[&>div]:rounded-none [&>div]:!border-0 [&>div]:bg-transparent [&>div]:!shadow-none">
         <ChatInputArea
           {...props}

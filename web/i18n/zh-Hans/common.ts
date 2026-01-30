@@ -655,6 +655,8 @@ const translation = {
     inputPlaceholder: '和 {{botName}} 聊天',
     thinking: '深度思考中...',
     thought: '已深度思考',
+    toolCalling: '工具调用中',
+    toolComplete: '工具调用完成',
     resend: '重新发送',
   },
   promptEditor: {

@@ -41,6 +41,19 @@ export const preprocessThinkTag = (content: string) => {
   ])(content)
 }
 
+export const preprocessToolTag = (content: string) => {
+  // 匹配 <tool>...</tool> 并检查后面是否有非空内容
+  const toolBlockRegex = /<tool>([\s\S]*?)<\/tool>(\s*)(\S?)/g
+
+  return content.replace(toolBlockRegex, (match, toolContent, whitespace, nextChar) => {
+    // 如果 </tool> 后面紧跟着非空字符，说明有输出内容，标记为 complete
+    const hasOutputAfter = nextChar && nextChar.trim().length > 0
+    const completeFlag = hasOutputAfter ? '[TOOLCOMPLETE]' : ''
+
+    return `<div data-tool=true>${toolContent}${completeFlag}[ENDTOOLFLAG]</div>${whitespace}${nextChar}`
+  })
+}
+
 /**
  * Transforms a URI for use in react-markdown, ensuring security and compatibility.
  * This function is designed to work with react-markdown v9+ which has stricter

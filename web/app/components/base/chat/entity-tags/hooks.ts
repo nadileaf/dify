@@ -3,22 +3,11 @@
  * 管理实体标签的状态和逻辑
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { EntityTag, EntityTagMessage } from './types'
 
-type UseEntityTagsOptions = {
-  // 当新标签被添加时的回调，返回新标签的文本表示（用于插入输入框）
-  onTagsAdded?: (tagsText: string) => void;
-}
-
-export const useEntityTags = (options: UseEntityTagsOptions = {}) => {
+export const useEntityTags = () => {
   const [entityTags, setEntityTags] = useState<EntityTag[]>([])
-  const onTagsAddedRef = useRef(options.onTagsAdded)
-
-  // 保持 ref 同步
-  useEffect(() => {
-    onTagsAddedRef.current = options.onTagsAdded
-  }, [options.onTagsAdded])
 
   // 生成唯一ID
   const generateId = () =>
@@ -38,14 +27,8 @@ export const useEntityTags = (options: UseEntityTagsOptions = {}) => {
         id: generateId(),
       }))
       setEntityTags(prev => [...prev, ...newTags])
-
-      // 通知外部组件插入标签文本到输入框
-      if (onTagsAddedRef.current) {
-        const tagsText = tags.map(tagToInputText).join(' ')
-        onTagsAddedRef.current(tagsText)
-      }
     },
-    [tagToInputText],
+    [],
   )
 
   // 删除标签

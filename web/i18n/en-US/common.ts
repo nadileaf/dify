@@ -661,6 +661,8 @@ const translation = {
     inputPlaceholder: 'Talk to {{botName}}',
     thinking: 'Thinking...',
     thought: 'Thought',
+    toolCalling: 'Tool Calling',
+    toolComplete: 'Tool Complete',
     resend: 'Resend',
   },
   promptEditor: {

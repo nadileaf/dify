@@ -13,6 +13,7 @@ import MarkdownForm from '@/app/components/base/markdown-blocks/form'
 import Paragraph from '@/app/components/base/markdown-blocks/paragraph'
 import ScriptBlock from '@/app/components/base/markdown-blocks/script-block'
 import ThinkBlock from '@/app/components/base/markdown-blocks/think-block'
+import ToolBlock from '@/app/components/base/markdown-blocks/tool-block'
 import VideoBlock from '@/app/components/base/markdown-blocks/video-block'
 import { customUrlTransform } from './markdown-utils'
 
@@ -80,6 +81,11 @@ export const ReactMarkdownWrapper: FC<ReactMarkdownWrapperProps> = (props) => {
         form: MarkdownForm,
         script: ScriptBlock as any,
         details: ThinkBlock,
+        div: (props: any) => {
+          if (props['data-tool'])
+            return <ToolBlock {...props} />
+          return <div {...props} />
+        },
         ...customComponents,
       }}
     >
