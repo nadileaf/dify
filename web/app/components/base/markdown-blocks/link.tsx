@@ -106,15 +106,15 @@ const Link = ({ node, children, ...props }: any) => {
     const customStyle = extractButtonStyle(children)
 
     return (
-      <button
-        className="btn btn-primary rounded-lg px-3 py-2 text-sm font-medium"
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-2.5 text-sm font-medium text-white no-underline shadow-lg transition-all duration-200 ease-in-out hover:from-blue-600 hover:to-blue-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95"
         style={customStyle}
-        onClick={() => {
-          window.open(href, '_blank', 'noopener,noreferrer')
-        }}
       >
         {buttonText}
-      </button>
+      </a>
     )
   }
 
