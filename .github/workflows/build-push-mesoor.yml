@@ -27,6 +27,13 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "::notice::📦 Version: ${VERSION}"
 
+      - name: Get timestamp
+        id: get_timestamp
+        run: |
+          TIMESTAMP=$(date -u +%Y%m%d%H%M)
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "::notice::🕐 Timestamp: ${TIMESTAMP}"
+
       - name: Get short commit hash
         id: get_hash
         run: |
@@ -48,8 +55,8 @@ jobs:
         timeout-minutes: 20
         working-directory: web
         env:
-          GHCR_IMAGE_TAG: ${{ env.GHCR_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}
-          MESOOR_IMAGE_TAG: ${{ env.MESOOR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}
+          GHCR_IMAGE_TAG: ${{ env.GHCR_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_timestamp.outputs.timestamp }}
+          MESOOR_IMAGE_TAG: ${{ env.MESOOR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}-${{ steps.get_timestamp.outputs.timestamp }}
         run: |
           echo "::group::Docker Build Process"
           docker buildx build \
@@ -66,7 +73,7 @@ jobs:
           echo ""
           echo "镜像已推送到 GHCR，请使用以下命令同步到腾讯云："
           echo ""
-          echo "::notice file=sync-command,title=同步命令::./scripts/sync-image-to-mesoor.sh ${{ steps.get_version.outputs.version }}-${{ steps.get_hash.outputs.hash }}"
+          echo "::notice file=sync-command,title=同步命令::./scripts/sync-image-to-mesoor.sh ${{ steps.get_version.outputs.version }}-${{ steps.get_timestamp.outputs.timestamp }}"
           echo ""
           echo "或者手动同步："
           echo "::notice file=manual-sync,line=1::docker pull ${GHCR_IMAGE_TAG}"

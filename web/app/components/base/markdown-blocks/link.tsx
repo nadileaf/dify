@@ -110,7 +110,7 @@ const Link = ({ node, children, ...props }: any) => {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-2.5 text-sm font-medium text-white no-underline shadow-lg transition-all duration-200 ease-in-out hover:from-blue-600 hover:to-blue-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95"
+        className="!inline-flex !h-8 !items-center !justify-center !rounded-lg !border !border-components-button-primary-border !bg-components-button-primary-bg !px-3.5 !text-[13px] !font-medium !leading-4 !text-components-button-primary-text !no-underline !shadow !transition-all !duration-200 hover:!border-components-button-primary-border-hover hover:!bg-components-button-primary-bg-hover"
         style={customStyle}
       >
         {buttonText}
