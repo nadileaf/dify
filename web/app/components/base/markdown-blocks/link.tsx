@@ -110,7 +110,7 @@ const Link = ({ node, children, ...props }: any) => {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="!inline-flex !h-8 !items-center !justify-center !rounded-lg !border !border-components-button-primary-border !bg-components-button-primary-bg !px-3.5 !text-[13px] !font-medium !leading-4 !text-components-button-primary-text !no-underline !shadow !transition-all !duration-200 hover:!border-components-button-primary-border-hover hover:!bg-components-button-primary-bg-hover"
+        className="!inline-flex !h-8 !items-center !justify-center truncate !rounded-lg !border !border-components-button-primary-border !bg-components-button-primary-bg !px-3.5 !text-[13px] !font-medium !leading-4 !text-components-button-primary-text !no-underline !shadow !transition-all !duration-200 hover:!border-components-button-primary-border-hover hover:!bg-components-button-primary-bg-hover"
         style={customStyle}
       >
         {buttonText}

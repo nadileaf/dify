@@ -658,6 +658,18 @@ const translation = {
     toolCalling: '工具调用中',
     toolComplete: '工具调用完成',
     resend: '重新发送',
+    thinkingIndicators: [
+      '捕捉灵感',
+      '梳理思路',
+      '组织语言',
+      '深思熟虑',
+      '精心构思',
+      '仔细斟酌',
+      '推敲细节',
+      '整理观点',
+      '润色表达',
+      '优化回答',
+    ],
   },
   promptEditor: {
     placeholder: '在这里写你的提示词，输入\'{\' 插入变量、输入\'/\' 插入提示内容块',

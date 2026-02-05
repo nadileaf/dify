@@ -21,6 +21,7 @@ import type { AppData } from '@/models/share'
 import cn from '@/utils/classnames'
 import { FileList } from '@/app/components/base/file-uploader'
 import ContentSwitch from '../content-switch'
+import ThinkingIndicator from '../thinking-indicator'
 
 type AnswerProps = {
   item: ChatItem
@@ -41,7 +42,8 @@ const Answer: FC<AnswerProps> = ({
   question,
   index,
   config,
-  answerIcon,
+
+  answerIcon: _answerIcon,
   responding,
   showPromptLog,
   chatAnswerContainerInner,
@@ -179,6 +181,11 @@ const Answer: FC<AnswerProps> = ({
                   className='mt-1'
                   title={t('appAnnotation.editBy', { author: annotation.authorName })}
                 />
+              )
+            }
+            {
+              responding && (
+                <ThinkingIndicator />
               )
             }
             <SuggestedQuestions item={item} />

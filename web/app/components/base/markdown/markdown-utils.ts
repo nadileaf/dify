@@ -42,15 +42,17 @@ export const preprocessThinkTag = (content: string) => {
 }
 
 export const preprocessToolTag = (content: string) => {
-  // 匹配 <tool>...</tool> 并检查后面是否有非空内容
-  const toolBlockRegex = /<tool>([\s\S]*?)<\/tool>(\s*)(\S?)/g
+  // 使用前瞻断言检查 </tool> 后是否有非空内容，但不消费字符
+  const toolBlockRegex = /<tool(?:\s+name="([^"]*)")?\s*>([\s\S]*?)<\/tool>(\s*)(?=(\S)|$)/g
 
-  return content.replace(toolBlockRegex, (match, toolContent, whitespace, nextChar) => {
-    // 如果 </tool> 后面紧跟着非空字符，说明有输出内容，标记为 complete
+  return content.replace(toolBlockRegex, (match, toolName, toolContent, whitespace, nextChar) => {
+    // nextChar 通过前瞻捕获，不会从原字符串中移除
     const hasOutputAfter = nextChar && nextChar.trim().length > 0
     const completeFlag = hasOutputAfter ? '[TOOLCOMPLETE]' : ''
+    const nameAttr = toolName ? ` data-tool-name="${toolName}"` : ''
 
-    return `<div data-tool=true>${toolContent}${completeFlag}[ENDTOOLFLAG]</div>${whitespace}${nextChar}`
+    // 不输出 nextChar，因为它还在原字符串中
+    return `<div data-tool=true${nameAttr}>${toolContent}${completeFlag}[ENDTOOLFLAG]</div>${whitespace}`
   })
 }
 

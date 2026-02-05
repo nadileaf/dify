@@ -2,17 +2,36 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useChatContext } from '../chat/chat/context'
 
-const hasEndTool = (children: any): boolean => {
+const extractTextContent = (children: any): string => {
   if (typeof children === 'string')
-    return children.includes('[ENDTOOLFLAG]')
+    return children
 
   if (Array.isArray(children))
-    return children.some(child => hasEndTool(child))
+    return children.map(extractTextContent).join('')
 
   if (children?.props?.children)
-    return hasEndTool(children.props.children)
+    return extractTextContent(children.props.children)
 
-  return false
+  return ''
+}
+
+const tryParseJSON = (content: string): any | null => {
+  try {
+    const trimmed = content.trim()
+    if (!trimmed.startsWith('{'))
+      return null
+    return JSON.parse(trimmed)
+  }
+  catch {
+    return null
+  }
+}
+
+const isSkillJSON = (json: any): boolean => {
+  return json
+    && typeof json === 'object'
+    && json.action === 'skill'
+    && json.skill_name
 }
 
 const hasToolComplete = (children: any): boolean => {
@@ -76,47 +95,6 @@ const extractToolName = (children: any): string => {
   return 'Tool'
 }
 
-const hasToolContent = (children: any): boolean => {
-  if (typeof children === 'string') {
-    const content = children.replace('[ENDTOOLFLAG]', '').trim()
-    // 检查是否有多行内容（第一行是工具名，第二行开始才是输出内容）
-    const lines = content.split('\n')
-    if (lines.length <= 1) return false
-
-    // 检查第二行及以后是否有非空内容
-    const hasContentAfterFirstLine = lines.slice(1).some(line => line.trim().length > 0)
-    return hasContentAfterFirstLine
-  }
-
-  if (Array.isArray(children)) {
-    if (children.length === 0) return false
-
-    // 如果有多个非空子元素，说明有内容
-    const nonEmptyChildren = children.filter((child) => {
-      if (typeof child === 'string') {
-        const content = child.replace('[ENDTOOLFLAG]', '').trim()
-        return content.length > 0
-      }
-      return child && typeof child !== 'string'
-    })
-
-    // 多个非空元素，或者包含非字符串元素
-    if (nonEmptyChildren.length > 1) return true
-    if (nonEmptyChildren.some(child => typeof child !== 'string')) return true
-
-    // 只有一个字符串元素，检查是否有多行
-    if (nonEmptyChildren.length === 1 && typeof nonEmptyChildren[0] === 'string')
-      return hasToolContent(nonEmptyChildren[0])
-
-    return false
-  }
-
-  if (children?.props?.children)
-    return hasToolContent(children.props.children)
-
-  return false
-}
-
 const useToolTimer = (children: any) => {
   const { isResponding } = useChatContext()
   const [startTime] = useState(() => Date.now())
@@ -147,10 +125,80 @@ const useToolTimer = (children: any) => {
   return { elapsedTime, isComplete }
 }
 
+const SkillDisplay = ({ skillData }: { skillData: any }) => {
+  const { answer, progress, skill_arguments } = skillData
+
+  const progressItems = progress ? progress.split('\n').filter((line: string) => line.trim()) : []
+
+  return (
+    <div className="space-y-3">
+      {answer && (
+        <div className="rounded-md bg-background-section-burn p-3">
+          <div className="system-xs-medium text-text-secondary">
+            {answer}
+          </div>
+        </div>
+      )}
+
+      {progressItems.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="system-xs-semibold text-text-tertiary">
+            执行进度
+          </div>
+          {progressItems.map((item: string, idx: number) => {
+            const isChecked = item.includes('[x]') || item.includes('[X]')
+            const text = item.replace(/^-\s*\[[xX ]\]\s*/, '')
+
+            return (
+              <div key={idx} className="flex items-start gap-2">
+                <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded ${isChecked ? 'bg-text-accent' : 'border border-divider-regular'}`}>
+                  {isChecked && (
+                    <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span className={`system-xs-regular ${isChecked ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+                  {text}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {skill_arguments && Object.keys(skill_arguments).length > 0 && (
+        <details className="group/details">
+          <summary className="system-xs-semibold cursor-pointer text-text-tertiary hover:text-text-secondary">
+            <span className="inline-flex items-center gap-1">
+              参数详情
+              <svg className="h-3 w-3 transition-transform group-open/details:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </summary>
+          <div className="mt-2 rounded-md bg-background-section-burn p-2">
+            <pre className="system-xs-regular overflow-x-auto text-text-tertiary">
+              {JSON.stringify(skill_arguments, null, 2)}
+            </pre>
+          </div>
+        </details>
+      )}
+    </div>
+  )
+}
+
 const ToolBlock = ({ children, ...props }: React.ComponentProps<'div'>) => {
   const { elapsedTime } = useToolTimer(children)
   const displayContent = removeEndTool(children)
-  const toolName = extractToolName(children)
+  const toolNameFromAttr = (props as any)['data-tool-name']
+  const toolNameFromContent = extractToolName(children)
+
+  const textContent = extractTextContent(displayContent)
+  const jsonData = tryParseJSON(textContent)
+  const skillName = jsonData?.skill_name || jsonData?.skill_id
+
+  const toolName = toolNameFromAttr || skillName || toolNameFromContent
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -167,10 +215,10 @@ const ToolBlock = ({ children, ...props }: React.ComponentProps<'div'>) => {
   return (
     <div className="group my-2 overflow-hidden rounded-lg border border-components-panel-border bg-components-panel-bg transition-all">
       <div
-        className="flex cursor-pointer select-none items-center justify-between p-3"
+        className="flex cursor-pointer select-none items-start justify-between gap-2 p-3 sm:items-center"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {status === 'loading' && (
             <svg
               className="h-4 w-4 animate-spin text-text-accent"
@@ -211,17 +259,17 @@ const ToolBlock = ({ children, ...props }: React.ComponentProps<'div'>) => {
           <span className="system-sm-semibold text-text-secondary">
             {status === 'loading' ? t('common.chat.toolCalling') : t('common.chat.toolComplete')}
           </span>
-          <span className="system-xs-medium text-text-tertiary">
+          <span className="system-xs-medium max-w-[200px] truncate text-text-tertiary sm:max-w-none" title={toolName}>
             {toolName}
           </span>
           {status === 'complete' && (
-            <span className="system-xs-regular text-text-quaternary">
+            <span className="system-xs-regular whitespace-nowrap text-text-quaternary">
               ({elapsedTime.toFixed(1)}s)
             </span>
           )}
         </div>
         <svg
-          className={`h-4 w-4 text-text-tertiary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 shrink-0 text-text-tertiary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -236,9 +284,13 @@ const ToolBlock = ({ children, ...props }: React.ComponentProps<'div'>) => {
       </div>
       {isOpen && (
         <div className="border-t border-components-panel-border bg-components-panel-bg-alt px-3 py-2 text-text-secondary">
-          <div className="system-xs-regular">
-            {displayContent}
-          </div>
+          {jsonData && isSkillJSON(jsonData)
+            ? <SkillDisplay skillData={jsonData} />
+            : (
+              <div className="system-xs-regular overflow-x-auto break-words">
+                {displayContent}
+              </div>
+            )}
         </div>
       )}
     </div>

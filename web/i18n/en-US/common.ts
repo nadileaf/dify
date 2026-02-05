@@ -664,6 +664,18 @@ const translation = {
     toolCalling: 'Tool Calling',
     toolComplete: 'Tool Complete',
     resend: 'Resend',
+    thinkingIndicators: [
+      'Capturing ideas',
+      'Organizing thoughts',
+      'Structuring response',
+      'Thinking carefully',
+      'Crafting answer',
+      'Considering details',
+      'Refining thoughts',
+      'Gathering insights',
+      'Polishing words',
+      'Composing reply',
+    ],
   },
   promptEditor: {
     placeholder: 'Write your prompt word here, enter \'{\' to insert a variable, enter \'/\' to insert a prompt content block',

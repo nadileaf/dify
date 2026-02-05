@@ -140,11 +140,16 @@ const config = {
       animation: {
         'spin-slow': 'spin 2s linear infinite',
         'fade': 'fade 1.4s ease-in-out infinite',
+        'fade-in': 'fadeIn 0.2s ease-in',
       },
       keyframes: {
         fade: {
           '0%, 100%': { opacity: '0.2' },
           '50%': { opacity: '1' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0.2' },
+          '100%': { opacity: '1' },
         },
       },
     },
