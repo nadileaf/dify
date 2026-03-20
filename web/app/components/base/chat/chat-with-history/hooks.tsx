@@ -379,9 +379,13 @@ export const useChatWithHistory = (installedAppInfo?: InstalledApp) => {
   }, [appChatListData, currentConversationId])
   const [currentConversationInputs, setCurrentConversationInputs] = useState<Record<string, any>>(currentConversationLatestInputs || {})
   useEffect(() => {
-    if (currentConversationItem)
-      setCurrentConversationInputs(currentConversationLatestInputs || {})
-  }, [currentConversationItem, currentConversationLatestInputs])
+    if (currentConversationItem || (currentConversationId && Object.keys(initInputs).length > 0)) {
+      setCurrentConversationInputs({
+        ...currentConversationLatestInputs,
+        ...initInputs,
+      })
+    }
+  }, [currentConversationItem, currentConversationLatestInputs, currentConversationId, initInputs])
 
   const { notify } = useToastContext()
   const checkInputsRequired = useCallback((silent?: boolean) => {

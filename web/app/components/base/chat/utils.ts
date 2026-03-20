@@ -19,26 +19,21 @@ async function getRawInputsFromUrlParams(): Promise<Record<string, any>> {
   const urlParams = new URLSearchParams(window.location.search)
   const inputs: Record<string, any> = {}
   const entriesArray = Array.from(urlParams.entries())
-  entriesArray.forEach(([key, value]) => {
-    const prefixArray = ['sys.', 'user.']
-    if (!prefixArray.some(prefix => key.startsWith(prefix)))
-      inputs[key] = decodeURIComponent(value)
-  })
+  await Promise.all(
+    entriesArray.map(async ([key, value]) => {
+      const prefixArray = ['sys.', 'user.']
+      if (!prefixArray.some(prefix => key.startsWith(prefix)) && value) {
+        const decodedValue = await decodeBase64AndDecompress(decodeURIComponent(value))
+        if (decodedValue)
+          inputs[key] = decodedValue
+      }
+    }),
+  )
   return inputs
 }
 
 async function getProcessedInputsFromUrlParams(): Promise<Record<string, any>> {
-  const urlParams = new URLSearchParams(window.location.search)
-  const inputs: Record<string, any> = {}
-  const entriesArray = Array.from(urlParams.entries())
-  await Promise.all(
-    entriesArray.map(async ([key, value]) => {
-      const prefixArray = ['sys.', 'user.']
-      if (!prefixArray.some(prefix => key.startsWith(prefix)))
-        inputs[key] = await decodeBase64AndDecompress(decodeURIComponent(value))
-    }),
-  )
-  return inputs
+  return getRawInputsFromUrlParams()
 }
 
 async function getProcessedSystemVariablesFromUrlParams(): Promise<Record<string, any>> {
@@ -64,28 +59,24 @@ async function getProcessedSystemVariablesFromUrlParams(): Promise<Record<string
   return systemVariables
 }
 
-async function getProcessedUserVariablesFromUrlParams(): Promise<Record<string, any>> {
+async function getRawUserVariablesFromUrlParams(): Promise<Record<string, any>> {
   const urlParams = new URLSearchParams(window.location.search)
   const userVariables: Record<string, any> = {}
   const entriesArray = Array.from(urlParams.entries())
   await Promise.all(
     entriesArray.map(async ([key, value]) => {
-      if (key.startsWith('user.'))
-        userVariables[key.slice(5)] = await decodeBase64AndDecompress(decodeURIComponent(value))
+      if (key.startsWith('user.') && value) {
+        const decodedValue = await decodeBase64AndDecompress(decodeURIComponent(value))
+        if (decodedValue)
+          userVariables[key.slice(5)] = decodedValue
+      }
     }),
   )
   return userVariables
 }
 
-async function getRawUserVariablesFromUrlParams(): Promise<Record<string, any>> {
-  const urlParams = new URLSearchParams(window.location.search)
-  const userVariables: Record<string, any> = {}
-  const entriesArray = Array.from(urlParams.entries())
-  entriesArray.forEach(([key, value]) => {
-    if (key.startsWith('user.'))
-      userVariables[key.slice(5)] = decodeURIComponent(value)
-  })
-  return userVariables
+async function getProcessedUserVariablesFromUrlParams(): Promise<Record<string, any>> {
+  return getRawUserVariablesFromUrlParams()
 }
 
 function isValidGeneratedAnswer(item?: ChatItem | ChatItemInTree): boolean {
