@@ -16,8 +16,8 @@ from core.app.entities.task_entities import (
     PingStreamResponse,
 )
 from core.errors.error import QuotaExceededError
-from core.model_runtime.errors.invoke import InvokeAuthorizationError, InvokeError
 from core.moderation.output_moderation import ModerationRule, OutputModeration
+from dify_graph.model_runtime.errors.invoke import InvokeAuthorizationError, InvokeError
 from models.enums import MessageStatus
 from models.model import Message
 
@@ -49,7 +49,7 @@ class BasedGenerateTaskPipeline:
         if isinstance(e, InvokeAuthorizationError):
             err = InvokeAuthorizationError("Incorrect API key provided")
         elif isinstance(e, InvokeError | ValueError):
-            err = e  # ty: ignore [invalid-assignment]
+            err = e
         else:
             description = getattr(e, "description", None)
             err = Exception(description if description is not None else str(e))

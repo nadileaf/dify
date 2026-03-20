@@ -7,11 +7,12 @@ from core.app.apps.base_app_queue_manager import AppQueueManager, PublishFrom
 from core.app.entities.app_invoke_entities import InvokeFrom
 from core.app.entities.queue_entities import QueueRetrieverResourcesEvent
 from core.rag.entities.citation_metadata import RetrievalSourceMetadata
-from core.rag.index_processor.constant.index_type import IndexType
+from core.rag.index_processor.constant.index_type import IndexStructureType
 from core.rag.models.document import Document
 from extensions.ext_database import db
 from models.dataset import ChildChunk, DatasetQuery, DocumentSegment
 from models.dataset import Document as DatasetDocument
+from models.enums import CreatorUserRole, DatasetQuerySource
 
 _logger = logging.getLogger(__name__)
 
@@ -35,10 +36,12 @@ class DatasetIndexToolCallbackHandler:
         dataset_query = DatasetQuery(
             dataset_id=dataset_id,
             content=query,
-            source="app",
+            source=DatasetQuerySource.APP,
             source_app_id=self._app_id,
             created_by_role=(
-                "account" if self._invoke_from in {InvokeFrom.EXPLORE, InvokeFrom.DEBUGGER} else "end_user"
+                CreatorUserRole.ACCOUNT
+                if self._invoke_from in {InvokeFrom.EXPLORE, InvokeFrom.DEBUGGER}
+                else CreatorUserRole.END_USER
             ),
             created_by=self._user_id,
         )
@@ -59,7 +62,7 @@ class DatasetIndexToolCallbackHandler:
                         document_id,
                     )
                     continue
-                if dataset_document.doc_form == IndexType.PARENT_CHILD_INDEX:
+                if dataset_document.doc_form == IndexStructureType.PARENT_CHILD_INDEX:
                     child_chunk_stmt = select(ChildChunk).where(
                         ChildChunk.index_node_id == document.metadata["doc_id"],
                         ChildChunk.dataset_id == dataset_document.dataset_id,

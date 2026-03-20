@@ -20,9 +20,6 @@ The TableTestRunner (`test_table_runner.py`) provides a robust table-driven test
 - **Mock configuration** - Seamless integration with the auto-mock system
 - **Performance metrics** - Track execution times and bottlenecks
 - **Detailed error reporting** - Comprehensive failure diagnostics
-- **Test tagging** - Organize and filter tests by tags
-- **Retry mechanism** - Handle flaky tests gracefully
-- **Custom validators** - Define custom validation logic
 
 ### Basic Usage
 
@@ -68,53 +65,10 @@ suite_result = runner.run_table_tests(
 print(f"Success rate: {suite_result.success_rate:.1f}%")
 ```
 
-#### Test Tagging and Filtering
-
-```python
-test_case = WorkflowTestCase(
-    fixture_path="workflow",
-    inputs={},
-    expected_outputs={},
-    tags=["smoke", "critical"],
-)
-
-# Run only tests with specific tags
-suite_result = runner.run_table_tests(
-    test_cases,
-    tags_filter=["smoke"]
-)
-```
-
-#### Retry Mechanism
-
-```python
-test_case = WorkflowTestCase(
-    fixture_path="flaky_workflow",
-    inputs={},
-    expected_outputs={},
-    retry_count=2,  # Retry up to 2 times on failure
-)
-```
-
-#### Custom Validators
-
-```python
-def custom_validator(outputs: dict) -> bool:
-    # Custom validation logic
-    return "error" not in outputs.get("status", "")
-
-test_case = WorkflowTestCase(
-    fixture_path="workflow",
-    inputs={},
-    expected_outputs={"status": "success"},
-    custom_validator=custom_validator,
-)
-```
-
 #### Event Sequence Validation
 
 ```python
-from core.workflow.graph_events import (
+from dify_graph.graph_events import (
     GraphRunStartedEvent,
     NodeRunStartedEvent,
     NodeRunSucceededEvent,
@@ -422,39 +376,39 @@ See `test_mock_example.py` for comprehensive examples including:
 
 ```bash
 # Run graph engine tests (includes property-based tests)
-uv run pytest api/tests/unit_tests/core/workflow/graph_engine/test_graph_engine.py
+uv run pytest api/tests/unit_tests/dify_graph/graph_engine/test_graph_engine.py
 
 # Run with specific test patterns
-uv run pytest api/tests/unit_tests/core/workflow/graph_engine/test_graph_engine.py -k "test_echo"
+uv run pytest api/tests/unit_tests/dify_graph/graph_engine/test_graph_engine.py -k "test_echo"
 
 # Run with verbose output
-uv run pytest api/tests/unit_tests/core/workflow/graph_engine/test_graph_engine.py -v
+uv run pytest api/tests/unit_tests/dify_graph/graph_engine/test_graph_engine.py -v
 ```
 
 ### Mock System Tests
 
 ```bash
 # Run auto-mock system tests
-uv run pytest api/tests/unit_tests/core/workflow/graph_engine/test_auto_mock_system.py
+uv run pytest api/tests/unit_tests/dify_graph/graph_engine/test_auto_mock_system.py
 
 # Run examples
-uv run python api/tests/unit_tests/core/workflow/graph_engine/test_mock_example.py
+uv run python api/tests/unit_tests/dify_graph/graph_engine/test_mock_example.py
 
 # Run simple validation
-uv run python api/tests/unit_tests/core/workflow/graph_engine/test_mock_simple.py
+uv run python api/tests/unit_tests/dify_graph/graph_engine/test_mock_simple.py
 ```
 
 ### All Tests
 
 ```bash
 # Run all graph engine tests
-uv run pytest api/tests/unit_tests/core/workflow/graph_engine/
+uv run pytest api/tests/unit_tests/dify_graph/graph_engine/
 
 # Run with coverage
-uv run pytest api/tests/unit_tests/core/workflow/graph_engine/ --cov=core.workflow.graph_engine
+uv run pytest api/tests/unit_tests/dify_graph/graph_engine/ --cov=dify_graph.graph_engine
 
 # Run in parallel
-uv run pytest api/tests/unit_tests/core/workflow/graph_engine/ -n auto
+uv run pytest api/tests/unit_tests/dify_graph/graph_engine/ -n auto
 ```
 
 ## Troubleshooting

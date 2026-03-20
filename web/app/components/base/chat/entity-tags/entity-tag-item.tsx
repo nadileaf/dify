@@ -6,7 +6,7 @@
 import type { FC } from 'react'
 import { RiCloseLine } from '@remixicon/react'
 import type { EntityTag } from './types'
-import cn from '@/utils/classnames'
+import { cn } from '@/utils/classnames'
 
 type EntityTagItemProps = {
   tag: EntityTag

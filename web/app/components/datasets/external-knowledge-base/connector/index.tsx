@@ -1,14 +1,15 @@
 'use client'
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useToastContext } from '@/app/components/base/toast'
-import ExternalKnowledgeBaseCreate from '@/app/components/datasets/external-knowledge-base/create'
 import type { CreateKnowledgeBaseReq } from '@/app/components/datasets/external-knowledge-base/create/declarations'
+import * as React from 'react'
+import { useState } from 'react'
+import { trackEvent } from '@/app/components/base/amplitude'
+import { toast } from '@/app/components/base/ui/toast'
+import ExternalKnowledgeBaseCreate from '@/app/components/datasets/external-knowledge-base/create'
+import { useRouter } from '@/next/navigation'
 import { createExternalKnowledgeBase } from '@/service/datasets'
 
 const ExternalKnowledgeBaseConnector = () => {
-  const { notify } = useToastContext()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -17,14 +18,18 @@ const ExternalKnowledgeBaseConnector = () => {
       setLoading(true)
       const result = await createExternalKnowledgeBase({ body: formValue })
       if (result && result.id) {
-        notify({ type: 'success', message: 'External Knowledge Base Connected Successfully' })
+        toast.add({ type: 'success', title: 'External Knowledge Base Connected Successfully' })
+        trackEvent('create_external_knowledge_base', {
+          provider: formValue.provider,
+          name: formValue.name,
+        })
         router.back()
       }
       else { throw new Error('Failed to create external knowledge base') }
     }
     catch (error) {
       console.error('Error creating external knowledge base:', error)
-      notify({ type: 'error', message: 'Failed to connect External Knowledge Base' })
+      toast.add({ type: 'error', title: 'Failed to connect External Knowledge Base' })
     }
     setLoading(false)
   }

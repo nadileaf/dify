@@ -17,11 +17,11 @@ from sqlalchemy.orm import sessionmaker
 from tenacity import before_sleep_log, retry, retry_if_exception, stop_after_attempt
 
 from configs import dify_config
-from core.model_runtime.utils.encoders import jsonable_encoder
-from core.workflow.entities import WorkflowNodeExecution
-from core.workflow.enums import NodeType, WorkflowNodeExecutionMetadataKey, WorkflowNodeExecutionStatus
-from core.workflow.repositories.workflow_node_execution_repository import OrderConfig, WorkflowNodeExecutionRepository
-from core.workflow.workflow_type_encoder import WorkflowRuntimeTypeConverter
+from dify_graph.entities import WorkflowNodeExecution
+from dify_graph.enums import WorkflowNodeExecutionMetadataKey, WorkflowNodeExecutionStatus
+from dify_graph.model_runtime.utils.encoders import jsonable_encoder
+from dify_graph.repositories.workflow_node_execution_repository import OrderConfig, WorkflowNodeExecutionRepository
+from dify_graph.workflow_type_encoder import WorkflowRuntimeTypeConverter
 from extensions.ext_storage import storage
 from libs.helper import extract_tenant_id
 from libs.uuid_utils import uuidv7
@@ -104,7 +104,6 @@ class SQLAlchemyWorkflowNodeExecutionRepository(WorkflowNodeExecutionRepository)
         self._creator_user_role = CreatorUserRole.ACCOUNT if isinstance(user, Account) else CreatorUserRole.END_USER
 
         # Initialize in-memory cache for node executions
-        # Key: node_execution_id, Value: WorkflowNodeExecution (DB model)
         self._node_execution_cache: dict[str, WorkflowNodeExecutionModel] = {}
 
         # Initialize FileService for handling offloaded data
@@ -147,7 +146,7 @@ class SQLAlchemyWorkflowNodeExecutionRepository(WorkflowNodeExecutionRepository)
             index=db_model.index,
             predecessor_node_id=db_model.predecessor_node_id,
             node_id=db_model.node_id,
-            node_type=NodeType(db_model.node_type),
+            node_type=db_model.node_type,
             title=db_model.title,
             inputs=inputs,
             process_data=process_data,
@@ -332,17 +331,10 @@ class SQLAlchemyWorkflowNodeExecutionRepository(WorkflowNodeExecutionRepository)
         Args:
             execution: The NodeExecution domain entity to persist
         """
-        # NOTE: As per the implementation of `WorkflowCycleManager`,
-        # the `save` method is invoked multiple times during the node's execution lifecycle, including:
-        #
-        # - When the node starts execution
-        # - When the node retries execution
-        # - When the node completes execution (either successfully or with failure)
-        #
-        # Only the final invocation will have `inputs` and `outputs` populated.
-        #
-        # This simplifies the logic for saving offloaded variables but introduces a tight coupling
-        # between this module and `WorkflowCycleManager`.
+        # NOTE: The workflow engine triggers `save` multiple times for a single node execution:
+        # when the node starts, any time it retries, and once more when it reaches a terminal state.
+        # Only the final call contains the complete inputs and outputs payloads, so earlier invocations
+        # must tolerate missing data without attempting to offload variables.
 
         # Convert domain model to database model using tenant context and other attributes
         db_model = self._to_db_model(execution)
@@ -496,6 +488,7 @@ class SQLAlchemyWorkflowNodeExecutionRepository(WorkflowNodeExecutionRepository)
                 WorkflowNodeExecutionModel.workflow_run_id == workflow_run_id,
                 WorkflowNodeExecutionModel.tenant_id == self._tenant_id,
                 WorkflowNodeExecutionModel.triggered_from == triggered_from,
+                WorkflowNodeExecutionModel.status != WorkflowNodeExecutionStatus.PAUSED,
             )
 
             if self._app_id:

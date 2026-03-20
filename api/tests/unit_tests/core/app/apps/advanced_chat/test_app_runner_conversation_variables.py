@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from core.app.apps.advanced_chat.app_runner import AdvancedChatAppRunner
 from core.app.entities.app_invoke_entities import AdvancedChatAppGenerateEntity, InvokeFrom
-from core.variables import SegmentType
+from dify_graph.variables import SegmentType
 from factories import variable_factory
 from models import ConversationVariable, Workflow
 
@@ -99,6 +99,8 @@ class TestAdvancedChatAppRunnerConversationVariables:
             workflow=mock_workflow,
             system_user_id=str(uuid4()),
             app=MagicMock(),
+            workflow_execution_repository=MagicMock(),
+            workflow_node_execution_repository=MagicMock(),
         )
 
         # Mock database session
@@ -123,7 +125,11 @@ class TestAdvancedChatAppRunnerConversationVariables:
             patch("core.app.apps.advanced_chat.app_runner.select") as mock_select,
             patch("core.app.apps.advanced_chat.app_runner.db") as mock_db,
             patch.object(runner, "_init_graph") as mock_init_graph,
-            patch.object(runner, "handle_input_moderation", return_value=False),
+            patch.object(
+                runner,
+                "handle_input_moderation",
+                return_value=(False, mock_app_generate_entity.inputs, mock_app_generate_entity.query),
+            ),
             patch.object(runner, "handle_annotation_reply", return_value=False),
             patch("core.app.apps.advanced_chat.app_runner.WorkflowEntry") as mock_workflow_entry_class,
             patch("core.app.apps.advanced_chat.app_runner.GraphRuntimeState") as mock_graph_runtime_state_class,
@@ -237,6 +243,8 @@ class TestAdvancedChatAppRunnerConversationVariables:
             workflow=mock_workflow,
             system_user_id=str(uuid4()),
             app=MagicMock(),
+            workflow_execution_repository=MagicMock(),
+            workflow_node_execution_repository=MagicMock(),
         )
 
         # Mock database session
@@ -261,7 +269,11 @@ class TestAdvancedChatAppRunnerConversationVariables:
             patch("core.app.apps.advanced_chat.app_runner.select") as mock_select,
             patch("core.app.apps.advanced_chat.app_runner.db") as mock_db,
             patch.object(runner, "_init_graph") as mock_init_graph,
-            patch.object(runner, "handle_input_moderation", return_value=False),
+            patch.object(
+                runner,
+                "handle_input_moderation",
+                return_value=(False, mock_app_generate_entity.inputs, mock_app_generate_entity.query),
+            ),
             patch.object(runner, "handle_annotation_reply", return_value=False),
             patch("core.app.apps.advanced_chat.app_runner.WorkflowEntry") as mock_workflow_entry_class,
             patch("core.app.apps.advanced_chat.app_runner.GraphRuntimeState") as mock_graph_runtime_state_class,
@@ -390,6 +402,8 @@ class TestAdvancedChatAppRunnerConversationVariables:
             workflow=mock_workflow,
             system_user_id=str(uuid4()),
             app=MagicMock(),
+            workflow_execution_repository=MagicMock(),
+            workflow_node_execution_repository=MagicMock(),
         )
 
         # Mock database session
@@ -406,7 +420,11 @@ class TestAdvancedChatAppRunnerConversationVariables:
             patch("core.app.apps.advanced_chat.app_runner.select") as mock_select,
             patch("core.app.apps.advanced_chat.app_runner.db") as mock_db,
             patch.object(runner, "_init_graph") as mock_init_graph,
-            patch.object(runner, "handle_input_moderation", return_value=False),
+            patch.object(
+                runner,
+                "handle_input_moderation",
+                return_value=(False, mock_app_generate_entity.inputs, mock_app_generate_entity.query),
+            ),
             patch.object(runner, "handle_annotation_reply", return_value=False),
             patch("core.app.apps.advanced_chat.app_runner.WorkflowEntry") as mock_workflow_entry_class,
             patch("core.app.apps.advanced_chat.app_runner.GraphRuntimeState") as mock_graph_runtime_state_class,

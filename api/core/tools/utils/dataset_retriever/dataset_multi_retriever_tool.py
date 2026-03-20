@@ -1,5 +1,4 @@
 import threading
-from typing import Any
 
 from flask import Flask, current_app
 from pydantic import BaseModel, Field
@@ -7,18 +6,19 @@ from sqlalchemy import select
 
 from core.callback_handler.index_tool_callback_handler import DatasetIndexToolCallbackHandler
 from core.model_manager import ModelManager
-from core.model_runtime.entities.model_entities import ModelType
 from core.rag.datasource.retrieval_service import RetrievalService
 from core.rag.entities.citation_metadata import RetrievalSourceMetadata
 from core.rag.models.document import Document as RagDocument
 from core.rag.rerank.rerank_model import RerankModelRunner
 from core.rag.retrieval.retrieval_methods import RetrievalMethod
 from core.tools.utils.dataset_retriever.dataset_retriever_base_tool import DatasetRetrieverBaseTool
+from core.tools.utils.dataset_retriever.dataset_retriever_tool import DefaultRetrievalModelDict
+from dify_graph.model_runtime.entities.model_entities import ModelType
 from extensions.ext_database import db
 from models.dataset import Dataset, Document, DocumentSegment
 
-default_retrieval_model: dict[str, Any] = {
-    "search_method": RetrievalMethod.SEMANTIC_SEARCH.value,
+default_retrieval_model: DefaultRetrievalModelDict = {
+    "search_method": RetrievalMethod.SEMANTIC_SEARCH,
     "reranking_enable": False,
     "reranking_model": {"reranking_provider_name": "", "reranking_model_name": ""},
     "top_k": 2,
@@ -126,7 +126,7 @@ class DatasetMultiRetrieverTool(DatasetRetrieverBaseTool):
                             data_source_type=document.data_source_type,
                             segment_id=segment.id,
                             retriever_from=self.retriever_from,
-                            score=document_score_list.get(segment.index_node_id, None),
+                            score=document_score_list.get(segment.index_node_id),
                             doc_metadata=document.doc_metadata,
                         )
 
@@ -172,7 +172,7 @@ class DatasetMultiRetrieverTool(DatasetRetrieverBaseTool):
             if dataset.indexing_technique == "economy":
                 # use keyword table query
                 documents = RetrievalService.retrieve(
-                    retrieval_method="keyword_search",
+                    retrieval_method=RetrievalMethod.KEYWORD_SEARCH,
                     dataset_id=dataset.id,
                     query=query,
                     top_k=retrieval_model.get("top_k") or 4,

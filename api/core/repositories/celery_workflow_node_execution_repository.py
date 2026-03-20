@@ -12,8 +12,8 @@ from typing import Union
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
-from core.workflow.entities.workflow_node_execution import WorkflowNodeExecution
-from core.workflow.repositories.workflow_node_execution_repository import (
+from dify_graph.entities.workflow_node_execution import WorkflowNodeExecution
+from dify_graph.repositories.workflow_node_execution_repository import (
     OrderConfig,
     WorkflowNodeExecutionRepository,
 )
@@ -81,7 +81,7 @@ class CeleryWorkflowNodeExecutionRepository(WorkflowNodeExecutionRepository):
         tenant_id = extract_tenant_id(user)
         if not tenant_id:
             raise ValueError("User must have a tenant_id or current_tenant_id")
-        self._tenant_id = tenant_id  # type: ignore[assignment]  # We've already checked tenant_id is not None
+        self._tenant_id = tenant_id
 
         # Store app context
         self._app_id = app_id

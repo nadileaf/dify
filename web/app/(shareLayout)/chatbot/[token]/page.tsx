@@ -1,22 +1,12 @@
 'use client'
-import React, { useEffect } from 'react'
-import EmbeddedChatbotWithQueryParams from '@/app/components/base/chat/embedded-chatbot/with-query-params'
+import * as React from 'react'
+import EmbeddedChatbot from '@/app/components/base/chat/embedded-chatbot'
 import AuthenticatedLayout from '../../components/authenticated-layout'
-import { initLinkClickInterceptor } from '@/app/components/base/chat/embedded-chatbot/link-click-interceptor'
 
 const Chatbot = () => {
-  useEffect(() => {
-    const cleanup = initLinkClickInterceptor({
-      targetOrigin: '*',
-      debug: true,
-    })
-
-    return cleanup
-  }, [])
-
   return (
     <AuthenticatedLayout>
-      <EmbeddedChatbotWithQueryParams />
+      <EmbeddedChatbot />
     </AuthenticatedLayout>
   )
 }

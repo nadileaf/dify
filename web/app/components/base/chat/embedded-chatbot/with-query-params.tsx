@@ -25,7 +25,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import EmbeddedChatbot from './index'
-import type { EmbeddedChatbotWrapperProps } from './index'
+
+type EmbeddedChatbotWrapperProps = Record<string, never>
 
 /**
  * Hook: Read and parse query parameters from URL
@@ -114,16 +115,11 @@ export const useBackgroundStyle = (
  * This wrapper automatically reads URL parameters and passes them to EmbeddedChatbot.
  * All custom logic is isolated here to avoid conflicts during upstream merges.
  */
-const EmbeddedChatbotWithQueryParams = (props: Partial<EmbeddedChatbotWrapperProps> = {}) => {
-  const queryParams = useEmbeddedChatbotQueryParams()
+const EmbeddedChatbotWithQueryParams = (_props: Partial<EmbeddedChatbotWrapperProps> = {}) => {
+  const _queryParams = useEmbeddedChatbotQueryParams()
 
   return (
-    <EmbeddedChatbot
-      initialPrompt={props.initialPrompt ?? queryParams.prompt}
-      hideTitle={props.hideTitle ?? queryParams.hideTitle}
-      backgroundColor={props.backgroundColor ?? queryParams.backgroundColor}
-      {...props}
-    />
+    <EmbeddedChatbot />
   )
 }
 

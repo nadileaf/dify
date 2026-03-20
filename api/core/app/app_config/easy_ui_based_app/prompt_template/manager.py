@@ -1,17 +1,19 @@
+from typing import Any
+
 from core.app.app_config.entities import (
     AdvancedChatMessageEntity,
     AdvancedChatPromptTemplateEntity,
     AdvancedCompletionPromptTemplateEntity,
     PromptTemplateEntity,
 )
-from core.model_runtime.entities.message_entities import PromptMessageRole
 from core.prompt.simple_prompt_transform import ModelMode
-from models.model import AppMode
+from dify_graph.model_runtime.entities.message_entities import PromptMessageRole
+from models.model import AppMode, AppModelConfigDict
 
 
 class PromptTemplateConfigManager:
     @classmethod
-    def convert(cls, config: dict) -> PromptTemplateEntity:
+    def convert(cls, config: AppModelConfigDict) -> PromptTemplateEntity:
         if not config.get("prompt_type"):
             raise ValueError("prompt_type is required")
 
@@ -40,14 +42,15 @@ class PromptTemplateConfigManager:
             advanced_completion_prompt_template = None
             completion_prompt_config = config.get("completion_prompt_config", {})
             if completion_prompt_config:
-                completion_prompt_template_params = {
+                completion_prompt_template_params: dict[str, Any] = {
                     "prompt": completion_prompt_config["prompt"]["text"],
                 }
 
-                if "conversation_histories_role" in completion_prompt_config:
+                conv_role = completion_prompt_config.get("conversation_histories_role")
+                if conv_role:
                     completion_prompt_template_params["role_prefix"] = {
-                        "user": completion_prompt_config["conversation_histories_role"]["user_prefix"],
-                        "assistant": completion_prompt_config["conversation_histories_role"]["assistant_prefix"],
+                        "user": conv_role["user_prefix"],
+                        "assistant": conv_role["assistant_prefix"],
                     }
 
                 advanced_completion_prompt_template = AdvancedCompletionPromptTemplateEntity(
@@ -100,7 +103,7 @@ class PromptTemplateConfigManager:
             if config["model"]["mode"] not in model_mode_vals:
                 raise ValueError(f"model.mode must be in {model_mode_vals} when prompt_type is advanced")
 
-            if app_mode == AppMode.CHAT and config["model"]["mode"] == ModelMode.COMPLETION.value:
+            if app_mode == AppMode.CHAT and config["model"]["mode"] == ModelMode.COMPLETION:
                 user_prefix = config["completion_prompt_config"]["conversation_histories_role"]["user_prefix"]
                 assistant_prefix = config["completion_prompt_config"]["conversation_histories_role"]["assistant_prefix"]
 
@@ -110,7 +113,7 @@ class PromptTemplateConfigManager:
                 if not assistant_prefix:
                     config["completion_prompt_config"]["conversation_histories_role"]["assistant_prefix"] = "Assistant"
 
-            if config["model"]["mode"] == ModelMode.CHAT.value:
+            if config["model"]["mode"] == ModelMode.CHAT:
                 prompt_list = config["chat_prompt_config"]["prompt"]
 
                 if len(prompt_list) > 10:

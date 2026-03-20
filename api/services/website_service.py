@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import json
 from dataclasses import dataclass
@@ -7,7 +9,7 @@ import httpx
 from flask_login import current_user
 
 from core.helper import encrypter
-from core.rag.extractor.firecrawl.firecrawl_app import FirecrawlApp
+from core.rag.extractor.firecrawl.firecrawl_app import CrawlStatusResponse, FirecrawlApp, FirecrawlDocumentData
 from core.rag.extractor.watercrawl.provider import WaterCrawlProvider
 from extensions.ext_redis import redis_client
 from extensions.ext_storage import storage
@@ -23,6 +25,7 @@ class CrawlOptions:
     only_main_content: bool = False
     includes: str | None = None
     excludes: str | None = None
+    prompt: str | None = None
     max_depth: int | None = None
     use_sitemap: bool = True
 
@@ -70,13 +73,14 @@ class WebsiteCrawlApiRequest:
             only_main_content=self.options.get("only_main_content", False),
             includes=self.options.get("includes"),
             excludes=self.options.get("excludes"),
+            prompt=self.options.get("prompt"),
             max_depth=self.options.get("max_depth"),
             use_sitemap=self.options.get("use_sitemap", True),
         )
         return CrawlRequest(url=self.url, provider=self.provider, options=options)
 
     @classmethod
-    def from_args(cls, args: dict) -> "WebsiteCrawlApiRequest":
+    def from_args(cls, args: dict) -> WebsiteCrawlApiRequest:
         """Create from Flask-RESTful parsed arguments."""
         provider = args.get("provider")
         url = args.get("url")
@@ -100,7 +104,7 @@ class WebsiteCrawlStatusApiRequest:
     job_id: str
 
     @classmethod
-    def from_args(cls, args: dict, job_id: str) -> "WebsiteCrawlStatusApiRequest":
+    def from_args(cls, args: dict, job_id: str) -> WebsiteCrawlStatusApiRequest:
         """Create from Flask-RESTful parsed arguments."""
         provider = args.get("provider")
         if not provider:
@@ -120,7 +124,7 @@ class WebsiteService:
         if provider == "firecrawl":
             plugin_id = "langgenius/firecrawl_datasource"
         elif provider == "watercrawl":
-            plugin_id = "langgenius/watercrawl_datasource"
+            plugin_id = "watercrawl/watercrawl_datasource"
         elif provider == "jinareader":
             plugin_id = "langgenius/jina_datasource"
         else:
@@ -174,6 +178,7 @@ class WebsiteService:
     def _crawl_with_firecrawl(cls, request: CrawlRequest, api_key: str, config: dict) -> dict[str, Any]:
         firecrawl_app = FirecrawlApp(api_key=api_key, base_url=config.get("base_url"))
 
+        params: dict[str, Any]
         if not request.options.crawl_sub_pages:
             params = {
                 "includePaths": [],
@@ -188,8 +193,10 @@ class WebsiteService:
                 "limit": request.options.limit,
                 "scrapeOptions": {"onlyMainContent": request.options.only_main_content},
             }
-            if request.options.max_depth:
-                params["maxDepth"] = request.options.max_depth
+
+        # Add optional prompt for Firecrawl v2 crawl-params compatibility
+        if request.options.prompt:
+            params["prompt"] = request.options.prompt
 
         job_id = firecrawl_app.crawl_url(request.url, params)
         website_crawl_time_cache_key = f"website_crawl_{job_id}"
@@ -209,8 +216,10 @@ class WebsiteService:
             "max_depth": request.options.max_depth,
             "use_sitemap": request.options.use_sitemap,
         }
-        return WaterCrawlProvider(api_key=api_key, base_url=config.get("base_url")).crawl_url(
-            url=request.url, options=options
+        return dict(
+            WaterCrawlProvider(api_key=api_key, base_url=config.get("base_url")).crawl_url(
+                url=request.url, options=options
+            )
         )
 
     @classmethod
@@ -263,13 +272,13 @@ class WebsiteService:
     @classmethod
     def _get_firecrawl_status(cls, job_id: str, api_key: str, config: dict) -> dict[str, Any]:
         firecrawl_app = FirecrawlApp(api_key=api_key, base_url=config.get("base_url"))
-        result = firecrawl_app.check_crawl_status(job_id)
-        crawl_status_data = {
-            "status": result.get("status", "active"),
+        result: CrawlStatusResponse = firecrawl_app.check_crawl_status(job_id)
+        crawl_status_data: dict[str, Any] = {
+            "status": result["status"],
             "job_id": job_id,
-            "total": result.get("total", 0),
-            "current": result.get("current", 0),
-            "data": result.get("data", []),
+            "total": result["total"] or 0,
+            "current": result["current"] or 0,
+            "data": result["data"],
         }
         if crawl_status_data["status"] == "completed":
             website_crawl_time_cache_key = f"website_crawl_{job_id}"
@@ -282,8 +291,8 @@ class WebsiteService:
         return crawl_status_data
 
     @classmethod
-    def _get_watercrawl_status(cls, job_id: str, api_key: str, config: dict) -> dict[str, Any]:
-        return WaterCrawlProvider(api_key, config.get("base_url")).get_crawl_status(job_id)
+    def _get_watercrawl_status(cls, job_id: str, api_key: str, config: dict[str, Any]) -> dict[str, Any]:
+        return dict(WaterCrawlProvider(api_key, config.get("base_url")).get_crawl_status(job_id))
 
     @classmethod
     def _get_jinareader_status(cls, job_id: str, api_key: str) -> dict[str, Any]:
@@ -336,7 +345,7 @@ class WebsiteService:
 
     @classmethod
     def _get_firecrawl_url_data(cls, job_id: str, url: str, api_key: str, config: dict) -> dict[str, Any] | None:
-        crawl_data: list[dict[str, Any]] | None = None
+        crawl_data: list[FirecrawlDocumentData] | None = None
         file_key = "website_files/" + job_id + ".txt"
         if storage.exists(file_key):
             stored_data = storage.load_once(file_key)
@@ -345,19 +354,22 @@ class WebsiteService:
         else:
             firecrawl_app = FirecrawlApp(api_key=api_key, base_url=config.get("base_url"))
             result = firecrawl_app.check_crawl_status(job_id)
-            if result.get("status") != "completed":
+            if result["status"] != "completed":
                 raise ValueError("Crawl job is not completed")
-            crawl_data = result.get("data")
+            crawl_data = result["data"]
 
         if crawl_data:
             for item in crawl_data:
-                if item.get("source_url") == url:
+                if item["source_url"] == url:
                     return dict(item)
         return None
 
     @classmethod
-    def _get_watercrawl_url_data(cls, job_id: str, url: str, api_key: str, config: dict) -> dict[str, Any] | None:
-        return WaterCrawlProvider(api_key, config.get("base_url")).get_crawl_url_data(job_id, url)
+    def _get_watercrawl_url_data(
+        cls, job_id: str, url: str, api_key: str, config: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        result = WaterCrawlProvider(api_key, config.get("base_url")).get_crawl_url_data(job_id, url)
+        return dict(result) if result is not None else None
 
     @classmethod
     def _get_jinareader_url_data(cls, job_id: str, url: str, api_key: str) -> dict[str, Any] | None:
@@ -409,8 +421,8 @@ class WebsiteService:
     def _scrape_with_firecrawl(cls, request: ScrapeRequest, api_key: str, config: dict) -> dict[str, Any]:
         firecrawl_app = FirecrawlApp(api_key=api_key, base_url=config.get("base_url"))
         params = {"onlyMainContent": request.only_main_content}
-        return firecrawl_app.scrape_url(url=request.url, params=params)
+        return dict(firecrawl_app.scrape_url(url=request.url, params=params))
 
     @classmethod
-    def _scrape_with_watercrawl(cls, request: ScrapeRequest, api_key: str, config: dict) -> dict[str, Any]:
-        return WaterCrawlProvider(api_key=api_key, base_url=config.get("base_url")).scrape_url(request.url)
+    def _scrape_with_watercrawl(cls, request: ScrapeRequest, api_key: str, config: dict[str, Any]) -> dict[str, Any]:
+        return dict(WaterCrawlProvider(api_key=api_key, base_url=config.get("base_url")).scrape_url(request.url))

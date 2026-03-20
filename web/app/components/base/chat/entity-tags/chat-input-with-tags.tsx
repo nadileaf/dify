@@ -5,7 +5,7 @@
 
 'use client'
 import type { FC } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { OnSend } from '../types'
 import type { Theme } from '../embedded-chatbot/theme/theme-context'
 import type { InputForm } from '../chat/type'
@@ -15,6 +15,7 @@ import type { FileUpload } from '@/app/components/base/features/types'
 import type { EnableType } from '@/app/components/base/chat/types'
 
 type ChatInputWithTagsProps = {
+  readonly?: boolean;
   botName?: string;
   showFeatureBar?: boolean;
   showFileUpload?: boolean;
@@ -28,27 +29,13 @@ type ChatInputWithTagsProps = {
   theme?: Theme | null;
   isResponding?: boolean;
   disabled?: boolean;
-  minRows?: number;
-  autoFocus?: boolean;
-  suggestedQuestions?: string[];
-  webAppDescription?: string;
-  initialValue?: string;
+  sendOnEnter?: boolean;
 }
 
 export const ChatInputWithTags: FC<ChatInputWithTagsProps> = (props) => {
-  // 受控输入框值
-  const [inputValue, setInputValue] = useState(props.initialValue || '')
-
-  // 同步外部 initialValue 变化（不覆盖用户输入）
-  useEffect(() => {
-    if (props.initialValue !== undefined && props.initialValue !== inputValue)
-      setInputValue(props.initialValue)
-  }, [props.initialValue])
-
   const { entityTags, removeTag, clearTags, tagsToText }
     = useEntityTags()
 
-  // 包装 onSend 函数，在发送前添加标签文本
   const handleSend = useMemo(() => {
     if (!props.onSend) {
       return () => {
@@ -57,16 +44,12 @@ export const ChatInputWithTags: FC<ChatInputWithTagsProps> = (props) => {
     }
 
     return (message: string, files: any[]) => {
-      // 将标签转换为 Markdown 链接格式并添加到消息前面
       const tagsText = tagsToText(entityTags)
       const finalMessage = tagsText ? `${tagsText} ${message}` : message
 
-      // 调用原始 onSend
       props.onSend!(finalMessage, files)
 
-      // 发送后清空标签和输入框
       clearTags()
-      setInputValue('')
     }
   }, [props.onSend, entityTags, tagsToText, clearTags])
 
@@ -74,7 +57,6 @@ export const ChatInputWithTags: FC<ChatInputWithTagsProps> = (props) => {
     return (
       <ChatInputArea
         {...props}
-        initialValue={inputValue}
         onSend={handleSend as OnSend}
       />
     )
@@ -86,7 +68,6 @@ export const ChatInputWithTags: FC<ChatInputWithTagsProps> = (props) => {
       <div className="[&>div]:rounded-none [&>div]:!border-0 [&>div]:bg-transparent [&>div]:!shadow-none">
         <ChatInputArea
           {...props}
-          initialValue={inputValue}
           onSend={handleSend as OnSend}
         />
       </div>

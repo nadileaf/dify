@@ -5,21 +5,22 @@ Therefore, a model manager is needed to list/invoke/validate models.
 """
 
 import json
+from decimal import Decimal
 from typing import cast
 
 from core.model_manager import ModelManager
-from core.model_runtime.entities.llm_entities import LLMResult
-from core.model_runtime.entities.message_entities import PromptMessage
-from core.model_runtime.entities.model_entities import ModelPropertyKey, ModelType
-from core.model_runtime.errors.invoke import (
+from dify_graph.model_runtime.entities.llm_entities import LLMResult
+from dify_graph.model_runtime.entities.message_entities import PromptMessage
+from dify_graph.model_runtime.entities.model_entities import ModelPropertyKey, ModelType
+from dify_graph.model_runtime.errors.invoke import (
     InvokeAuthorizationError,
     InvokeBadRequestError,
     InvokeConnectionError,
     InvokeRateLimitError,
     InvokeServerUnavailableError,
 )
-from core.model_runtime.model_providers.__base.large_language_model import LargeLanguageModel
-from core.model_runtime.utils.encoders import jsonable_encoder
+from dify_graph.model_runtime.model_providers.__base.large_language_model import LargeLanguageModel
+from dify_graph.model_runtime.utils.encoders import jsonable_encoder
 from extensions.ext_database import db
 from models.tools import ToolModelInvoke
 
@@ -46,7 +47,7 @@ class ModelInvocationUtils:
             raise InvokeModelError("Model not found")
 
         llm_model = cast(LargeLanguageModel, model_instance.model_type_instance)
-        schema = llm_model.get_model_schema(model_instance.model, model_instance.credentials)
+        schema = llm_model.get_model_schema(model_instance.model_name, model_instance.credentials)
 
         if not schema:
             raise InvokeModelError("No model schema found")
@@ -118,10 +119,10 @@ class ModelInvocationUtils:
             model_response="",
             prompt_tokens=prompt_tokens,
             answer_tokens=0,
-            answer_unit_price=0,
-            answer_price_unit=0,
+            answer_unit_price=Decimal(),
+            answer_price_unit=Decimal(),
             provider_response_latency=0,
-            total_price=0,
+            total_price=Decimal(),
             currency="USD",
         )
 
@@ -152,7 +153,7 @@ class ModelInvocationUtils:
             raise InvokeModelError(f"Invoke error: {e}")
 
         # update tool model invoke
-        tool_model_invoke.model_response = response.message.content
+        tool_model_invoke.model_response = str(response.message.content)
         if response.usage:
             tool_model_invoke.answer_tokens = response.usage.completion_tokens
             tool_model_invoke.answer_unit_price = response.usage.completion_unit_price
