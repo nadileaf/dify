@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Iterator, Sequence
 from json import JSONDecodeError
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -19,17 +19,18 @@ from core.entities.provider_entities import (
 )
 from core.helper import encrypter
 from core.helper.model_provider_cache import ProviderCredentialsCache, ProviderCredentialsCacheType
-from core.model_runtime.entities.model_entities import AIModelEntity, FetchFrom, ModelType
-from core.model_runtime.entities.provider_entities import (
+from dify_graph.model_runtime.entities.model_entities import AIModelEntity, FetchFrom, ModelType
+from dify_graph.model_runtime.entities.provider_entities import (
     ConfigurateMethod,
     CredentialFormSchema,
     FormType,
     ProviderEntity,
 )
-from core.model_runtime.model_providers.__base.ai_model import AIModel
-from core.model_runtime.model_providers.model_provider_factory import ModelProviderFactory
-from extensions.ext_database import db
+from dify_graph.model_runtime.model_providers.__base.ai_model import AIModel
+from dify_graph.model_runtime.model_providers.model_provider_factory import ModelProviderFactory
 from libs.datetime_utils import naive_utc_now
+from models.engine import db
+from models.enums import CredentialSourceType
 from models.provider import (
     LoadBalancingModelConfig,
     Provider,
@@ -73,9 +74,8 @@ class ProviderConfiguration(BaseModel):
     # pydantic configs
     model_config = ConfigDict(protected_namespaces=())
 
-    def __init__(self, **data):
-        super().__init__(**data)
-
+    @model_validator(mode="after")
+    def _(self):
         if self.provider.provider not in original_provider_configurate_methods:
             original_provider_configurate_methods[self.provider.provider] = []
             for configurate_method in self.provider.configurate_methods:
@@ -90,6 +90,7 @@ class ProviderConfiguration(BaseModel):
                 and ConfigurateMethod.PREDEFINED_MODEL not in self.provider.configurate_methods
             ):
                 self.provider.configurate_methods.append(ConfigurateMethod.PREDEFINED_MODEL)
+        return self
 
     def get_current_credentials(self, model_type: ModelType, model: str) -> dict | None:
         """
@@ -207,7 +208,7 @@ class ProviderConfiguration(BaseModel):
         """
         stmt = select(Provider).where(
             Provider.tenant_id == self.tenant_id,
-            Provider.provider_type == ProviderType.CUSTOM.value,
+            Provider.provider_type == ProviderType.CUSTOM,
             Provider.provider_name.in_(self._get_provider_names()),
         )
 
@@ -253,7 +254,7 @@ class ProviderConfiguration(BaseModel):
                 try:
                     credentials[key] = encrypter.decrypt_token(tenant_id=self.tenant_id, token=credentials[key])
                 except Exception:
-                    pass
+                    logger.exception("Failed to decrypt credential secret variable %s", key)
 
         return self.obfuscated_credentials(
             credentials=credentials,
@@ -458,7 +459,7 @@ class ProviderConfiguration(BaseModel):
                     provider_record = Provider(
                         tenant_id=self.tenant_id,
                         provider_name=self.provider.provider,
-                        provider_type=ProviderType.CUSTOM.value,
+                        provider_type=ProviderType.CUSTOM,
                         is_valid=True,
                         credential_id=new_record.id,
                     )
@@ -472,6 +473,21 @@ class ProviderConfiguration(BaseModel):
                     provider_model_credentials_cache.delete()
 
                     self.switch_preferred_provider_type(provider_type=ProviderType.CUSTOM, session=session)
+                else:
+                    provider_record.is_valid = True
+
+                    if provider_record.credential_id is None:
+                        provider_record.credential_id = new_record.id
+                        provider_record.updated_at = naive_utc_now()
+
+                        provider_model_credentials_cache = ProviderCredentialsCache(
+                            tenant_id=self.tenant_id,
+                            identity_id=provider_record.id,
+                            cache_type=ProviderCredentialsCacheType.PROVIDER,
+                        )
+                        provider_model_credentials_cache.delete()
+
+                        self.switch_preferred_provider_type(provider_type=ProviderType.CUSTOM, session=session)
 
                 session.commit()
             except Exception:
@@ -531,7 +547,7 @@ class ProviderConfiguration(BaseModel):
                 self._update_load_balancing_configs_with_credential(
                     credential_id=credential_id,
                     credential_record=credential_record,
-                    credential_source="provider",
+                    credential_source=CredentialSourceType.PROVIDER,
                     session=session,
                 )
             except Exception:
@@ -608,7 +624,7 @@ class ProviderConfiguration(BaseModel):
                 LoadBalancingModelConfig.tenant_id == self.tenant_id,
                 LoadBalancingModelConfig.provider_name.in_(self._get_provider_names()),
                 LoadBalancingModelConfig.credential_id == credential_id,
-                LoadBalancingModelConfig.credential_source_type == "provider",
+                LoadBalancingModelConfig.credential_source_type == CredentialSourceType.PROVIDER,
             )
             lb_configs_using_credential = session.execute(lb_stmt).scalars().all()
             try:
@@ -762,7 +778,7 @@ class ProviderConfiguration(BaseModel):
                 try:
                     credentials[key] = encrypter.decrypt_token(tenant_id=self.tenant_id, token=credentials[key])
                 except Exception:
-                    pass
+                    logger.exception("Failed to decrypt model credential secret variable %s", key)
 
         current_credential_id = credential_record.id
         current_credential_name = credential_record.credential_name
@@ -1028,7 +1044,7 @@ class ProviderConfiguration(BaseModel):
                 self._update_load_balancing_configs_with_credential(
                     credential_id=credential_id,
                     credential_record=credential_record,
-                    credential_source="custom_model",
+                    credential_source=CredentialSourceType.CUSTOM_MODEL,
                     session=session,
                 )
             except Exception:
@@ -1058,7 +1074,7 @@ class ProviderConfiguration(BaseModel):
                 LoadBalancingModelConfig.tenant_id == self.tenant_id,
                 LoadBalancingModelConfig.provider_name.in_(self._get_provider_names()),
                 LoadBalancingModelConfig.credential_id == credential_id,
-                LoadBalancingModelConfig.credential_source_type == "custom_model",
+                LoadBalancingModelConfig.credential_source_type == CredentialSourceType.CUSTOM_MODEL,
             )
             lb_configs_using_credential = session.execute(lb_stmt).scalars().all()
 
@@ -1145,6 +1161,15 @@ class ProviderConfiguration(BaseModel):
                     raise ValueError("Can't add same credential")
                 provider_model_record.credential_id = credential_record.id
                 provider_model_record.updated_at = naive_utc_now()
+
+                # clear cache
+                provider_model_credentials_cache = ProviderCredentialsCache(
+                    tenant_id=self.tenant_id,
+                    identity_id=provider_model_record.id,
+                    cache_type=ProviderCredentialsCacheType.MODEL,
+                )
+                provider_model_credentials_cache.delete()
+
             session.add(provider_model_record)
             session.commit()
 
@@ -1177,6 +1202,14 @@ class ProviderConfiguration(BaseModel):
             provider_model_record.updated_at = naive_utc_now()
             session.add(provider_model_record)
             session.commit()
+
+            # clear cache
+            provider_model_credentials_cache = ProviderCredentialsCache(
+                tenant_id=self.tenant_id,
+                identity_id=provider_model_record.id,
+                cache_type=ProviderCredentialsCacheType.MODEL,
+            )
+            provider_model_credentials_cache.delete()
 
     def delete_custom_model(self, model_type: ModelType, model: str):
         """
@@ -1389,12 +1422,12 @@ class ProviderConfiguration(BaseModel):
             preferred_model_provider = s.execute(stmt).scalars().first()
 
             if preferred_model_provider:
-                preferred_model_provider.preferred_provider_type = provider_type.value
+                preferred_model_provider.preferred_provider_type = provider_type
             else:
                 preferred_model_provider = TenantPreferredModelProvider(
                     tenant_id=self.tenant_id,
                     provider_name=self.provider.provider,
-                    preferred_provider_type=provider_type.value,
+                    preferred_provider_type=provider_type,
                 )
                 s.add(preferred_model_provider)
             s.commit()
@@ -1414,7 +1447,7 @@ class ProviderConfiguration(BaseModel):
         """
         secret_input_form_variables = []
         for credential_form_schema in credential_form_schemas:
-            if credential_form_schema.type.value == FormType.SECRET_INPUT.value:
+            if credential_form_schema.type == FormType.SECRET_INPUT:
                 secret_input_form_variables.append(credential_form_schema.variable)
 
         return secret_input_form_variables
@@ -1512,6 +1545,9 @@ class ProviderConfiguration(BaseModel):
 
             # Return composite sort key: (model_type value, model position index)
             return (model.model_type.value, position_index)
+
+        # Deduplicate
+        provider_models = list({(m.model, m.model_type, m.fetch_from): m for m in provider_models}.values())
 
         # Sort using the composite sort key
         return sorted(provider_models, key=get_sort_key)
@@ -1676,7 +1712,7 @@ class ProviderConfiguration(BaseModel):
                     provider_model_lb_configs = [
                         config
                         for config in model_setting.load_balancing_configs
-                        if config.credential_source_type != "custom_model"
+                        if config.credential_source_type != CredentialSourceType.CUSTOM_MODEL
                     ]
 
                     load_balancing_enabled = model_setting.load_balancing_enabled
@@ -1734,7 +1770,7 @@ class ProviderConfiguration(BaseModel):
                 custom_model_lb_configs = [
                     config
                     for config in model_setting.load_balancing_configs
-                    if config.credential_source_type != "provider"
+                    if config.credential_source_type != CredentialSourceType.PROVIDER
                 ]
 
                 load_balancing_enabled = model_setting.load_balancing_enabled
@@ -1848,7 +1884,7 @@ class ProviderConfigurations(BaseModel):
         if "/" not in key:
             key = str(ModelProviderID(key))
 
-        return self.configurations.get(key, default)  # type: ignore
+        return self.configurations.get(key, default)
 
 
 class ProviderModelBundle(BaseModel):

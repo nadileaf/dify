@@ -4,7 +4,6 @@ from unittest.mock import Mock, patch
 import jsonschema
 import pytest
 
-from core.app.app_config.entities import VariableEntity, VariableEntityType
 from core.app.features.rate_limiting.rate_limit import RateLimitGenerator
 from core.mcp import types
 from core.mcp.server.streamable_http import (
@@ -19,6 +18,7 @@ from core.mcp.server.streamable_http import (
     prepare_tool_arguments,
     process_mapping_response,
 )
+from dify_graph.variables.input_entities import VariableEntity, VariableEntityType
 from models.model import App, AppMCPServer, AppMode, EndUser
 
 
@@ -235,7 +235,7 @@ class TestIndividualHandlers:
         # Type assertion needed due to union type
         text_content = result.content[0]
         assert hasattr(text_content, "text")
-        assert text_content.text == "test answer"  # type: ignore[attr-defined]
+        assert text_content.text == "test answer"
 
     def test_handle_call_tool_no_end_user(self):
         """Test call tool handler without end user"""

@@ -7,10 +7,11 @@ from sqlalchemy import select
 
 import app
 from configs import dify_config
+from enums.cloud_plan import CloudPlan
 from extensions.ext_database import db
 from extensions.ext_mail import mail
 from libs.email_i18n import EmailType, get_email_i18n_service
-from models.account import Account, Tenant, TenantAccountJoin
+from models import Account, Tenant, TenantAccountJoin
 from models.dataset import Dataset, DatasetAutoDisableLog
 from services.feature_service import FeatureService
 
@@ -45,19 +46,21 @@ def mail_clean_document_notify_task():
         for tenant_id, tenant_dataset_auto_disable_logs in dataset_auto_disable_logs_map.items():
             features = FeatureService.get_features(tenant_id)
             plan = features.billing.subscription.plan
-            if plan != "sandbox":
+            if plan != CloudPlan.SANDBOX:
                 knowledge_details = []
                 # check tenant
-                tenant = db.session.query(Tenant).where(Tenant.id == tenant_id).first()
+                tenant = db.session.scalar(select(Tenant).where(Tenant.id == tenant_id))
                 if not tenant:
                     continue
                 # check current owner
-                current_owner_join = (
-                    db.session.query(TenantAccountJoin).filter_by(tenant_id=tenant.id, role="owner").first()
+                current_owner_join = db.session.scalar(
+                    select(TenantAccountJoin)
+                    .where(TenantAccountJoin.tenant_id == tenant.id, TenantAccountJoin.role == "owner")
+                    .limit(1)
                 )
                 if not current_owner_join:
                     continue
-                account = db.session.query(Account).where(Account.id == current_owner_join.account_id).first()
+                account = db.session.scalar(select(Account).where(Account.id == current_owner_join.account_id))
                 if not account:
                     continue
 
@@ -70,7 +73,7 @@ def mail_clean_document_notify_task():
                     )
 
                 for dataset_id, document_ids in dataset_auto_dataset_map.items():
-                    dataset = db.session.query(Dataset).where(Dataset.id == dataset_id).first()
+                    dataset = db.session.scalar(select(Dataset).where(Dataset.id == dataset_id))
                     if dataset:
                         document_count = len(document_ids)
                         knowledge_details.append(rf"Knowledge base {dataset.name}: {document_count} documents")

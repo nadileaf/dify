@@ -2,7 +2,11 @@ from typing import Literal, Union
 
 from pydantic import BaseModel
 
-from core.workflow.nodes.base import BaseNodeData
+from core.rag.index_processor.index_processor_base import SummaryIndexSettingDict
+from core.rag.retrieval.retrieval_methods import RetrievalMethod
+from core.workflow.nodes.knowledge_index import KNOWLEDGE_INDEX_NODE_TYPE
+from dify_graph.entities.base_node_data import BaseNodeData
+from dify_graph.enums import NodeType
 
 
 class RerankingModelConfig(BaseModel):
@@ -63,7 +67,7 @@ class RetrievalSetting(BaseModel):
     Retrieval Setting.
     """
 
-    search_method: Literal["semantic_search", "keyword_search", "full_text_search", "hybrid_search"]
+    search_method: RetrievalMethod
     top_k: int
     score_threshold: float | None = 0.5
     score_threshold_enabled: bool = False
@@ -154,6 +158,8 @@ class KnowledgeIndexNodeData(BaseNodeData):
     Knowledge index Node Data.
     """
 
-    type: str = "knowledge-index"
+    type: NodeType = KNOWLEDGE_INDEX_NODE_TYPE
     chunk_structure: str
     index_chunk_variable_selector: list[str]
+    indexing_technique: str | None = None
+    summary_index_setting: SummaryIndexSettingDict | None = None

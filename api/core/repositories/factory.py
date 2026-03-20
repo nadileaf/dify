@@ -11,8 +11,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from configs import dify_config
-from core.workflow.repositories.workflow_execution_repository import WorkflowExecutionRepository
-from core.workflow.repositories.workflow_node_execution_repository import WorkflowNodeExecutionRepository
+from dify_graph.repositories.workflow_execution_repository import WorkflowExecutionRepository
+from dify_graph.repositories.workflow_node_execution_repository import WorkflowNodeExecutionRepository
 from libs.module_loading import import_string
 from models import Account, EndUser
 from models.enums import WorkflowRunTriggeredFrom
@@ -60,7 +60,7 @@ class DifyCoreRepositoryFactory:
 
         try:
             repository_class = import_string(class_path)
-            return repository_class(  # type: ignore[no-any-return]
+            return repository_class(
                 session_factory=session_factory,
                 user=user,
                 app_id=app_id,
@@ -96,7 +96,7 @@ class DifyCoreRepositoryFactory:
 
         try:
             repository_class = import_string(class_path)
-            return repository_class(  # type: ignore[no-any-return]
+            return repository_class(
                 session_factory=session_factory,
                 user=user,
                 app_id=app_id,

@@ -1,7 +1,7 @@
 from collections.abc import Generator
 
-import boto3  # type: ignore
-from botocore.exceptions import ClientError  # type: ignore
+import boto3
+from botocore.exceptions import ClientError
 
 from configs import dify_config
 from extensions.storage.base_storage import BaseStorage
@@ -55,5 +55,5 @@ class OracleOCIStorage(BaseStorage):
         except:
             return False
 
-    def delete(self, filename):
+    def delete(self, filename: str):
         self.client.delete_object(Bucket=self.bucket_name, Key=filename)

@@ -10,22 +10,22 @@ from pydantic import TypeAdapter, ValidationError
 from core.llm_generator.output_parser.errors import OutputParserError
 from core.llm_generator.prompts import STRUCTURED_OUTPUT_PROMPT
 from core.model_manager import ModelInstance
-from core.model_runtime.callbacks.base_callback import Callback
-from core.model_runtime.entities.llm_entities import (
+from dify_graph.model_runtime.callbacks.base_callback import Callback
+from dify_graph.model_runtime.entities.llm_entities import (
     LLMResult,
     LLMResultChunk,
     LLMResultChunkDelta,
     LLMResultChunkWithStructuredOutput,
     LLMResultWithStructuredOutput,
 )
-from core.model_runtime.entities.message_entities import (
+from dify_graph.model_runtime.entities.message_entities import (
     AssistantPromptMessage,
     PromptMessage,
     PromptMessageTool,
     SystemPromptMessage,
     TextPromptMessageContent,
 )
-from core.model_runtime.entities.model_entities import AIModelEntity, ParameterRule
+from dify_graph.model_runtime.entities.model_entities import AIModelEntity, ParameterRule
 
 
 class ResponseFormat(StrEnum):
@@ -224,8 +224,8 @@ def _handle_native_json_schema(
 
     # Set appropriate response format if required by the model
     for rule in rules:
-        if rule.name == "response_format" and ResponseFormat.JSON_SCHEMA.value in rule.options:
-            model_parameters["response_format"] = ResponseFormat.JSON_SCHEMA.value
+        if rule.name == "response_format" and ResponseFormat.JSON_SCHEMA in rule.options:
+            model_parameters["response_format"] = ResponseFormat.JSON_SCHEMA
 
     return model_parameters
 
@@ -239,10 +239,10 @@ def _set_response_format(model_parameters: dict, rules: list):
     """
     for rule in rules:
         if rule.name == "response_format":
-            if ResponseFormat.JSON.value in rule.options:
-                model_parameters["response_format"] = ResponseFormat.JSON.value
-            elif ResponseFormat.JSON_OBJECT.value in rule.options:
-                model_parameters["response_format"] = ResponseFormat.JSON_OBJECT.value
+            if ResponseFormat.JSON in rule.options:
+                model_parameters["response_format"] = ResponseFormat.JSON
+            elif ResponseFormat.JSON_OBJECT in rule.options:
+                model_parameters["response_format"] = ResponseFormat.JSON_OBJECT
 
 
 def _handle_prompt_based_schema(

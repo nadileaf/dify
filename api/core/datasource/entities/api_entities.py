@@ -3,8 +3,8 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from core.datasource.entities.datasource_entities import DatasourceParameter
-from core.model_runtime.utils.encoders import jsonable_encoder
 from core.tools.entities.common_entities import I18nObject
+from dify_graph.model_runtime.utils.encoders import jsonable_encoder
 
 
 class DatasourceApiEntity(BaseModel):
@@ -49,7 +49,7 @@ class DatasourceProviderApiEntity(BaseModel):
         for datasource in datasources:
             if datasource.get("parameters"):
                 for parameter in datasource.get("parameters"):
-                    if parameter.get("type") == DatasourceParameter.DatasourceParameterType.SYSTEM_FILES.value:
+                    if parameter.get("type") == DatasourceParameter.DatasourceParameterType.SYSTEM_FILES:
                         parameter["type"] = "files"
         # -------------
 

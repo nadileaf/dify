@@ -3,8 +3,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from core.workflow.nodes.base import BaseNodeData
-from core.workflow.nodes.llm.entities import ModelConfig, VisionConfig
+from dify_graph.entities.base_node_data import BaseNodeData
+from dify_graph.enums import BuiltinNodeTypes, NodeType
+from dify_graph.nodes.llm.entities import ModelConfig, VisionConfig
 
 
 class RerankingModelConfig(BaseModel):
@@ -113,8 +114,9 @@ class KnowledgeRetrievalNodeData(BaseNodeData):
     Knowledge retrieval Node Data.
     """
 
-    type: str = "knowledge-retrieval"
-    query_variable_selector: list[str]
+    type: NodeType = BuiltinNodeTypes.KNOWLEDGE_RETRIEVAL
+    query_variable_selector: list[str] | None | str = None
+    query_attachment_selector: list[str] | None | str = None
     dataset_ids: list[str]
     retrieval_mode: Literal["single", "multiple"]
     multiple_retrieval_config: MultipleRetrievalConfig | None = None
