@@ -40,10 +40,20 @@ done
 
 if $api_modified; then
     echo "Running Ruff linter on api module"
-    echo "Skipping api checks (uv not available)"
-    # Temporarily disabled for merge commit
-    # uv run --project api --dev ruff check --fix ./api
-    # uv run --project api --dev ruff check  ./api || status=$?
+
+    # run Ruff linter auto-fixing
+    uv run --project api --dev ruff check --fix ./api
+
+    # run Ruff linter checks
+    uv run --project api --dev ruff check  ./api || status=$?
+
+    status=${status:-0}
+
+    if [ $status -ne 0 ]; then
+      echo "Ruff linter on api module error, exit code: $status"
+      echo "Please run 'dev/reformat' to fix the fixable linting errors."
+      exit 1
+    fi
 fi
 
 if $web_modified; then
