@@ -1,9 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-function getBackendUrl(): string {
-  return process.env.NEXT_PUBLIC_PUBLIC_API_PREFIX || 'http://localhost:5001/api'
-}
+const BACKEND_URL = 'http://localhost:5001/api'
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,8 +38,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const backendUrl = getBackendUrl()
-    const passportUrl = `${backendUrl}/passport?user_id=${encodeURIComponent(user)}`
+    const passportUrl = `${BACKEND_URL}/passport?user_id=${encodeURIComponent(user)}`
 
     const passportResponse = await fetch(passportUrl, {
       method: 'GET',
@@ -60,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const { access_token: webToken } = await passportResponse.json()
 
-    const chatUrl = `${backendUrl}/chat-messages`
+    const chatUrl = `${BACKEND_URL}/chat-messages`
     const chatResponse = await fetch(chatUrl, {
       method: 'POST',
       headers: {
