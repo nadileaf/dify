@@ -45,7 +45,8 @@ import {
 } from '@/service/use-share'
 import { TransferMethod } from '@/types/app'
 import { CONVERSATION_ID_INFO } from '../constants'
-import { buildChatItemTree, getProcessedSystemVariablesFromUrlParams, getRawInputsFromUrlParams, getRawUserVariablesFromUrlParams } from '../utils'
+import { buildChatItemTree, getRawInputsFromUrlParams, getRawUserVariablesFromUrlParams } from '../utils'
+import { clearUrlParams, parseUrlParams } from './url-params-handler'
 
 function getFormattedChatList(messages: any[]) {
   const newChatList: ChatItem[] = []

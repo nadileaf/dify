@@ -35,6 +35,6 @@ export const EntityTags: FC<EntityTagsProps> = ({
   )
 }
 
-export * from './types'
-export * from './hooks'
 export { EntityTagItem } from './entity-tag-item'
+export * from './hooks'
+export * from './types'

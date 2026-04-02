@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import type { LinkClickMessage } from './link-click-interceptor'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export type UseLinkClickHandlerOptions = {
   allowedOrigins?: string[]

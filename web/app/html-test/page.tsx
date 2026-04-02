@@ -1,11 +1,11 @@
 'use client'
-import React from 'react'
+import { Button } from '@heroui/react'
 import { Editor } from '@monaco-editor/react'
+import { useLocalStorageState } from 'ahooks'
+import * as React from 'react'
 import { Markdown } from '@/app/components/base/markdown'
 import useTheme from '@/hooks/use-theme'
 import { Theme } from '@/types/app'
-import { useLocalStorageState } from 'ahooks'
-import { Button } from '@heroui/react'
 
 const DEFAULT_CONTENT = `
 # HTML渲染测试Demo
@@ -381,7 +381,7 @@ const HtmlTestDemo: React.FC = () => {
     <div className="flex h-screen flex-col overflow-hidden bg-gray-50">
       <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2">
         <h1 className="text-lg font-bold text-gray-900">HTML渲染测试Demo</h1>
-        <Button size='sm' onClick={() => setTestContent(DEFAULT_CONTENT)}>Reset Content</Button>
+        <Button size="sm" onClick={() => setTestContent(DEFAULT_CONTENT)}>Reset Content</Button>
       </div>
       <div className="flex flex-1 overflow-hidden">
         {/* 左侧编辑区域 */}
@@ -389,7 +389,7 @@ const HtmlTestDemo: React.FC = () => {
           {/* 编辑器区域 */}
           <div className="flex flex-1 flex-col overflow-hidden">
             <Editor
-              defaultLanguage='markdown'
+              defaultLanguage="markdown"
               theme={theme === Theme.dark ? 'vs-dark' : 'vs'}
               value={testContent}
               onChange={value => setTestContent(value || '')}

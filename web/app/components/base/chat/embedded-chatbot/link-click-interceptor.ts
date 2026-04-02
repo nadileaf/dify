@@ -52,7 +52,6 @@ function isHashLink(href: string): boolean {
 }
 
 function isDangerousProtocol(href: string): boolean {
-  // eslint-disable-next-line sonarjs/code-eval
   const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:']
   const protocol = href.trim().toLowerCase()
   return dangerousProtocols.some(p => protocol.startsWith(p))

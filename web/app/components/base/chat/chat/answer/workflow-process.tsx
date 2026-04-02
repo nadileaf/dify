@@ -5,9 +5,9 @@ import {
   useState,
 } from 'react'
 import { useTranslation } from 'react-i18next'
+import BlockIcon from '@/app/components/workflow/block-icon'
 import TracingPanel from '@/app/components/workflow/run/tracing-panel'
 import { WorkflowRunningStatus } from '@/app/components/workflow/types'
-import BlockIcon from '@/app/components/workflow/block-icon'
 import { cn } from '@/utils/classnames'
 
 type WorkflowProcessProps = {
@@ -101,14 +101,14 @@ const WorkflowProcessItem = ({
           {!collapse ? t('common.workflowProcess', { ns: 'workflow' }) : latestNode?.title}
         </div>
         {runningNode && (
-          <div className='flex items-center gap-1.5'>
-            <BlockIcon size='xs' className='shrink-0' type={runningNode.node_type} toolIcon={runningNode.extras?.icon || runningNode.extras} />
-            <span className='system-xs-regular flex items-center text-text-tertiary'>
+          <div className="flex items-center gap-1.5">
+            <BlockIcon size="xs" className="shrink-0" type={runningNode.node_type} toolIcon={runningNode.extras?.icon || runningNode.extras} />
+            <span className="system-xs-regular flex items-center text-text-tertiary">
               {runningNode.title}
-              <span className='ml-0.5 inline-flex'>
-                <span className='animate-fade'>.</span>
-                <span className='animate-fade [animation-delay:0.2s]'>.</span>
-                <span className='animate-fade [animation-delay:0.4s]'>.</span>
+              <span className="ml-0.5 inline-flex">
+                <span className="animate-fade">.</span>
+                <span className="animate-fade [animation-delay:0.2s]">.</span>
+                <span className="animate-fade [animation-delay:0.4s]">.</span>
               </span>
             </span>
           </div>

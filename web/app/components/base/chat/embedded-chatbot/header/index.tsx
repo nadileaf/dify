@@ -1,12 +1,8 @@
 import type { FC } from 'react'
 import type { Theme } from '../theme/theme-context'
+
 import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
-import {
-  RiCollapseDiagonal2Line,
-  RiExpandDiagonal2Line,
-  RiResetLeftLine,
-} from '@remixicon/react'
 import { useTranslation } from 'react-i18next'
 import ActionButton from '@/app/components/base/action-button'
 import ViewFormDropdown from '@/app/components/base/chat/embedded-chatbot/inputs-form/view-form-dropdown'
@@ -20,15 +16,14 @@ import {
   useEmbeddedChatbotContext,
 } from '../context'
 import { CssTransform } from '../theme/utils'
-import { Image } from '@heroui/react'
 
 export type IHeaderProps = {
-  isMobile?: boolean;
-  allowResetChat?: boolean;
-  customerIcon?: React.ReactNode;
-  title: string;
-  theme?: Theme;
-  onCreateNewChat?: () => void;
+  isMobile?: boolean
+  allowResetChat?: boolean
+  customerIcon?: React.ReactNode
+  title: string
+  theme?: Theme
+  onCreateNewChat?: () => void
 }
 const Header: FC<IHeaderProps> = ({
   isMobile,
@@ -46,7 +41,6 @@ const Header: FC<IHeaderProps> = ({
     allInputsHidden,
   } = useEmbeddedChatbotContext()
 
-
   const isIframe = isClient ? window.self !== window.top : false
   const [parentOrigin, setParentOrigin] = useState('')
   const [showToggleExpandButton, setShowToggleExpandButton] = useState(false)
@@ -60,11 +54,12 @@ const Header: FC<IHeaderProps> = ({
         currentParentOrigin = event.origin
         setParentOrigin(event.origin)
       }
-      if (event.origin !== currentParentOrigin) return
+      if (event.origin !== currentParentOrigin)
+        return
       if (event.data.type === 'dify-chatbot-config') {
         setShowToggleExpandButton(
           event.data.payload.isToggledByButton
-            && !event.data.payload.isDraggable,
+          && !event.data.payload.isDraggable,
         )
       }
     },

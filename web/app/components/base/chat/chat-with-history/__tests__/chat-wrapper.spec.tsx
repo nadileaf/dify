@@ -87,6 +87,8 @@ const defaultContextValue: ChatWithHistoryContextValue = {
   appMeta: { tool_icons: {} } as unknown as AppMeta,
   currentConversationId: '1',
   currentConversationItem: { id: '1', name: 'Conv 1' } as unknown as ConversationItem,
+  resetNewConversationFlag: vi.fn(),
+  resetInitialPrompt: vi.fn(),
   appPrevChatTree: [],
   newConversationInputs: {},
   newConversationInputsRef: { current: {} } as ChatWithHistoryContextValue['newConversationInputsRef'],

@@ -6,7 +6,6 @@ import type {
 import type { InputForm } from '../type'
 import type { FileUpload } from '@/app/components/base/features/types'
 import { noop } from 'es-toolkit/function'
-import { decode } from 'html-entities'
 import Recorder from 'js-audio-recorder'
 import {
   useCallback,
@@ -270,7 +269,6 @@ const ChatInputArea = ({
                 placeholder={getDynamicPlaceholder()}
                 autoFocus={autoFocus}
                 minRows={minRows}
-                onResize={handleTextareaResize}
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value)

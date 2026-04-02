@@ -22,10 +22,10 @@
  *   />
  */
 
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import EmbeddedChatbot from './index'
 import type { EmbeddedChatbotWrapperProps } from './index'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import EmbeddedChatbot from './index'
 
 /**
  * Hook: Read and parse query parameters from URL

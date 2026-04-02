@@ -9,12 +9,12 @@ import ActionButton from '@/app/components/base/action-button'
 import CopyIcon from '@/app/components/base/copy-icon'
 import MarkdownMusic from '@/app/components/base/markdown-blocks/music'
 import ErrorBoundary from '@/app/components/base/markdown/error-boundary'
-import HtmlRender from './html-render'
 import SVGBtn from '@/app/components/base/svg'
 import useTheme from '@/hooks/use-theme'
 import dynamic from '@/next/dynamic'
 import { Theme } from '@/types/app'
 import SVGRenderer from '../svg-gallery'
+import HtmlRender from './html-render'
 
 const Flowchart = dynamic(() => import('@/app/components/base/mermaid'), { ssr: false })
 

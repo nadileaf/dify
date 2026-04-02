@@ -26,7 +26,7 @@ const InputsFormNode = ({
     inputsForms,
   } = useChatWithHistoryContext()
 
-  if (allInputsHidden || inputsForms.length === 0)
+  if (true ||allInputsHidden || inputsForms.length === 0)
     return null
 
   return (

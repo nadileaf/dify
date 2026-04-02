@@ -7,7 +7,6 @@ import type {
 } from '../types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AnswerIcon from '@/app/components/base/answer-icon'
-import AppIcon from '@/app/components/base/app-icon'
 import InputsForm from '@/app/components/base/chat/chat-with-history/inputs-form'
 import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
 import { Markdown } from '@/app/components/base/markdown'
@@ -21,15 +20,14 @@ import {
 } from '@/service/share'
 import { submitHumanInputForm as submitHumanInputFormService } from '@/service/workflow'
 import { TransferMethod } from '@/types/app'
-import { cn } from '@/utils/classnames'
 import { formatBooleanInputs } from '@/utils/model-config'
 import { Avatar } from '../../avatar'
 import Chat from '../chat'
+import ChatInputArea from '../chat/chat-input-area'
 import { useChat } from '../chat/hooks'
 import { getLastAnswer, isValidGeneratedAnswer } from '../utils'
-import { useChatWithHistoryContext } from './context'
-import ChatInputArea from '../chat/chat-input-area'
 import BgMascot from './bg-mascot'
+import { useChatWithHistoryContext } from './context'
 
 const ChatWrapper = () => {
   const {
@@ -285,7 +283,7 @@ const ChatWrapper = () => {
           <div className="w-0 grow">
             <BgMascot url={appData?.site.icon_url || ''} />
             <div className="body-lg-regular grow rounded-2xl px-4 py-3 text-text-primary">
-              <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className="!text-center !text-3xl  max-sm:!text-xl" />
+              <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className="!text-center !text-3xl max-sm:!text-xl" />
               <div className="my-10">
                 <ChatInputArea
                   botName={appData?.site.title || 'Bot'}
@@ -312,7 +310,7 @@ const ChatWrapper = () => {
         </div>
       </div>
     )
-  }, [appData?.site.title, appData?.site.icon_url, appData?.site.description, chatList, currentConversationId, respondingState, initialPrompt, promptSent, inputDisabled, appConfig, doSend, currentConversationInputs, newConversationInputs, inputsForms, themeBuilder, welcomeMessage])
+  }, [appData?.site.title, appData?.site.icon_url, appData?.site.description, chatList, currentConversationId, respondingState, initialPrompt, promptSent, inputDisabled, appConfig, doSend, currentConversationInputs, newConversationInputs, inputsForms, themeBuilder])
 
   const answerIcon = (appData?.site && appData.site.use_icon_as_answer_icon)
     ? (
@@ -327,7 +325,7 @@ const ChatWrapper = () => {
 
   return (
     <div
-      className="h-full overflow-hidden bg-chatbot-bg"
+      className="h-full overflow-hidden"
     >
       <Chat
         appData={appData ?? undefined}

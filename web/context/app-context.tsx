@@ -1,15 +1,15 @@
 'use client'
 
+import type { FC, ReactNode } from 'react'
+import type { ICurrentWorkspace, LangGeniusVersionResponse, UserProfileResponse } from '@/models/common'
+import { noop } from 'lodash-es'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import { createContext, useContext, useContextSelector } from 'use-context-selector'
-import type { FC, ReactNode } from 'react'
-import { fetchCurrentWorkspace, fetchLangGeniusVersion, fetchUserProfile } from '@/service/common'
-import type { ICurrentWorkspace, LangGeniusVersionResponse, UserProfileResponse } from '@/models/common'
-import MaintenanceNotice from '@/app/components/header/maintenance-notice'
-import { noop } from 'lodash-es'
 import { setZendeskConversationFields } from '@/app/components/base/zendesk/utils'
+import MaintenanceNotice from '@/app/components/header/maintenance-notice'
 import { ZENDESK_FIELD_IDS } from '@/config'
+import { fetchCurrentWorkspace, fetchLangGeniusVersion, fetchUserProfile } from '@/service/common'
 
 export type AppContextValue = {
   userProfile: UserProfileResponse
@@ -25,7 +25,7 @@ export type AppContextValue = {
   isLoadingCurrentWorkspace: boolean
 }
 
-const userProfilePlaceholder = {
+export const userProfilePlaceholder = {
   id: '',
   name: '',
   email: '',
@@ -34,7 +34,7 @@ const userProfilePlaceholder = {
   is_password_set: false,
 }
 
-const initialLangGeniusVersionInfo = {
+export const initialLangGeniusVersionInfo = {
   current_env: '',
   current_version: '',
   latest_version: '',
@@ -44,7 +44,7 @@ const initialLangGeniusVersionInfo = {
   can_auto_update: false,
 }
 
-const initialWorkspaceInfo: ICurrentWorkspace = {
+export const initialWorkspaceInfo: ICurrentWorkspace = {
   id: '',
   name: '',
   plan: '',
@@ -54,7 +54,7 @@ const initialWorkspaceInfo: ICurrentWorkspace = {
   providers: [],
 }
 
-const AppContext = createContext<AppContextValue>({
+export const AppContext = createContext<AppContextValue>({
   userProfile: userProfilePlaceholder,
   currentWorkspace: initialWorkspaceInfo,
   isCurrentWorkspaceManager: false,
@@ -168,10 +168,11 @@ export const AppContextProvider: FC<AppContextProviderProps> = ({ children }) =>
       isCurrentWorkspaceDatasetOperator,
       mutateCurrentWorkspace,
       isLoadingCurrentWorkspace,
-    }}>
-      <div className='flex h-[100dvh] flex-col overflow-y-auto'>
+    }}
+    >
+      <div className="flex h-[100dvh] flex-col overflow-y-auto">
         {globalThis.document?.body?.getAttribute('data-public-maintenance-notice') && <MaintenanceNotice />}
-        <div className='relative flex grow flex-col overflow-y-auto overflow-x-hidden bg-background-body'>
+        <div className="relative flex grow flex-col overflow-y-auto overflow-x-hidden bg-background-body">
           {children}
         </div>
       </div>

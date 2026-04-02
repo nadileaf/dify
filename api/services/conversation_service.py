@@ -3,6 +3,8 @@ import logging
 from collections.abc import Callable, Sequence
 from typing import Any, Union
 
+from core.variables.types import SegmentType
+from core.workflow.nodes.variable_assigner.common.impl import conversation_variable_updater_factory
 from sqlalchemy import asc, desc, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -10,8 +12,6 @@ from configs import dify_config
 from core.app.entities.app_invoke_entities import InvokeFrom
 from core.db.session_factory import session_factory
 from core.llm_generator.llm_generator import LLMGenerator
-from core.variables.types import SegmentType
-from core.workflow.nodes.variable_assigner.common.impl import conversation_variable_updater_factory
 from extensions.ext_database import db
 from factories import variable_factory
 from libs.datetime_utils import naive_utc_now
@@ -41,6 +41,7 @@ class ConversationService:
         )
         rows = db.session.scalars(stmt).all()
         return [str(x) for x in rows]
+
     @classmethod
     def pagination_by_last_id(
         cls,

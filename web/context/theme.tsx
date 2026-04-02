@@ -1,6 +1,7 @@
 'use client'
-import { ThemeProvider, type ThemeProviderProps } from 'next-themes'
+import type { ThemeProviderProps } from 'next-themes'
 import { HeroUIProvider } from '@heroui/react'
+import { ThemeProvider } from 'next-themes'
 
 export default function _ThemeProvider({
   children,

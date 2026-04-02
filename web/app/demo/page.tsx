@@ -102,23 +102,38 @@ const DemoIndex = () => {
           <ul className="space-y-2 text-gray-700">
             <li className="flex items-start">
               <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs text-white">📘</span>
-              <span><strong>集成文档：</strong>查看完整的 Chatbot 集成指南，包含 URL 参数、实体标签功能说明和多框架代码示例</span>
+              <span>
+                <strong>集成文档：</strong>
+                查看完整的 Chatbot 集成指南，包含 URL 参数、实体标签功能说明和多框架代码示例
+              </span>
             </li>
             <li className="flex items-start">
               <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs text-white">1</span>
-              <span><strong>Chatbot 参数测试：</strong>可以动态调整 prompt、hideTitle、backgroundColor 参数，实时预览效果</span>
+              <span>
+                <strong>Chatbot 参数测试：</strong>
+                可以动态调整 prompt、hideTitle、backgroundColor 参数，实时预览效果
+              </span>
             </li>
             <li className="flex items-start">
               <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500 text-xs text-white">2</span>
-              <span><strong>实体标签测试：</strong>测试通过 postMessage 向 Chatbot 发送实体对象，以标签形式展示在输入框</span>
+              <span>
+                <strong>实体标签测试：</strong>
+                测试通过 postMessage 向 Chatbot 发送实体对象，以标签形式展示在输入框
+              </span>
             </li>
             <li className="flex items-start">
               <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-xs text-white">3</span>
-              <span><strong>链接拦截器测试：</strong>展示外部项目集成方式，点击 Chatbot 链接在右侧加载</span>
+              <span>
+                <strong>链接拦截器测试：</strong>
+                展示外部项目集成方式，点击 Chatbot 链接在右侧加载
+              </span>
             </li>
             <li className="flex items-start">
               <span className="mr-2 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-500 text-xs text-white">4</span>
-              <span><strong>HTML 渲染测试：</strong>可以在左侧编辑 Markdown 内容，右侧实时预览渲染效果</span>
+              <span>
+                <strong>HTML 渲染测试：</strong>
+                可以在左侧编辑 Markdown 内容，右侧实时预览渲染效果
+              </span>
             </li>
           </ul>
         </div>

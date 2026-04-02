@@ -1,31 +1,32 @@
-import React from 'react'
+import type { FC } from 'react'
+import * as React from 'react'
 import ReactMarkdown from 'react-markdown'
-import RemarkMath from 'remark-math'
-import RemarkBreaks from 'remark-breaks'
 import RehypeKatex from 'rehype-katex'
-import RemarkGfm from 'remark-gfm'
 import RehypeRaw from 'rehype-raw'
+import RemarkBreaks from 'remark-breaks'
+import RemarkGfm from 'remark-gfm'
+import RemarkMath from 'remark-math'
 import AudioBlock from '@/app/components/base/markdown-blocks/audio-block'
-import Img from '@/app/components/base/markdown-blocks/img'
-import Link from '@/app/components/base/markdown-blocks/link'
 import MarkdownButton from '@/app/components/base/markdown-blocks/button'
 import MarkdownForm from '@/app/components/base/markdown-blocks/form'
+import Img from '@/app/components/base/markdown-blocks/img'
+import Link from '@/app/components/base/markdown-blocks/link'
 import Paragraph from '@/app/components/base/markdown-blocks/paragraph'
-import ScriptBlock from '@/app/components/base/markdown-blocks/script-block'
 import ThinkBlock from '@/app/components/base/markdown-blocks/think-block'
 import ToolBlock from '@/app/components/base/markdown-blocks/tool-block'
 import VideoBlock from '@/app/components/base/markdown-blocks/video-block'
+
+import dynamic from '@/next/dynamic'
+
 import { customUrlTransform } from './markdown-utils'
-
-import type { FC } from 'react'
-
-import dynamic from 'next/dynamic'
 
 const CodeBlock = dynamic(() => import('@/app/components/base/markdown-blocks/code-block'), { ssr: false })
 
 export type ReactMarkdownWrapperProps = {
+  // eslint-disable-next-line ts/no-explicit-any
   latexContent: any
   customDisallowedElements?: string[]
+  // eslint-disable-next-line ts/no-explicit-any
   customComponents?: Record<string, React.ComponentType<any>>
 }
 
@@ -41,10 +42,13 @@ export const ReactMarkdownWrapper: FC<ReactMarkdownWrapperProps> = (props) => {
       ]}
       rehypePlugins={[
         RehypeKatex,
+        // eslint-disable-next-line ts/no-explicit-any
         RehypeRaw as any,
-          // The Rehype plug-in is used to remove the ref attribute of an element
+        // The Rehype plug-in is used to remove the ref attribute of an element
         () => {
+          // eslint-disable-next-line ts/no-explicit-any
           return (tree: any) => {
+            // eslint-disable-next-line ts/no-explicit-any
             const iterate = (node: any) => {
               if (node.type === 'element' && node.properties?.ref)
                 delete node.properties.ref
@@ -65,6 +69,7 @@ export const ReactMarkdownWrapper: FC<ReactMarkdownWrapperProps> = (props) => {
       disallowedElements={['iframe', 'head', 'html', 'meta', 'link', 'style', 'body', ...(props.customDisallowedElements || [])]}
       components={{
         code: CodeBlock,
+        // eslint-disable-next-line ts/no-explicit-any
         pre: ({ children, ...props }: any) => {
           // 检查是否是 custom-html 代码块
           const child = React.Children.only(children)
@@ -72,15 +77,15 @@ export const ReactMarkdownWrapper: FC<ReactMarkdownWrapperProps> = (props) => {
             return children
           return <pre {...props}>{children}</pre>
         },
-        img: Img,
-        video: VideoBlock,
-        audio: AudioBlock,
-        a: Link,
-        p: Paragraph,
-        button: MarkdownButton,
-        form: MarkdownForm,
-        script: ScriptBlock as any,
-        details: ThinkBlock,
+        img: Img as any,
+        video: VideoBlock as any,
+        audio: AudioBlock as any,
+        a: Link as any,
+        p: Paragraph as any,
+        button: MarkdownButton as any,
+        form: MarkdownForm as any,
+        details: ThinkBlock as any,
+        // eslint-disable-next-line ts/no-explicit-any
         div: (props: any) => {
           if (props['data-tool'])
             return <ToolBlock {...props} />

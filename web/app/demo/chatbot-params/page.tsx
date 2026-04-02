@@ -1,6 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { getChatbotToken, getDefaultCustomParams } from '../config'
 
 // 代码示例常量
@@ -484,17 +484,41 @@ const ChatbotParamsDemo = () => {
                     <div>
                       <strong>基础参数：</strong>
                       <ul className="ml-4 mt-1 list-disc space-y-1">
-                        <li><code className="rounded bg-white px-1">prompt</code> - 自动发送的消息</li>
-                        <li><code className="rounded bg-white px-1">hideTitle</code> - 隐藏标题栏（true/false）</li>
-                        <li><code className="rounded bg-white px-1">backgroundColor</code> - 背景色（十六进制）</li>
+                        <li>
+                          <code className="rounded bg-white px-1">prompt</code>
+                          {' '}
+                          - 自动发送的消息
+                        </li>
+                        <li>
+                          <code className="rounded bg-white px-1">hideTitle</code>
+                          {' '}
+                          - 隐藏标题栏（true/false）
+                        </li>
+                        <li>
+                          <code className="rounded bg-white px-1">backgroundColor</code>
+                          {' '}
+                          - 背景色（十六进制）
+                        </li>
                       </ul>
                     </div>
                     <div>
                       <strong>系统参数（压缩编码）：</strong>
                       <ul className="ml-4 mt-1 list-disc space-y-1">
-                        <li><code className="rounded bg-white px-1">sys.conversation_id</code> - 会话ID</li>
-                        <li><code className="rounded bg-white px-1">sys.user_id</code> - 用户ID</li>
-                        <li><code className="rounded bg-white px-1">customParams</code> - 任意自定义参数（动态）</li>
+                        <li>
+                          <code className="rounded bg-white px-1">sys.conversation_id</code>
+                          {' '}
+                          - 会话ID
+                        </li>
+                        <li>
+                          <code className="rounded bg-white px-1">sys.user_id</code>
+                          {' '}
+                          - 用户ID
+                        </li>
+                        <li>
+                          <code className="rounded bg-white px-1">customParams</code>
+                          {' '}
+                          - 任意自定义参数（动态）
+                        </li>
                       </ul>
                       <p className="ml-4 mt-1 text-xs text-gray-600">
                         自定义参数示例：resumeid, jobid, projectid 等
@@ -576,7 +600,10 @@ const ChatbotParamsDemo = () => {
 
                   <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                     <p className="text-xs text-gray-700">
-                      💡 <strong>提示：</strong>点击"复制"按钮可以快速复制代码到剪贴板
+                      💡
+                      {' '}
+                      <strong>提示：</strong>
+                      点击"复制"按钮可以快速复制代码到剪贴板
                     </p>
                   </div>
                 </div>
@@ -602,7 +629,9 @@ const ChatbotParamsDemo = () => {
               <span className="text-xs font-semibold text-gray-700">地址栏</span>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-medium ${getUrlLengthColor(currentUrl.length)}`}>
-                  {currentUrl.length.toLocaleString()} 字符
+                  {currentUrl.length.toLocaleString()}
+                  {' '}
+                  字符
                 </span>
                 {currentUrl && (
                   <button

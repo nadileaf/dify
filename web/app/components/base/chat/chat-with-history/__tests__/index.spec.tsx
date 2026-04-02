@@ -103,6 +103,10 @@ const defaultHookReturn: HookReturn = {
   setCurrentConversationInputs: vi.fn(),
   allInputsHidden: false,
   initUserVariables: {},
+  initialPrompt: undefined,
+  shouldStartNewConversation: false,
+  resetNewConversationFlag: vi.fn(),
+  resetInitialPrompt: vi.fn(),
 }
 
 describe('ChatWithHistory', () => {

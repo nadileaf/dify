@@ -82,6 +82,8 @@ const createMockContext = (overrides: Partial<ChatWithHistoryContextValue> = {})
     handleSidebarCollapse: vi.fn(),
     setClearChatList: vi.fn(),
     setIsResponding: vi.fn(),
+    resetNewConversationFlag: vi.fn(),
+    resetInitialPrompt: vi.fn(),
     ...overrides,
   }
   return base

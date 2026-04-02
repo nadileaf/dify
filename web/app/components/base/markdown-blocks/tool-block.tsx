@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import * as React from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useChatContext } from '../chat/chat/context'
 
@@ -70,10 +71,12 @@ const removeEndTool = (children: any): any => {
 const extractToolName = (children: any): string => {
   if (typeof children === 'string') {
     const content = children.replace('[ENDTOOLFLAG]', '').replace('[TOOLCOMPLETE]', '').trim()
-    if (!content) return 'Tool'
+    if (!content)
+      return 'Tool'
 
     const lines = content.split('\n').filter(line => line.trim())
-    if (lines.length === 0) return 'Tool'
+    if (lines.length === 0)
+      return 'Tool'
 
     // 尝试从第一行提取工具名称
     const firstLine = lines[0].trim()
@@ -110,7 +113,8 @@ const useToolTimer = (children: any) => {
       return
     }
 
-    if (isComplete) return
+    if (isComplete)
+      return
 
     timerRef.current = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime) / 100) / 10)
@@ -147,7 +151,7 @@ const SkillDisplay = ({ skillData }: { skillData: any }) => {
           </div>
           {progressItems.map((item: string, idx: number) => {
             const isChecked = item.includes('[x]') || item.includes('[X]')
-            const text = item.replace(/^-\s*\[[xX ]\]\s*/, '')
+            const text = item.replace(/^-\s*\[[x ]\]\s*/i, '')
 
             return (
               <div key={idx} className="flex items-start gap-2">
@@ -264,7 +268,9 @@ const ToolBlock = ({ children, ...props }: React.ComponentProps<'div'>) => {
           </span>
           {status === 'complete' && (
             <span className="system-xs-regular whitespace-nowrap text-text-quaternary">
-              ({elapsedTime.toFixed(1)}s)
+              (
+              {elapsedTime.toFixed(1)}
+              s)
             </span>
           )}
         </div>
@@ -287,10 +293,10 @@ const ToolBlock = ({ children, ...props }: React.ComponentProps<'div'>) => {
           {jsonData && isSkillJSON(jsonData)
             ? <SkillDisplay skillData={jsonData} />
             : (
-              <div className="system-xs-regular overflow-x-auto break-words">
-                {displayContent}
-              </div>
-            )}
+                <div className="system-xs-regular overflow-x-auto break-words">
+                  {displayContent}
+                </div>
+              )}
         </div>
       )}
     </div>

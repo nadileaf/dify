@@ -13,9 +13,6 @@ import PartnerStackCookieRecorder from './components/billing/partner-stack/cooki
 import { AgentationLoader } from './components/devtools/agentation-loader'
 import { ReactScanLoader } from './components/devtools/react-scan/loader'
 import { I18nServerProvider } from './components/provider/i18n-server'
-import BrowserInitializer from './components/browser-initializer'
-import SentryInitializer from './components/sentry-initializer'
-import Zendesk from './components/base/zendesk'
 import RoutePrefixHandle from './routePrefixHandle'
 import './styles/globals.css'
 import './styles/markdown.css'
@@ -67,30 +64,25 @@ const LocaleLayout = async ({
               disableTransitionOnChange
               enableColorScheme={false}
             >
-              <BrowserInitializer>
-                <SentryInitializer>
-                  <NuqsAdapter>
-                    <TanstackQueryInitializer>
-                      <I18nServerProvider>
-                        <ToastHost timeout={5000} limit={3} />
-                        <PartnerStackCookieRecorder />
-                        <ToastProvider>
-                          <GlobalPublicStoreProvider>
-                            <TooltipProvider delay={300} closeDelay={200}>
-                              {children}
-                            </TooltipProvider>
-                          </GlobalPublicStoreProvider>
-                        </ToastProvider>
-                      </I18nServerProvider>
-                    </TanstackQueryInitializer>
-                  </NuqsAdapter>
-                </SentryInitializer>
-              </BrowserInitializer>
+              <NuqsAdapter>
+                <TanstackQueryInitializer>
+                  <I18nServerProvider>
+                    <ToastHost timeout={5000} limit={3} />
+                    <PartnerStackCookieRecorder />
+                    <ToastProvider>
+                      <GlobalPublicStoreProvider>
+                        <TooltipProvider delay={300} closeDelay={200}>
+                          {children}
+                        </TooltipProvider>
+                      </GlobalPublicStoreProvider>
+                    </ToastProvider>
+                  </I18nServerProvider>
+                </TanstackQueryInitializer>
+              </NuqsAdapter>
             </ThemeProvider>
           </JotaiProvider>
           <RoutePrefixHandle />
           <AgentationLoader />
-          <Zendesk />
         </div>
       </body>
     </html>

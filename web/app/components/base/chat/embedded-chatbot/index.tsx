@@ -20,7 +20,6 @@ import {
 } from './context'
 import { useEmbeddedChatbot } from './hooks'
 import { useThemeContext } from './theme/theme-context'
-import { CssTransform } from './theme/utils'
 import { isDify } from './utils'
 
 const Chatbot = () => {
@@ -202,11 +201,13 @@ const EmbeddedChatbotWrapper = ({ initialPrompt, hideTitle, backgroundColor }: E
 }
 
 const EmbeddedChatbot = ({ initialPrompt, hideTitle, backgroundColor }: EmbeddedChatbotWrapperProps = {}) => {
-  return <EmbeddedChatbotWrapper
-    initialPrompt={initialPrompt}
-    hideTitle={hideTitle}
-    backgroundColor={backgroundColor}
-  />
+  return (
+    <EmbeddedChatbotWrapper
+      initialPrompt={initialPrompt}
+      hideTitle={hideTitle}
+      backgroundColor={backgroundColor}
+    />
+  )
 }
 
 export default EmbeddedChatbot

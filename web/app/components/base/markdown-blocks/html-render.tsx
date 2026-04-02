@@ -1,9 +1,9 @@
+import DOMPurify from 'dompurify'
 /**
  * @fileoverview HTML渲染组件，用于安全地渲染HTML内容
  * 支持白名单标签和属性，防止XSS攻击
  */
-import React from 'react'
-import DOMPurify from 'dompurify'
+import * as React from 'react'
 
 type HtmlRenderProps = {
   content: string
@@ -14,17 +14,49 @@ type HtmlRenderProps = {
 
 // 默认允许的HTML标签
 const DEFAULT_ALLOWED_TAGS = [
-  'div', 'span', 'p', 'br', 'hr',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'ul', 'ol', 'li',
-  'strong', 'b', 'em', 'i', 'u', 's', 'del', 'ins',
-  'blockquote', 'pre', 'code',
-  'table', 'thead', 'tbody', 'tr', 'th', 'td',
-  'a', 'img',
-  'sub', 'sup',
-  'mark', 'small',
-  'abbr', 'cite', 'dfn', 'time',
-  'details', 'summary',
+  'div',
+  'span',
+  'p',
+  'br',
+  'hr',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'ul',
+  'ol',
+  'li',
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  's',
+  'del',
+  'ins',
+  'blockquote',
+  'pre',
+  'code',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+  'a',
+  'img',
+  'sub',
+  'sup',
+  'mark',
+  'small',
+  'abbr',
+  'cite',
+  'dfn',
+  'time',
+  'details',
+  'summary',
 ]
 
 // 默认允许的属性

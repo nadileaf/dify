@@ -130,6 +130,7 @@ https://agent.nadileaf.com/chat/{token}?sys.user_id=272455&sys.conversation_id={
 ```
 
 **预期结果**：
+
 - ✅ 能够成功加载会话历史
 - ✅ 不再出现 404 错误
 - ✅ 可以继续对话
@@ -148,6 +149,7 @@ function getBackendUrl(): string {
 ```
 
 **配置方式**：
+
 - 在 `.env.local` 中设置 `NEXT_PUBLIC_PUBLIC_API_PREFIX`
 - 例如：`NEXT_PUBLIC_PUBLIC_API_PREFIX=https://agent.nadileaf.com/api`
 - 如果不配置，默认使用 `http://localhost:5001/api`
@@ -155,15 +157,15 @@ function getBackendUrl(): string {
 ### 工作流程
 
 1. **接收请求**：接收 API 格式的请求（Bearer token + web_app_code + user 参数）
-2. **环境检测**：根据运行环境选择后端 URL
-3. **获取 Web Token**：
+1. **环境检测**：根据运行环境选择后端 URL
+1. **获取 Web Token**：
    - 调用 `/api/passport?user_id={user}`
    - 使用 `X-App-Code: {web_app_code}` header
    - 返回 Web 端的 JWT token
-4. **转发请求**：
+1. **转发请求**：
    - 使用 Web token 调用 `/api/chat-messages`
    - 这样创建的会话是 `type=browser`
-5. **返回响应**：
+1. **返回响应**：
    - Streaming 模式：直接流式返回
    - Blocking 模式：返回 JSON
 
@@ -177,44 +179,47 @@ function getBackendUrl(): string {
 
 ### 与原 API 的兼容性
 
-| 特性 | 原 API (/v1/chat-messages) | Web 代理 (/web-proxy/v1/chat-messages) |
-|------|---------------------------|-----------------------------------------|
-| 请求格式 | ✅ 相同 | ✅ 相同 + web_app_code |
-| Bearer Token | ✅ app-xxx | ✅ app-xxx |
-| user 参数 | ✅ 支持 | ✅ 支持 |
-| Streaming | ✅ 支持 | ✅ 支持 |
-| Blocking | ✅ 支持 | ✅ 支持 |
-| 响应格式 | ✅ 相同 | ✅ 相同 |
-| Web 端访问 | ❌ 不支持 | ✅ 支持 |
+| 特性         | 原 API (/v1/chat-messages) | Web 代理 (/web-proxy/v1/chat-messages) |
+| ------------ | -------------------------- | -------------------------------------- |
+| 请求格式     | ✅ 相同                    | ✅ 相同 + web_app_code                 |
+| Bearer Token | ✅ app-xxx                 | ✅ app-xxx                             |
+| user 参数    | ✅ 支持                    | ✅ 支持                                |
+| Streaming    | ✅ 支持                    | ✅ 支持                                |
+| Blocking     | ✅ 支持                    | ✅ 支持                                |
+| 响应格式     | ✅ 相同                    | ✅ 相同                                |
+| Web 端访问   | ❌ 不支持                  | ✅ 支持                                |
 
 ## 注意事项
 
 1. **web_app_code 参数**：必须提供，这是 Web 应用的标识码（不同于 Service API token）
-2. **API Token 格式**：必须是 `app-` 开头的格式
-3. **user 参数**：必须提供，用于创建/获取 Web EndUser
-4. **环境变量**：在 `.env.local` 中配置 `NEXT_PUBLIC_PUBLIC_API_PREFIX` 指向后端 API 地址
-5. **后端服务**：确保后端 API 服务可访问（直接运行或通过代理）
+1. **API Token 格式**：必须是 `app-` 开头的格式
+1. **user 参数**：必须提供，用于创建/获取 Web EndUser
+1. **环境变量**：在 `.env.local` 中配置 `NEXT_PUBLIC_PUBLIC_API_PREFIX` 指向后端 API 地址
+1. **后端服务**：确保后端 API 服务可访问（直接运行或通过代理）
 
 ### 如何获取 web_app_code
 
 1. 登录 Dify 控制台
-2. 进入应用详情页
-3. 点击「访问 API」
-4. 在 URL 中可以找到类似 `https://your-domain.com/chat/igJgPiPgHAEX6uP4` 的地址
-5. 其中 `igJgPiPgHAEX6uP4` 就是 `web_app_code`
+1. 进入应用详情页
+1. 点击「访问 API」
+1. 在 URL 中可以找到类似 `https://your-domain.com/chat/igJgPiPgHAEX6uP4` 的地址
+1. 其中 `igJgPiPgHAEX6uP4` 就是 `web_app_code`
 
 ## 故障排查
 
 ### 401 Unauthorized
+
 - 检查 API token 是否正确
 - 检查 token 格式是否为 `app-xxx`
 
 ### 404 Not Found
+
 - 确认使用的是 `/web-proxy/v1/chat-messages`（不是 `/api/v1/chat-messages`）
 - 检查 `NEXT_PUBLIC_PUBLIC_API_PREFIX` 环境变量
 - 确认后端服务正常运行
 
 ### 500 Internal Server Error
+
 - 查看服务器日志：`console.error` 输出
 - 检查后端 `/api/passport` 和 `/api/chat-messages` 接口
 
@@ -223,7 +228,7 @@ function getBackendUrl(): string {
 对于其他项目，需要修改两处：
 
 1. 修改调用的 URL（注意路径变化）
-2. 添加 `web_app_code` 参数
+1. 添加 `web_app_code` 参数
 
 ```bash
 # 原来
@@ -238,5 +243,6 @@ curl https://agent.nadileaf.com/web-proxy/v1/chat-messages \
 ```
 
 **变更点**：
+
 1. URL: `/v1/chat-messages` → `/web-proxy/v1/chat-messages`
-2. 请求体: 添加 `"web_app_code": "your_code"`
+1. 请求体: 添加 `"web_app_code": "your_code"`

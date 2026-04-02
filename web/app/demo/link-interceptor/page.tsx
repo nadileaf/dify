@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
 import { RiArrowLeftLine, RiRefreshLine } from '@remixicon/react'
+import * as React from 'react'
+import { useEffect, useState } from 'react'
 import { getChatbotToken, getDefaultCustomParams } from '../config'
 
 const LinkInterceptorDemo = () => {
@@ -142,32 +143,37 @@ const LinkInterceptorDemo = () => {
           <div className="flex-1 bg-white">
             {clickedLink
               ? (
-                <iframe
-                  src={clickedLink}
-                  className="h-full w-full"
-                  title="Link Preview"
-                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                />
-              )
+                  <iframe
+                    src={clickedLink}
+                    className="h-full w-full"
+                    title="Link Preview"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                  />
+                )
               : (
-                <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                  <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-100">
-                    <svg className="h-12 w-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
+                  <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                    <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-100">
+                      <svg className="h-12 w-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </div>
+                    <h3 className="mb-2 text-lg font-semibold text-gray-800">等待链接点击</h3>
+                    <p className="max-w-sm text-sm text-gray-600">
+                      在左侧 Chatbot 中点击任何链接，该链接的内容会在这里显示
+                    </p>
+                    <div className="mt-6 space-y-2 text-left text-xs text-gray-500">
+                      <p>✅ 支持内部链接（如 /resume）</p>
+                      <p>✅ 支持外部链接（如 https://...）</p>
+                      <p>
+                        ✅ 支持 HTML
+                        <code className="rounded bg-gray-100 px-1">&lt;a&gt;</code>
+                        {' '}
+                        标签
+                      </p>
+                      <p>✅ 支持 Markdown 链接语法</p>
+                    </div>
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-gray-800">等待链接点击</h3>
-                  <p className="max-w-sm text-sm text-gray-600">
-                    在左侧 Chatbot 中点击任何链接，该链接的内容会在这里显示
-                  </p>
-                  <div className="mt-6 space-y-2 text-left text-xs text-gray-500">
-                    <p>✅ 支持内部链接（如 /resume）</p>
-                    <p>✅ 支持外部链接（如 https://...）</p>
-                    <p>✅ 支持 HTML <code className="rounded bg-gray-100 px-1">&lt;a&gt;</code> 标签</p>
-                    <p>✅ 支持 Markdown 链接语法</p>
-                  </div>
-                </div>
-              )}
+                )}
           </div>
         </div>
       </div>
@@ -185,7 +191,9 @@ const LinkInterceptorDemo = () => {
             </div>
           </div>
           <div>
-            Token: <code className="rounded bg-gray-100 px-1.5 py-0.5">{chatbotToken || '加载中...'}</code>
+            Token:
+            {' '}
+            <code className="rounded bg-gray-100 px-1.5 py-0.5">{chatbotToken || '加载中...'}</code>
           </div>
         </div>
       </div>

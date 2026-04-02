@@ -3,8 +3,8 @@
  * 管理实体标签的状态和逻辑
  */
 
-import { useCallback, useEffect, useState } from 'react'
 import type { EntityTag, EntityTagMessage } from './types'
+import { useCallback, useEffect, useState } from 'react'
 
 export const useEntityTags = () => {
   const [entityTags, setEntityTags] = useState<EntityTag[]>([])
@@ -56,7 +56,8 @@ export const useEntityTags = () => {
     const handleMessage = (event: MessageEvent<EntityTagMessage>) => {
       if (event.data?.type === 'dify-add-entity-tags') {
         const { tags } = event.data.payload
-        if (Array.isArray(tags) && tags.length > 0) addTags(tags)
+        if (Array.isArray(tags) && tags.length > 0)
+          addTags(tags)
       }
     }
 

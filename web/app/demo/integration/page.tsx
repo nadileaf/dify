@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { RiDownloadLine, RiFileCopyLine } from '@remixicon/react'
+import { useEffect, useState } from 'react'
 import { Markdown } from '@/app/components/base/markdown'
 
 const IntegrationDocsPage = () => {
@@ -80,18 +80,18 @@ const IntegrationDocsPage = () => {
           <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
             {content
               ? (
-                <div className="prose prose-slate prose-headings:font-bold prose-h1:text-3xl prose-h2:mt-8 prose-h2:border-b prose-h2:pb-2 prose-h2:text-2xl prose-h3:text-xl prose-h4:text-lg prose-p:text-gray-700 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:text-gray-800 prose-code:before:content-[''] prose-code:after:content-[''] prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-table:text-sm prose-th:bg-gray-100 prose-th:font-semibold prose-td:border prose-td:border-gray-300 prose-th:border prose-th:border-gray-300 prose-img:rounded-lg max-w-none">
-                  <Markdown content={content} />
-                </div>
-              )
-              : (
-                <div className="flex items-center justify-center py-20">
-                  <div className="text-center">
-                    <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
-                    <p className="text-gray-600">加载文档中...</p>
+                  <div className="prose prose-slate prose-headings:font-bold prose-h1:text-3xl prose-h2:mt-8 prose-h2:border-b prose-h2:pb-2 prose-h2:text-2xl prose-h3:text-xl prose-h4:text-lg prose-p:text-gray-700 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:text-gray-800 prose-code:before:content-[''] prose-code:after:content-[''] prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-table:text-sm prose-th:bg-gray-100 prose-th:font-semibold prose-td:border prose-td:border-gray-300 prose-th:border prose-th:border-gray-300 prose-img:rounded-lg max-w-none">
+                    <Markdown content={content} />
                   </div>
-                </div>
-              )}
+                )
+              : (
+                  <div className="flex items-center justify-center py-20">
+                    <div className="text-center">
+                      <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+                      <p className="text-gray-600">加载文档中...</p>
+                    </div>
+                  </div>
+                )}
           </div>
         </div>
       </main>

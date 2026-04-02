@@ -17,7 +17,6 @@ import RenameModal from '@/app/components/base/chat/chat-with-history/sidebar/re
 import Confirm from '@/app/components/base/confirm'
 import DifyLogo from '@/app/components/base/logo/dify-logo'
 import MenuDropdown from '@/app/components/share/text-generation/menu-dropdown'
-import type { ConversationItem } from '@/models/share'
 import { useGlobalPublicStore } from '@/context/global-public-context'
 import { cn } from '@/utils/classnames'
 import { useChatWithHistoryContext } from '../context'

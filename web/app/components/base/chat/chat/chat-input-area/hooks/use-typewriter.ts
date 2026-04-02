@@ -18,7 +18,8 @@ export const useTypewriter = ({
   const [isActive, setIsActive] = useState(false)
 
   const startTypewriter = useCallback(() => {
-    if (texts.length === 0) return
+    if (texts.length === 0)
+      return
     setIsActive(true)
   }, [texts.length])
 
@@ -29,7 +30,8 @@ export const useTypewriter = ({
   }, [])
 
   useEffect(() => {
-    if (!isActive || texts.length === 0) return
+    if (!isActive || texts.length === 0)
+      return
 
     const currentText = texts[currentIndex].replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
     let timeout: NodeJS.Timeout
@@ -52,7 +54,8 @@ export const useTypewriter = ({
     }
 
     return () => {
-      if (timeout) clearTimeout(timeout)
+      if (timeout)
+        clearTimeout(timeout)
     }
   }, [displayText, currentIndex, texts, typingSpeed, pauseDuration, loop, isActive])
 

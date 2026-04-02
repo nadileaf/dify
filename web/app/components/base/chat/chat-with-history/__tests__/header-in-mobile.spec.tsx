@@ -97,6 +97,8 @@ const defaultContextValue: ChatWithHistoryContextValue = {
   handleUnpinConversation: vi.fn(),
   handleDeleteConversation: vi.fn(),
   handleRenameConversation: vi.fn(),
+  resetNewConversationFlag: vi.fn(),
+  resetInitialPrompt: vi.fn(),
   handleNewConversation: vi.fn(),
   handleNewConversationInputsChange: vi.fn(),
   handleStartChat: vi.fn(),

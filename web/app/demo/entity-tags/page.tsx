@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
 import { RiAddLine, RiCloseLine, RiSendPlaneFill } from '@remixicon/react'
+import * as React from 'react'
+import { useEffect, useState } from 'react'
 import { getChatbotToken } from '../config'
 
 type EntityTag = {
@@ -247,7 +248,9 @@ const EntityTagsDemo = () => {
                 >
                   <div className="font-semibold text-gray-800">{preset.name}</div>
                   <div className="mt-1 text-xs text-gray-500">
-                    {preset.tags.length} 个标签
+                    {preset.tags.length}
+                    {' '}
+                    个标签
                   </div>
                 </button>
               ))}
@@ -257,11 +260,26 @@ const EntityTagsDemo = () => {
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
             <h3 className="mb-2 font-semibold text-amber-900">💡 使用说明</h3>
             <ul className="space-y-1 text-sm text-amber-800">
-              <li>• <strong>Icon</strong>：可选，支持 Emoji（如 👤、📦）或图片 URL</li>
-              <li>• <strong>Label</strong>：可选，标签显示的文本</li>
-              <li>• <strong>Value</strong>：必填，发送给大模型的实际值</li>
+              <li>
+                •
+                <strong>Icon</strong>
+                ：可选，支持 Emoji（如 👤、📦）或图片 URL
+              </li>
+              <li>
+                •
+                <strong>Label</strong>
+                ：可选，标签显示的文本
+              </li>
+              <li>
+                •
+                <strong>Value</strong>
+                ：必填，发送给大模型的实际值
+              </li>
               <li>• 标签会显示在 Chatbot 输入框上方</li>
-              <li>• 发送消息时转换为 Markdown 链接：<code className="rounded bg-amber-100 px-1">[Label](Value)</code></li>
+              <li>
+                • 发送消息时转换为 Markdown 链接：
+                <code className="rounded bg-amber-100 px-1">[Label](Value)</code>
+              </li>
               <li>• 图片 URL 支持 http/https/data:image 格式</li>
             </ul>
           </div>
