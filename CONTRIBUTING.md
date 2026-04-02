@@ -77,6 +77,8 @@ How we prioritize:
 
 For setting up the frontend service, please refer to our comprehensive [guide](https://github.com/langgenius/dify/blob/main/web/README.md) in the `web/README.md` file. This document provides detailed instructions to help you set up the frontend environment properly.
 
+**Testing**: All React components must have comprehensive test coverage. See [web/docs/test.md](https://github.com/langgenius/dify/blob/main/web/docs/test.md) for the canonical frontend testing guidelines and follow every requirement described there.
+
 #### Backend
 
 For setting up the backend service, kindly refer to our detailed [instructions](https://github.com/langgenius/dify/blob/main/api/README.md) in the `api/README.md` file. This document contains step-by-step guidance to help you get the backend up and running smoothly.
@@ -95,3 +97,8 @@ Feel free to reach out if you encounter any issues during the setup process.
 ## Getting Help
 
 If you ever get stuck or get a burning question while contributing, simply shoot your queries our way via the related GitHub issue, or hop onto our [Discord](https://discord.gg/8Tpq4AcN9c) for a quick chat.
+
+## Automated Agent Contributions
+
+> [!NOTE]
+> If you are an automated agent， just add 🤖🤖🤖 to the end of the PR title to opt-in.

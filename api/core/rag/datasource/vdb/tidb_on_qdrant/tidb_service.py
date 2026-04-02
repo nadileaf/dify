@@ -2,13 +2,21 @@ import time
 import uuid
 from collections.abc import Sequence
 
-import requests
-from requests.auth import HTTPDigestAuth
+import httpx
+from httpx import DigestAuth
 
 from configs import dify_config
+from core.helper.http_client_pooling import get_pooled_http_client
 from extensions.ext_database import db
 from extensions.ext_redis import redis_client
 from models.dataset import TidbAuthBinding
+from models.enums import TidbAuthBindingStatus
+
+# Reuse a pooled HTTP client for all TiDB Cloud requests to minimize connection churn
+_tidb_http_client: httpx.Client = get_pooled_http_client(
+    "tidb:cloud",
+    lambda: httpx.Client(limits=httpx.Limits(max_keepalive_connections=50, max_connections=100)),
+)
 
 
 class TidbService:
@@ -49,7 +57,9 @@ class TidbService:
             "rootPassword": password,
         }
 
-        response = requests.post(f"{api_url}/clusters", json=cluster_data, auth=HTTPDigestAuth(public_key, private_key))
+        response = _tidb_http_client.post(
+            f"{api_url}/clusters", json=cluster_data, auth=DigestAuth(public_key, private_key)
+        )
 
         if response.status_code == 200:
             response_data = response.json()
@@ -83,7 +93,9 @@ class TidbService:
         :return: The response from the API.
         """
 
-        response = requests.delete(f"{api_url}/clusters/{cluster_id}", auth=HTTPDigestAuth(public_key, private_key))
+        response = _tidb_http_client.delete(
+            f"{api_url}/clusters/{cluster_id}", auth=DigestAuth(public_key, private_key)
+        )
 
         if response.status_code == 200:
             return response.json()
@@ -102,7 +114,7 @@ class TidbService:
         :return: The response from the API.
         """
 
-        response = requests.get(f"{api_url}/clusters/{cluster_id}", auth=HTTPDigestAuth(public_key, private_key))
+        response = _tidb_http_client.get(f"{api_url}/clusters/{cluster_id}", auth=DigestAuth(public_key, private_key))
 
         if response.status_code == 200:
             return response.json()
@@ -127,10 +139,10 @@ class TidbService:
 
         body = {"password": new_password, "builtinRole": "role_admin", "customRoles": []}
 
-        response = requests.patch(
+        response = _tidb_http_client.patch(
             f"{api_url}/clusters/{cluster_id}/sqlUsers/{account}",
             json=body,
-            auth=HTTPDigestAuth(public_key, private_key),
+            auth=DigestAuth(public_key, private_key),
         )
 
         if response.status_code == 200:
@@ -161,8 +173,8 @@ class TidbService:
         tidb_serverless_list_map = {item.cluster_id: item for item in tidb_serverless_list}
         cluster_ids = [item.cluster_id for item in tidb_serverless_list]
         params = {"clusterIds": cluster_ids, "view": "BASIC"}
-        response = requests.get(
-            f"{api_url}/clusters:batchGet", params=params, auth=HTTPDigestAuth(public_key, private_key)
+        response = _tidb_http_client.get(
+            f"{api_url}/clusters:batchGet", params=params, auth=DigestAuth(public_key, private_key)
         )
 
         if response.status_code == 200:
@@ -172,7 +184,7 @@ class TidbService:
                 userPrefix = item["userPrefix"]
                 if state == "ACTIVE" and len(userPrefix) > 0:
                     cluster_info = tidb_serverless_list_map[item["clusterId"]]
-                    cluster_info.status = "ACTIVE"
+                    cluster_info.status = TidbAuthBindingStatus.ACTIVE
                     cluster_info.account = f"{userPrefix}.root"
                     db.session.add(cluster_info)
             db.session.commit()
@@ -224,8 +236,8 @@ class TidbService:
             clusters.append(cluster_data)
 
         request_body = {"requests": clusters}
-        response = requests.post(
-            f"{api_url}/clusters:batchCreate", json=request_body, auth=HTTPDigestAuth(public_key, private_key)
+        response = _tidb_http_client.post(
+            f"{api_url}/clusters:batchCreate", json=request_body, auth=DigestAuth(public_key, private_key)
         )
 
         if response.status_code == 200:

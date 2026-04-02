@@ -12,7 +12,9 @@ import click
 import sqlalchemy as sa
 import tqdm
 from flask import Flask, current_app
+from pydantic import TypeAdapter
 from sqlalchemy.orm import Session
+from typing_extensions import TypedDict
 
 from core.agent.entities import AgentToolEntity
 from core.helper import marketplace
@@ -31,6 +33,14 @@ from services.plugin.plugin_service import PluginService
 logger = logging.getLogger(__name__)
 
 excluded_providers = ["time", "audio", "code", "webscraper"]
+
+
+class _TenantPluginRecord(TypedDict):
+    tenant_id: str
+    plugins: list[str]
+
+
+_tenant_plugin_adapter: TypeAdapter[_TenantPluginRecord] = TypeAdapter(_TenantPluginRecord)
 
 
 class PluginMigration:
@@ -146,7 +156,7 @@ class PluginMigration:
                     futures.append(
                         thread_pool.submit(
                             process_tenant,
-                            current_app._get_current_object(),  # type: ignore[attr-defined]
+                            current_app._get_current_object(),  # type: ignore
                             tenant_id,
                         )
                     )
@@ -242,7 +252,7 @@ class PluginMigration:
                     if data.get("type") == "tool":
                         provider_name = data.get("provider_name")
                         provider_type = data.get("provider_type")
-                        if provider_name not in excluded_providers and provider_type == ToolProviderType.BUILT_IN.value:
+                        if provider_name not in excluded_providers and provider_type == ToolProviderType.BUILT_IN:
                             result.append(ToolProviderID(provider_name).plugin_id)
 
             return result
@@ -269,9 +279,9 @@ class PluginMigration:
                     for tool in agent_config["tools"]:
                         if isinstance(tool, dict):
                             try:
-                                tool_entity = AgentToolEntity(**tool)
+                                tool_entity = AgentToolEntity.model_validate(tool)
                                 if (
-                                    tool_entity.provider_type == ToolProviderType.BUILT_IN.value
+                                    tool_entity.provider_type == ToolProviderType.BUILT_IN
                                     and tool_entity.provider_id not in excluded_providers
                                 ):
                                     result.append(ToolProviderID(tool_entity.provider_id).plugin_id)
@@ -308,9 +318,8 @@ class PluginMigration:
         logger.info("Extracting unique plugins from %s", extracted_plugins)
         with open(extracted_plugins) as f:
             for line in f:
-                data = json.loads(line)
-                new_plugin_ids = data.get("plugins", [])
-                for plugin_id in new_plugin_ids:
+                data = _tenant_plugin_adapter.validate_json(line)
+                for plugin_id in data["plugins"]:
                     if plugin_id not in plugin_ids:
                         plugin_ids.append(plugin_id)
 
@@ -381,21 +390,23 @@ class PluginMigration:
             Read line by line, and install plugins for each tenant.
             """
             for line in f:
-                data = json.loads(line)
-                tenant_id = data.get("tenant_id")
-                plugin_ids = data.get("plugins", [])
-                current_not_installed = {
-                    "tenant_id": tenant_id,
-                    "plugin_not_exist": [],
-                }
+                data = _tenant_plugin_adapter.validate_json(line)
+                tenant_id = data["tenant_id"]
+                plugin_ids = data["plugins"]
+                plugin_not_exist: list[str] = []
                 # get plugin unique identifier
                 for plugin_id in plugin_ids:
                     unique_identifier = plugins.get(plugin_id)
                     if unique_identifier:
-                        current_not_installed["plugin_not_exist"].append(plugin_id)
+                        plugin_not_exist.append(plugin_id)
 
-                if current_not_installed["plugin_not_exist"]:
-                    not_installed.append(current_not_installed)
+                if plugin_not_exist:
+                    not_installed.append(
+                        {
+                            "tenant_id": tenant_id,
+                            "plugin_not_exist": plugin_not_exist,
+                        }
+                    )
 
                 thread_pool.submit(install, tenant_id, plugin_ids)
 

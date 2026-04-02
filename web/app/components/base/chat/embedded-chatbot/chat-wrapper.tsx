@@ -1,31 +1,36 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import Chat from '../chat'
+import type { FileEntity } from '../../file-uploader/types'
 import type {
   ChatConfig,
   ChatItem,
   ChatItemInTree,
   OnSend,
 } from '../types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import AnswerIcon from '@/app/components/base/answer-icon'
+import AppIcon from '@/app/components/base/app-icon'
+import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
+import InputsForm from '@/app/components/base/chat/embedded-chatbot/inputs-form'
+import LogoAvatar from '@/app/components/base/logo/logo-embedded-chat-avatar'
+import { Markdown } from '@/app/components/base/markdown'
+import { InputVarType } from '@/app/components/workflow/types'
+import {
+  AppSourceType,
+  fetchSuggestedQuestions,
+  getUrl,
+  stopChatMessageResponding,
+  submitHumanInputForm,
+} from '@/service/share'
+import { submitHumanInputForm as submitHumanInputFormService } from '@/service/workflow'
+import { TransferMethod } from '@/types/app'
+import { cn } from '@/utils/classnames'
+import { Avatar } from '../../avatar'
+import Chat from '../chat'
 import { useChat } from '../chat/hooks'
 import { getLastAnswer, isValidGeneratedAnswer } from '../utils'
 import { useEmbeddedChatbotContext } from './context'
 import { isDify } from './utils'
-import { InputVarType } from '@/app/components/workflow/types'
-import { TransferMethod } from '@/types/app'
-import {
-  fetchSuggestedQuestions,
-  getUrl,
-  stopChatMessageResponding,
-} from '@/service/share'
-import LogoAvatar from '@/app/components/base/logo/logo-embedded-chat-avatar'
-import AnswerIcon from '@/app/components/base/answer-icon'
-import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
-import ChatInputWithTags from '@/app/components/base/chat/entity-tags/chat-input-with-tags'
-import { Markdown } from '@/app/components/base/markdown'
-import cn from '@/utils/classnames'
-import type { FileEntity } from '../../file-uploader/types'
-import Avatar from '../../avatar'
 import BgMascot from '../chat-with-history/bg-mascot'
+import ChatInputWithTags from '@/app/components/base/chat/entity-tags/chat-input-with-tags'
 
 const ChatWrapper = () => {
   const {
@@ -43,6 +48,7 @@ const ChatWrapper = () => {
     isInstalledApp,
     appId,
     appMeta,
+    disableFeedback,
     handleFeedback,
     currentChatInstanceRef,
     themeBuilder,
@@ -51,9 +57,19 @@ const ChatWrapper = () => {
     setIsResponding,
     allInputsHidden,
     initUserVariables,
+    appSourceType,
     initialPrompt,
   } = useEmbeddedChatbotContext()
   const [promptSent, setPromptSent] = useState(false)
+
+  const sendOnEnter = useMemo(() => {
+    if (typeof window === 'undefined')
+      return true
+    const urlParams = new URLSearchParams(window.location.search)
+    const param = urlParams.get('sendOnEnter')
+    return param !== 'false'
+  }, [])
+
   const appConfig = useMemo(() => {
     const config = appParams || {}
 
@@ -64,14 +80,14 @@ const ChatWrapper = () => {
         fileUploadConfig: (config as any).system_parameters,
       },
       supportFeedback: true,
-      opening_statement: currentConversationId ? currentConversationItem?.introduction : (config as any).opening_statement,
+      opening_statement: currentConversationItem?.introduction || (config as any).opening_statement,
     } as ChatConfig
-  }, [appParams, currentConversationItem?.introduction, currentConversationId])
+  }, [appParams, currentConversationItem?.introduction])
   const {
     chatList,
-    setTargetMessageId,
     handleSend,
     handleStop,
+    handleSwitchSibling,
     isResponding: respondingState,
     suggestedQuestions,
   } = useChat(
@@ -81,7 +97,7 @@ const ChatWrapper = () => {
       inputsForm: inputsForms,
     },
     appPrevChatList,
-    taskId => stopChatMessageResponding('', taskId, isInstalledApp, appId),
+    taskId => stopChatMessageResponding('', taskId, appSourceType, appId),
     clearChatList,
     setClearChatList,
   )
@@ -129,6 +145,40 @@ const ChatWrapper = () => {
     setIsResponding(respondingState)
   }, [respondingState, setIsResponding])
 
+  // Resume paused workflows when chat history is loaded
+  useEffect(() => {
+    if (!appPrevChatList || appPrevChatList.length === 0)
+      return
+
+    // Find the last answer item with workflow_run_id that needs resumption (DFS - find deepest first)
+    let lastPausedNode: ChatItemInTree | undefined
+    const findLastPausedWorkflow = (nodes: ChatItemInTree[]) => {
+      nodes.forEach((node) => {
+        // DFS: recurse to children first
+        if (node.children && node.children.length > 0)
+          findLastPausedWorkflow(node.children)
+
+        // Track the last node with humanInputFormDataList
+        if (node.isAnswer && node.workflow_run_id && node.humanInputFormDataList && node.humanInputFormDataList.length > 0)
+          lastPausedNode = node
+      })
+    }
+
+    findLastPausedWorkflow(appPrevChatList)
+
+    // Only resume the last paused workflow
+    if (lastPausedNode) {
+      handleSwitchSibling(
+        lastPausedNode.id,
+        {
+          onGetSuggestedQuestions: responseItemId => fetchSuggestedQuestions(responseItemId, appSourceType, appId),
+          onConversationComplete: currentConversationId ? undefined : handleNewConversationCompleted,
+          isPublicAPI: appSourceType === AppSourceType.webApp,
+        },
+      )
+    }
+  }, [])
+
   const doSend: OnSend = useCallback((message, files, isRegenerate = false, parentAnswer: ChatItem | null = null) => {
     const data: any = {
       query: message,
@@ -137,17 +187,16 @@ const ChatWrapper = () => {
       conversation_id: currentConversationId,
       parent_message_id: (isRegenerate ? parentAnswer?.id : getLastAnswer(chatList)?.id) || null,
     }
-
     handleSend(
-      getUrl('chat-messages', isInstalledApp, appId || ''),
+      getUrl('chat-messages', appSourceType, appId || ''),
       data,
       {
-        onGetSuggestedQuestions: responseItemId => fetchSuggestedQuestions(responseItemId, isInstalledApp, appId),
+        onGetSuggestedQuestions: responseItemId => fetchSuggestedQuestions(responseItemId, appSourceType, appId),
         onConversationComplete: currentConversationId ? undefined : handleNewConversationCompleted,
-        isPublicAPI: !isInstalledApp,
+        isPublicAPI: appSourceType === AppSourceType.webApp,
       },
     )
-  }, [currentConversationId, currentConversationInputs, newConversationInputs, chatList, handleSend, isInstalledApp, appId, handleNewConversationCompleted])
+  }, [currentConversationId, currentConversationInputs, newConversationInputs, chatList, handleSend, appSourceType, appId, handleNewConversationCompleted])
 
   useEffect(() => {
     if (initialPrompt && !promptSent && !currentConversationId && !respondingState && !inputDisabled) {
@@ -159,21 +208,49 @@ const ChatWrapper = () => {
     }
   }, [initialPrompt, promptSent, currentConversationId, respondingState, inputDisabled, doSend])
 
-  const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
+  const doRegenerate = useCallback((chatItem: ChatItem, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
     const parentAnswer = chatList.find(item => item.id === question.parentMessageId)
-    doSend(editedQuestion ? editedQuestion.message : question.content,
-      editedQuestion ? editedQuestion.files : question.message_files,
-      true,
-      isValidGeneratedAnswer(parentAnswer) ? parentAnswer : null,
-    )
+    doSend(editedQuestion ? editedQuestion.message : question.content, editedQuestion ? editedQuestion.files : question.message_files, true, isValidGeneratedAnswer(parentAnswer) ? parentAnswer : null)
   }, [chatList, doSend])
 
+  const doSwitchSibling = useCallback((siblingMessageId: string) => {
+    handleSwitchSibling(siblingMessageId, {
+      onGetSuggestedQuestions: responseItemId => fetchSuggestedQuestions(responseItemId, appSourceType, appId),
+      onConversationComplete: currentConversationId ? undefined : handleNewConversationCompleted,
+      isPublicAPI: appSourceType === AppSourceType.webApp,
+    })
+  }, [handleSwitchSibling, appSourceType, appId, currentConversationId, handleNewConversationCompleted])
+
   const messageList = useMemo(() => {
-    if (currentConversationId)
+    if (currentConversationId || chatList.length > 1)
       return chatList
+    // Without messages we are in the welcome screen, so hide the opening statement from chatlist
     return chatList.filter(item => !item.isOpeningStatement)
   }, [chatList, currentConversationId])
+
+  const isTryApp = appSourceType === AppSourceType.tryApp
+  const [collapsed, setCollapsed] = useState(!!currentConversationId && !isTryApp)
+
+  const chatNode = useMemo(() => {
+    if (allInputsHidden || !inputsForms.length)
+      return null
+    if (isMobile) {
+      if (!currentConversationId)
+        return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
+      return <div className="mb-4"></div>
+    }
+    else {
+      return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
+    }
+  }, [inputsForms.length, isMobile, currentConversationId, collapsed, allInputsHidden])
+
+  const handleSubmitHumanInputForm = useCallback(async (formToken: string, formData: any) => {
+    if (isInstalledApp)
+      await submitHumanInputFormService(formToken, formData)
+    else
+      await submitHumanInputForm(formToken, formData)
+  }, [isInstalledApp])
 
   const welcome = useMemo(() => {
     const welcomeMessage = chatList.find(item => item.isOpeningStatement)
@@ -186,11 +263,11 @@ const ChatWrapper = () => {
 
     return (
       <div className={cn('flex min-h-[90%] items-center justify-center px-4 py-12')}>
-        <div className='flex max-w-[720px] grow flex-col gap-4'>
+        <div className="flex max-w-[720px] grow flex-col gap-4">
           <BgMascot url={appData?.site.icon_url || ''} />
-          <div className='body-lg-regular grow px-4 py-3 text-text-primary'>
-            <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className='!text-center !text-3xl max-sm:!text-xl' />
-            <div className='my-10'>
+          <div className="body-lg-regular grow px-4 py-3 text-text-primary">
+            <Markdown content={welcomeMessage?.content || `${appData?.site.title || 'Bot'}，从这里开始你的旅程吧！`} className="!text-center !text-3xl max-sm:!text-xl" />
+            <div className="my-10">
               <ChatInputWithTags
                 botName={appData?.site.title || 'Bot'}
                 disabled={inputDisabled}
@@ -216,26 +293,29 @@ const ChatWrapper = () => {
         </div>
       </div>
     )
-  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, currentConversationId, inputsForms.length, respondingState, allInputsHidden, initialPrompt, promptSent])
+  }, [appData?.site.icon_url, appData?.site.title, appData?.site.description, chatList, currentConversationId, respondingState, initialPrompt, promptSent, inputDisabled, appConfig, doSend, currentConversationInputs, newConversationInputs, inputsForms, themeBuilder])
 
   const answerIcon = isDify()
-    ? <LogoAvatar className='relative shrink-0' />
+    ? <LogoAvatar className="relative shrink-0" />
     : (appData?.site && appData.site.use_icon_as_answer_icon)
-      ? <AnswerIcon
-        iconType={appData.site.icon_type}
-        icon={appData.site.icon}
-        background={appData.site.icon_background}
-        imageUrl={appData.site.icon_url}
-      />
-      : null
+        ? (
+            <AnswerIcon
+              iconType={appData.site.icon_type}
+              icon={appData.site.icon}
+              background={appData.site.icon_background}
+              imageUrl={appData.site.icon_url}
+            />
+          )
+        : null
 
   return (
     <Chat
-      appData={appData}
+      isTryApp={isTryApp}
+      appData={appData || undefined}
       config={appConfig}
       chatList={messageList}
       isResponding={respondingState}
-      chatContainerInnerClassName={cn('mx-auto w-full max-w-full pt-4 tablet:px-4', isMobile && 'px-4')}
+      chatContainerInnerClassName={cn('mx-auto w-full max-w-full px-4', messageList.length && 'pt-4')}
       chatFooterClassName={cn('pb-4', !isMobile && 'rounded-b-2xl')}
       chatFooterInnerClassName={cn('mx-auto w-full max-w-full px-4', isMobile && 'px-2')}
       onSend={doSend}
@@ -243,27 +323,33 @@ const ChatWrapper = () => {
       inputsForm={inputsForms}
       onRegenerate={doRegenerate}
       onStopResponding={handleStop}
-      chatNode={
+      onHumanInputFormSubmit={handleSubmitHumanInputForm}
+      chatNode={(
         <>
+          {chatNode}
           {welcome}
         </>
-      }
+      )}
       allToolIcons={appMeta?.tool_icons || {}}
+      disableFeedback={disableFeedback}
       onFeedback={handleFeedback}
       suggestedQuestions={suggestedQuestions}
       answerIcon={answerIcon}
       hideProcessDetail
       themeBuilder={themeBuilder}
-      switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
+      switchSibling={doSwitchSibling}
       inputDisabled={inputDisabled}
-      isMobile={isMobile}
+      sendOnEnter={sendOnEnter}
       questionIcon={
         initUserVariables?.avatar_url
-          ? <Avatar
-            avatar={initUserVariables.avatar_url}
-            name={initUserVariables.name || 'user'}
-            size={40}
-          /> : undefined
+          ? (
+              <Avatar
+                avatar={initUserVariables.avatar_url}
+                name={initUserVariables.name || 'user'}
+                size="xl"
+              />
+            )
+          : undefined
       }
       noChatInput={!currentConversationId}
     />

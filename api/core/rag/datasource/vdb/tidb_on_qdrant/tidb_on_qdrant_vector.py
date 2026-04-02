@@ -5,9 +5,10 @@ from collections.abc import Generator, Iterable, Sequence
 from itertools import islice
 from typing import TYPE_CHECKING, Any, Union
 
+import httpx
 import qdrant_client
-import requests
 from flask import current_app
+from httpx import DigestAuth
 from pydantic import BaseModel
 from qdrant_client.http import models as rest
 from qdrant_client.http.models import (
@@ -19,7 +20,6 @@ from qdrant_client.http.models import (
     TokenizerType,
 )
 from qdrant_client.local.qdrant_local import QdrantLocal
-from requests.auth import HTTPDigestAuth
 from sqlalchemy import select
 
 from configs import dify_config
@@ -33,6 +33,7 @@ from core.rag.models.document import Document
 from extensions.ext_database import db
 from extensions.ext_redis import redis_client
 from models.dataset import Dataset, TidbAuthBinding
+from models.enums import TidbAuthBindingStatus
 
 if TYPE_CHECKING:
     from qdrant_client import grpc  # noqa
@@ -141,15 +142,13 @@ class TidbOnQdrantVector(BaseVector):
 
                 # create group_id payload index
                 self._client.create_payload_index(
-                    collection_name, Field.GROUP_KEY.value, field_schema=PayloadSchemaType.KEYWORD
+                    collection_name, Field.GROUP_KEY, field_schema=PayloadSchemaType.KEYWORD
                 )
                 # create doc_id payload index
-                self._client.create_payload_index(
-                    collection_name, Field.DOC_ID.value, field_schema=PayloadSchemaType.KEYWORD
-                )
+                self._client.create_payload_index(collection_name, Field.DOC_ID, field_schema=PayloadSchemaType.KEYWORD)
                 # create document_id payload index
                 self._client.create_payload_index(
-                    collection_name, Field.DOCUMENT_ID.value, field_schema=PayloadSchemaType.KEYWORD
+                    collection_name, Field.DOCUMENT_ID, field_schema=PayloadSchemaType.KEYWORD
                 )
                 # create full text index
                 text_index_params = TextIndexParams(
@@ -159,9 +158,7 @@ class TidbOnQdrantVector(BaseVector):
                     max_token_len=20,
                     lowercase=True,
                 )
-                self._client.create_payload_index(
-                    collection_name, Field.CONTENT_KEY.value, field_schema=text_index_params
-                )
+                self._client.create_payload_index(collection_name, Field.CONTENT_KEY, field_schema=text_index_params)
             redis_client.set(collection_exist_cache_key, 1, ex=3600)
 
     def add_texts(self, documents: list[Document], embeddings: list[list[float]], **kwargs):
@@ -211,10 +208,10 @@ class TidbOnQdrantVector(BaseVector):
                     self._build_payloads(
                         batch_texts,
                         batch_metadatas,
-                        Field.CONTENT_KEY.value,
-                        Field.METADATA_KEY.value,
+                        Field.CONTENT_KEY,
+                        Field.METADATA_KEY,
                         group_id or "",
-                        Field.GROUP_KEY.value,
+                        Field.GROUP_KEY,
                     ),
                 )
             ]
@@ -288,27 +285,29 @@ class TidbOnQdrantVector(BaseVector):
         from qdrant_client.http import models
         from qdrant_client.http.exceptions import UnexpectedResponse
 
-        for node_id in ids:
-            try:
-                filter = models.Filter(
-                    must=[
-                        models.FieldCondition(
-                            key="metadata.doc_id",
-                            match=models.MatchValue(value=node_id),
-                        ),
-                    ],
-                )
-                self._client.delete(
-                    collection_name=self._collection_name,
-                    points_selector=FilterSelector(filter=filter),
-                )
-            except UnexpectedResponse as e:
-                # Collection does not exist, so return
-                if e.status_code == 404:
-                    return
-                # Some other error occurred, so re-raise the exception
-                else:
-                    raise e
+        if not ids:
+            return
+
+        try:
+            filter = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="metadata.doc_id",
+                        match=models.MatchAny(any=ids),
+                    ),
+                ],
+            )
+            self._client.delete(
+                collection_name=self._collection_name,
+                points_selector=FilterSelector(filter=filter),
+            )
+        except UnexpectedResponse as e:
+            # Collection does not exist, so return
+            if e.status_code == 404:
+                return
+            # Some other error occurred, so re-raise the exception
+            else:
+                raise e
 
     def text_exists(self, id: str) -> bool:
         all_collection_name = []
@@ -349,13 +348,13 @@ class TidbOnQdrantVector(BaseVector):
         for result in results:
             if result.payload is None:
                 continue
-            metadata = result.payload.get(Field.METADATA_KEY.value) or {}
+            metadata = result.payload.get(Field.METADATA_KEY) or {}
             # duplicate check score threshold
             score_threshold = kwargs.get("score_threshold") or 0.0
             if result.score >= score_threshold:
                 metadata["score"] = result.score
                 doc = Document(
-                    page_content=result.payload.get(Field.CONTENT_KEY.value, ""),
+                    page_content=result.payload.get(Field.CONTENT_KEY, ""),
                     metadata=metadata,
                 )
                 docs.append(doc)
@@ -392,7 +391,7 @@ class TidbOnQdrantVector(BaseVector):
         documents = []
         for result in results:
             if result:
-                document = self._document_from_scored_point(result, Field.CONTENT_KEY.value, Field.METADATA_KEY.value)
+                document = self._document_from_scored_point(result, Field.CONTENT_KEY, Field.METADATA_KEY)
                 documents.append(document)
 
         return documents
@@ -427,11 +426,10 @@ class TidbOnQdrantVectorFactory(AbstractVectorFactory):
                     TIDB_ON_QDRANT_API_KEY = f"{tidb_auth_binding.account}:{tidb_auth_binding.password}"
 
                 else:
-                    idle_tidb_auth_binding = (
-                        db.session.query(TidbAuthBinding)
+                    idle_tidb_auth_binding = db.session.scalar(
+                        select(TidbAuthBinding)
                         .where(TidbAuthBinding.active == False, TidbAuthBinding.status == "ACTIVE")
                         .limit(1)
-                        .one_or_none()
                     )
                     if idle_tidb_auth_binding:
                         idle_tidb_auth_binding.active = True
@@ -454,7 +452,7 @@ class TidbOnQdrantVectorFactory(AbstractVectorFactory):
                             password=new_cluster["password"],
                             tenant_id=dataset.tenant_id,
                             active=True,
-                            status="ACTIVE",
+                            status=TidbAuthBindingStatus.ACTIVE,
                         )
                         db.session.add(new_tidb_auth_binding)
                         db.session.commit()
@@ -504,10 +502,10 @@ class TidbOnQdrantVectorFactory(AbstractVectorFactory):
         }
         cluster_data = {"displayName": display_name, "region": region_object, "labels": labels}
 
-        response = requests.post(
+        response = httpx.post(
             f"{tidb_config.api_url}/clusters",
             json=cluster_data,
-            auth=HTTPDigestAuth(tidb_config.public_key, tidb_config.private_key),
+            auth=DigestAuth(tidb_config.public_key, tidb_config.private_key),
         )
 
         if response.status_code == 200:
@@ -527,10 +525,10 @@ class TidbOnQdrantVectorFactory(AbstractVectorFactory):
 
         body = {"password": new_password}
 
-        response = requests.put(
+        response = httpx.put(
             f"{tidb_config.api_url}/clusters/{cluster_id}/password",
             json=body,
-            auth=HTTPDigestAuth(tidb_config.public_key, tidb_config.private_key),
+            auth=DigestAuth(tidb_config.public_key, tidb_config.private_key),
         )
 
         if response.status_code == 200:

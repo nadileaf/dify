@@ -1,10 +1,20 @@
+from __future__ import annotations
+
 import contextlib
 import json
 from collections import defaultdict
 from collections.abc import Sequence
 from json import JSONDecodeError
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
+from graphon.model_runtime.entities.model_entities import ModelType
+from graphon.model_runtime.entities.provider_entities import (
+    ConfigurateMethod,
+    CredentialFormSchema,
+    FormType,
+    ProviderEntity,
+)
+from graphon.model_runtime.model_providers.model_provider_factory import ModelProviderFactory
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -28,14 +38,6 @@ from core.entities.provider_entities import (
 from core.helper import encrypter
 from core.helper.model_provider_cache import ProviderCredentialsCache, ProviderCredentialsCacheType
 from core.helper.position_helper import is_filtered
-from core.model_runtime.entities.model_entities import ModelType
-from core.model_runtime.entities.provider_entities import (
-    ConfigurateMethod,
-    CredentialFormSchema,
-    FormType,
-    ProviderEntity,
-)
-from core.model_runtime.model_providers.model_provider_factory import ModelProviderFactory
 from extensions import ext_hosting_provider
 from extensions.ext_database import db
 from extensions.ext_redis import redis_client
@@ -53,15 +55,25 @@ from models.provider import (
 from models.provider_ids import ModelProviderID
 from services.feature_service import FeatureService
 
+if TYPE_CHECKING:
+    from graphon.model_runtime.runtime import ModelRuntime
+
 
 class ProviderManager:
     """
-    ProviderManager is a class that manages the model providers includes Hosting and Customize Model Providers.
+    ProviderManager manages tenant-scoped model provider configuration.
+
+    The runtime adapter is injected by the composition layer so this class stays
+    focused on configuration assembly instead of constructing plugin runtimes.
+    Request-bound managers may carry caller identity in that runtime, and the
+    resulting ``ProviderConfiguration`` objects must reuse it for downstream
+    model-type and schema lookups.
     """
 
-    def __init__(self):
+    def __init__(self, model_runtime: ModelRuntime):
         self.decoding_rsa_key = None
         self.decoding_cipher_rsa = None
+        self._model_runtime = model_runtime
 
     def get_configurations(self, tenant_id: str) -> ProviderConfigurations:
         """
@@ -127,7 +139,7 @@ class ProviderManager:
                 )
 
         # Get all provider entities
-        model_provider_factory = ModelProviderFactory(tenant_id)
+        model_provider_factory = ModelProviderFactory(model_runtime=self._model_runtime)
         provider_entities = model_provider_factory.get_providers()
 
         # Get All preferred provider types of the workspace
@@ -195,7 +207,9 @@ class ProviderManager:
             preferred_provider_type_record = provider_name_to_preferred_model_provider_records_dict.get(provider_name)
 
             if preferred_provider_type_record:
-                preferred_provider_type = ProviderType.value_of(preferred_provider_type_record.preferred_provider_type)
+                preferred_provider_type = preferred_provider_type_record.preferred_provider_type
+            elif dify_config.EDITION == "CLOUD" and system_configuration.enabled:
+                preferred_provider_type = ProviderType.SYSTEM
             elif custom_configuration.provider or custom_configuration.models:
                 preferred_provider_type = ProviderType.CUSTOM
             elif system_configuration.enabled:
@@ -253,6 +267,7 @@ class ProviderManager:
                 custom_configuration=custom_configuration,
                 model_settings=model_settings,
             )
+            provider_configuration.bind_model_runtime(self._model_runtime)
 
             provider_configurations[str(provider_id_entity)] = provider_configuration
 
@@ -291,7 +306,7 @@ class ProviderManager:
         """
         stmt = select(TenantDefaultModel).where(
             TenantDefaultModel.tenant_id == tenant_id,
-            TenantDefaultModel.model_type == model_type.to_origin_model_type(),
+            TenantDefaultModel.model_type == model_type,
         )
         default_model = db.session.scalar(stmt)
 
@@ -305,22 +320,21 @@ class ProviderManager:
             available_models = provider_configurations.get_models(model_type=model_type, only_active=True)
 
             if available_models:
-                available_model = next(
-                    (model for model in available_models if model.model == "gpt-4"), available_models[0]
-                )
+                available_model = available_models[0]
 
-                default_model = TenantDefaultModel()
-                default_model.tenant_id = tenant_id
-                default_model.model_type = model_type.to_origin_model_type()
-                default_model.provider_name = available_model.provider.provider
-                default_model.model_name = available_model.model
+                default_model = TenantDefaultModel(
+                    tenant_id=tenant_id,
+                    model_type=model_type,
+                    provider_name=available_model.provider.provider,
+                    model_name=available_model.model,
+                )
                 db.session.add(default_model)
                 db.session.commit()
 
         if not default_model:
             return None
 
-        model_provider_factory = ModelProviderFactory(tenant_id)
+        model_provider_factory = ModelProviderFactory(model_runtime=self._model_runtime)
         provider_schema = model_provider_factory.get_provider_schema(provider=default_model.provider_name)
 
         return DefaultModelEntity(
@@ -330,7 +344,6 @@ class ProviderManager:
                 provider=provider_schema.provider,
                 label=provider_schema.label,
                 icon_small=provider_schema.icon_small,
-                icon_large=provider_schema.icon_large,
                 supported_model_types=provider_schema.supported_model_types,
             ),
         )
@@ -378,7 +391,7 @@ class ProviderManager:
             raise ValueError(f"Model {model} does not exist.")
         stmt = select(TenantDefaultModel).where(
             TenantDefaultModel.tenant_id == tenant_id,
-            TenantDefaultModel.model_type == model_type.to_origin_model_type(),
+            TenantDefaultModel.model_type == model_type,
         )
         default_model = db.session.scalar(stmt)
 
@@ -392,7 +405,7 @@ class ProviderManager:
             # create default model
             default_model = TenantDefaultModel(
                 tenant_id=tenant_id,
-                model_type=model_type.value,
+                model_type=model_type,
                 provider_name=provider,
                 model_name=model,
             )
@@ -610,26 +623,25 @@ class ProviderManager:
 
             provider_quota_to_provider_record_dict = {}
             for provider_record in provider_records:
-                if provider_record.provider_type != ProviderType.SYSTEM.value:
+                if provider_record.provider_type != ProviderType.SYSTEM:
                     continue
 
-                provider_quota_to_provider_record_dict[ProviderQuotaType.value_of(provider_record.quota_type)] = (
-                    provider_record
-                )
+                if provider_record.quota_type is not None:
+                    provider_quota_to_provider_record_dict[provider_record.quota_type] = provider_record
 
             for quota in configuration.quotas:
-                if quota.quota_type == ProviderQuotaType.TRIAL:
+                if quota.quota_type in (ProviderQuotaType.TRIAL, ProviderQuotaType.PAID):
                     # Init trial provider records if not exists
-                    if ProviderQuotaType.TRIAL not in provider_quota_to_provider_record_dict:
+                    if quota.quota_type not in provider_quota_to_provider_record_dict:
                         try:
                             # FIXME ignore the type error, only TrialHostingQuota has limit need to change the logic
                             new_provider_record = Provider(
                                 tenant_id=tenant_id,
                                 # TODO: Use provider name with prefix after the data migration.
                                 provider_name=ModelProviderID(provider_name).provider_name,
-                                provider_type=ProviderType.SYSTEM.value,
-                                quota_type=ProviderQuotaType.TRIAL.value,
-                                quota_limit=quota.quota_limit,  # type: ignore
+                                provider_type=ProviderType.SYSTEM,
+                                quota_type=quota.quota_type,  # type: ignore[arg-type]
+                                quota_limit=0,  # type: ignore
                                 quota_used=0,
                                 is_valid=True,
                             )
@@ -642,7 +654,7 @@ class ProviderManager:
                                 Provider.tenant_id == tenant_id,
                                 Provider.provider_name == ModelProviderID(provider_name).provider_name,
                                 Provider.provider_type == ProviderType.SYSTEM.value,
-                                Provider.quota_type == ProviderQuotaType.TRIAL.value,
+                                Provider.quota_type == quota.quota_type,
                             )
                             existed_provider_record = db.session.scalar(stmt)
                             if not existed_provider_record:
@@ -702,7 +714,7 @@ class ProviderManager:
         """Get custom provider configuration."""
         # Find custom provider record (non-system)
         custom_provider_record = next(
-            (record for record in provider_records if record.provider_type != ProviderType.SYSTEM.value), None
+            (record for record in provider_records if record.provider_type != ProviderType.SYSTEM), None
         )
 
         if not custom_provider_record:
@@ -810,7 +822,7 @@ class ProviderManager:
             custom_model_configurations.append(
                 CustomModelConfiguration(
                     model=provider_model_record.model_name,
-                    model_type=ModelType.value_of(provider_model_record.model_type),
+                    model_type=provider_model_record.model_type,
                     credentials=provider_model_credentials,
                     current_credential_id=provider_model_record.credential_id,
                     current_credential_name=provider_model_record.credential_name,
@@ -905,13 +917,28 @@ class ProviderManager:
         # Convert provider_records to dict
         quota_type_to_provider_records_dict: dict[ProviderQuotaType, Provider] = {}
         for provider_record in provider_records:
-            if provider_record.provider_type != ProviderType.SYSTEM.value:
+            if provider_record.provider_type != ProviderType.SYSTEM:
                 continue
 
-            quota_type_to_provider_records_dict[ProviderQuotaType.value_of(provider_record.quota_type)] = (
-                provider_record
-            )
+            if provider_record.quota_type is not None:
+                quota_type_to_provider_records_dict[provider_record.quota_type] = provider_record  # type: ignore[index]
         quota_configurations = []
+
+        if dify_config.EDITION == "CLOUD":
+            from services.credit_pool_service import CreditPoolService
+
+            trail_pool = CreditPoolService.get_pool(
+                tenant_id=tenant_id,
+                pool_type=ProviderQuotaType.TRIAL,
+            )
+            paid_pool = CreditPoolService.get_pool(
+                tenant_id=tenant_id,
+                pool_type=ProviderQuotaType.PAID,
+            )
+        else:
+            trail_pool = None
+            paid_pool = None
+
         for provider_quota in provider_hosting_configuration.quotas:
             if provider_quota.quota_type not in quota_type_to_provider_records_dict:
                 if provider_quota.quota_type == ProviderQuotaType.FREE:
@@ -932,16 +959,36 @@ class ProviderManager:
                     raise ValueError("quota_used is None")
                 if provider_record.quota_limit is None:
                     raise ValueError("quota_limit is None")
+                if provider_quota.quota_type == ProviderQuotaType.TRIAL and trail_pool is not None:
+                    quota_configuration = QuotaConfiguration(
+                        quota_type=provider_quota.quota_type,
+                        quota_unit=provider_hosting_configuration.quota_unit or QuotaUnit.TOKENS,
+                        quota_used=trail_pool.quota_used,
+                        quota_limit=trail_pool.quota_limit,
+                        is_valid=trail_pool.quota_limit > trail_pool.quota_used or trail_pool.quota_limit == -1,
+                        restrict_models=provider_quota.restrict_models,
+                    )
 
-                quota_configuration = QuotaConfiguration(
-                    quota_type=provider_quota.quota_type,
-                    quota_unit=provider_hosting_configuration.quota_unit or QuotaUnit.TOKENS,
-                    quota_used=provider_record.quota_used,
-                    quota_limit=provider_record.quota_limit,
-                    is_valid=provider_record.quota_limit > provider_record.quota_used
-                    or provider_record.quota_limit == -1,
-                    restrict_models=provider_quota.restrict_models,
-                )
+                elif provider_quota.quota_type == ProviderQuotaType.PAID and paid_pool is not None:
+                    quota_configuration = QuotaConfiguration(
+                        quota_type=provider_quota.quota_type,
+                        quota_unit=provider_hosting_configuration.quota_unit or QuotaUnit.TOKENS,
+                        quota_used=paid_pool.quota_used,
+                        quota_limit=paid_pool.quota_limit,
+                        is_valid=paid_pool.quota_limit > paid_pool.quota_used or paid_pool.quota_limit == -1,
+                        restrict_models=provider_quota.restrict_models,
+                    )
+
+                else:
+                    quota_configuration = QuotaConfiguration(
+                        quota_type=provider_quota.quota_type,
+                        quota_unit=provider_hosting_configuration.quota_unit or QuotaUnit.TOKENS,
+                        quota_used=provider_record.quota_used,
+                        quota_limit=provider_record.quota_limit,
+                        is_valid=provider_record.quota_limit > provider_record.quota_used
+                        or provider_record.quota_limit == -1,
+                        restrict_models=provider_quota.restrict_models,
+                    )
 
             quota_configurations.append(quota_configuration)
 
@@ -1046,7 +1093,7 @@ class ProviderManager:
         """
         secret_input_form_variables = []
         for credential_form_schema in credential_form_schemas:
-            if credential_form_schema.type.value == FormType.SECRET_INPUT.value:
+            if credential_form_schema.type == FormType.SECRET_INPUT:
                 secret_input_form_variables.append(credential_form_schema.variable)
 
         return secret_input_form_variables
@@ -1154,7 +1201,7 @@ class ProviderManager:
             model_settings.append(
                 ModelSettings(
                     model=provider_model_setting.model_name,
-                    model_type=ModelType.value_of(provider_model_setting.model_type),
+                    model_type=provider_model_setting.model_type,
                     enabled=provider_model_setting.enabled,
                     load_balancing_enabled=provider_model_setting.load_balancing_enabled,
                     load_balancing_configs=load_balancing_configs if len(load_balancing_configs) > 1 else [],

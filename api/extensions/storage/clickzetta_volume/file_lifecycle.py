@@ -5,6 +5,8 @@ automatic cleanup, backup and restore.
 Supports complete lifecycle management for knowledge base files.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import operator
@@ -13,7 +15,11 @@ from datetime import datetime
 from enum import StrEnum, auto
 from typing import Any
 
+from pydantic import TypeAdapter
+
 logger = logging.getLogger(__name__)
+
+_metadata_adapter: TypeAdapter[dict[str, Any]] = TypeAdapter(dict[str, Any])
 
 
 class FileStatus(StrEnum):
@@ -48,7 +54,7 @@ class FileMetadata:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "FileMetadata":
+    def from_dict(cls, data: dict) -> FileMetadata:
         """Create instance from dictionary"""
         data = data.copy()
         data["created_at"] = datetime.fromisoformat(data["created_at"])
@@ -199,9 +205,9 @@ class FileLifecycleManager:
                             # Temporarily create basic metadata information
                         except ValueError:
                             continue
-            except:
+            except Exception:
                 # If cannot scan version files, only return current version
-                pass
+                logger.exception("Failed to scan version files for %s", filename)
 
             return sorted(versions, key=lambda x: x.version or 0, reverse=True)
 
@@ -264,7 +270,7 @@ class FileLifecycleManager:
                 logger.warning("File %s not found in metadata", filename)
                 return False
 
-            metadata_dict[filename]["status"] = FileStatus.ARCHIVED.value
+            metadata_dict[filename]["status"] = FileStatus.ARCHIVED
             metadata_dict[filename]["modified_at"] = datetime.now().isoformat()
 
             self._save_metadata(metadata_dict)
@@ -309,7 +315,7 @@ class FileLifecycleManager:
             # Update metadata
             metadata_dict = self._load_metadata()
             if filename in metadata_dict:
-                metadata_dict[filename]["status"] = FileStatus.DELETED.value
+                metadata_dict[filename]["status"] = FileStatus.DELETED
                 metadata_dict[filename]["modified_at"] = datetime.now().isoformat()
                 self._save_metadata(metadata_dict)
 
@@ -453,8 +459,8 @@ class FileLifecycleManager:
         try:
             if self._storage.exists(self._metadata_file):
                 metadata_content = self._storage.load_once(self._metadata_file)
-                result = json.loads(metadata_content.decode("utf-8"))
-                return dict(result) if result else {}
+                result = _metadata_adapter.validate_json(metadata_content)
+                return result or {}
             else:
                 return {}
         except Exception as e:

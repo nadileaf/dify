@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from core.tools.__base.tool_provider import ToolProviderController
 from core.tools.builtin_tool.provider import BuiltinToolProviderController
@@ -26,19 +26,19 @@ class ToolLabelManager:
         labels = cls.filter_tool_labels(labels)
 
         if isinstance(controller, ApiToolProviderController | WorkflowToolProviderController):
-            provider_id = controller.provider_id  # ty: ignore [unresolved-attribute]
+            provider_id = controller.provider_id
         else:
             raise ValueError("Unsupported tool type")
 
         # delete old labels
-        db.session.query(ToolLabelBinding).where(ToolLabelBinding.tool_id == provider_id).delete()
+        db.session.execute(delete(ToolLabelBinding).where(ToolLabelBinding.tool_id == provider_id))
 
         # insert new labels
         for label in labels:
             db.session.add(
                 ToolLabelBinding(
                     tool_id=provider_id,
-                    tool_type=controller.provider_type.value,
+                    tool_type=controller.provider_type,
                     label_name=label,
                 )
             )
@@ -51,14 +51,14 @@ class ToolLabelManager:
         Get tool labels
         """
         if isinstance(controller, ApiToolProviderController | WorkflowToolProviderController):
-            provider_id = controller.provider_id  # ty: ignore [unresolved-attribute]
+            provider_id = controller.provider_id
         elif isinstance(controller, BuiltinToolProviderController):
             return controller.tool_labels
         else:
             raise ValueError("Unsupported tool type")
         stmt = select(ToolLabelBinding.label_name).where(
             ToolLabelBinding.tool_id == provider_id,
-            ToolLabelBinding.tool_type == controller.provider_type.value,
+            ToolLabelBinding.tool_type == controller.provider_type,
         )
         labels = db.session.scalars(stmt).all()
 
@@ -85,7 +85,7 @@ class ToolLabelManager:
         provider_ids = []
         for controller in tool_providers:
             assert isinstance(controller, ApiToolProviderController | WorkflowToolProviderController)
-            provider_ids.append(controller.provider_id)  # ty: ignore [unresolved-attribute]
+            provider_ids.append(controller.provider_id)
 
         labels = db.session.scalars(select(ToolLabelBinding).where(ToolLabelBinding.tool_id.in_(provider_ids))).all()
 

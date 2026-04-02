@@ -4,7 +4,7 @@
  * Handles special rendering for "abbr:" type links for interactive chat actions.
  * Supports button-style links with modern design using heroUI.
  */
-import React from 'react'
+import * as React from 'react'
 import { useChatContext } from '@/app/components/base/chat/chat/context'
 import { isValidUrl } from './utils'
 
@@ -124,7 +124,7 @@ const Link = ({ node, children, ...props }: any) => {
     return <abbr className={commonClassName} onClick={() => onSend?.(hidden_text)} title={node.children[0]?.value || ''}>{node.children[0]?.value || ''}</abbr>
   }
   else {
-    if (href && /^#[a-zA-Z0-9_-]+$/.test(href.toString())) {
+    if (href && /^#[\w-]+$/.test(href.toString())) {
       const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault()
         // scroll to target element if exists within the answer container

@@ -2,7 +2,7 @@ from collections.abc import Generator
 from datetime import datetime
 from typing import Any
 
-import pytz
+import pytz  # type: ignore[import-untyped]
 
 from core.tools.builtin_tool.tool import BuiltinTool
 from core.tools.entities.tool_entities import ToolInvokeMessage
@@ -34,6 +34,7 @@ class LocaltimeToTimestampTool(BuiltinTool):
 
         yield self.create_text_message(f"{timestamp}")
 
+    # TODO: this method's type is messy
     @staticmethod
     def localtime_to_timestamp(localtime: str, time_format: str, local_tz=None) -> int | None:
         try:

@@ -9,7 +9,7 @@ from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Session, declarative_base
 
 from configs import dify_config
-from core.rag.datasource.vdb.field import Field
+from core.rag.datasource.vdb.field import Field, parse_metadata_json
 from core.rag.datasource.vdb.vector_base import BaseVector
 from core.rag.datasource.vdb.vector_factory import AbstractVectorFactory
 from core.rag.datasource.vdb.vector_type import VectorType
@@ -55,13 +55,13 @@ class TiDBVector(BaseVector):
         return Table(
             self._collection_name,
             self._orm_base.metadata,
-            Column(Field.PRIMARY_KEY.value, String(36), primary_key=True, nullable=False),
+            Column(Field.PRIMARY_KEY, String(36), primary_key=True, nullable=False),
             Column(
-                Field.VECTOR.value,
+                Field.VECTOR,
                 VectorType(dim),
                 nullable=False,
             ),
-            Column(Field.TEXT_KEY.value, TEXT, nullable=False),
+            Column(Field.TEXT_KEY, TEXT, nullable=False),
             Column("meta", JSON, nullable=False),
             Column("create_time", DateTime, server_default=sqlalchemy.text("CURRENT_TIMESTAMP")),
             Column(
@@ -228,7 +228,7 @@ class TiDBVector(BaseVector):
             )
             results = [(row[0], row[1], row[2]) for row in res]
             for meta, text, distance in results:
-                metadata = json.loads(meta)
+                metadata = parse_metadata_json(meta)
                 metadata["score"] = 1 - distance
                 docs.append(Document(page_content=text, metadata=metadata))
         return docs
